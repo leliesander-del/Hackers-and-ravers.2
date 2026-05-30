@@ -12,7 +12,9 @@ function logoSources(domain) {
 }
 
 export default function StoreLogo({ store, sizeClass = 'h-12 w-12', emojiClass = 'text-2xl' }) {
-  const sources = logoSources(store.logoDomain)
+  const sources = store.logoSrc
+    ? [store.logoSrc, ...logoSources(store.logoDomain)]
+    : logoSources(store.logoDomain)
   const [i, setI] = useState(0)
   const source = sources[i]
 
@@ -30,13 +32,14 @@ export default function StoreLogo({ store, sizeClass = 'h-12 w-12', emojiClass =
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200 ${sizeClass}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full shadow-sm ring-1 ring-slate-200 ${sizeClass}`}
+      style={{ backgroundColor: store.logoBg || '#ffffff' }}
     >
       <img
         src={source}
         alt={`${store.name} logo`}
         onError={() => setI((n) => n + 1)}
-        className="h-full w-full object-contain p-1.5"
+        className={`h-full w-full object-contain ${store.logoBg ? 'p-0' : 'p-1.5'}`}
       />
     </span>
   )

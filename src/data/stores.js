@@ -7,6 +7,7 @@ export const stores = [
   {
     id: 'ah-xl',
     logoDomain: 'ah.be',
+    logoSrc: '/logos/ah-xl.png',
     name: 'AH XL Ghent',
     street: 'Brusselsesteenweg 707, Gentbrugge',
     department: 'groceries',
@@ -21,6 +22,7 @@ export const stores = [
   {
     id: 'mediamarkt',
     logoDomain: 'mediamarkt.be',
+    logoSrc: '/logos/mediamarkt.png',
     name: 'MediaMarkt Ghent',
     street: 'Woodrow Wilsonplein 4, Ghent',
     department: 'electronics',
@@ -35,6 +37,8 @@ export const stores = [
   {
     id: 'decathlon',
     logoDomain: 'decathlon.be',
+    logoSrc: '/logos/decathlon.png',
+    logoBg: '#ffffff',
     name: 'Decathlon Ghent',
     street: 'Koopvaardijlaan 40, Ghent',
     department: 'sport',
@@ -49,6 +53,8 @@ export const stores = [
   {
     id: 'hema',
     logoDomain: 'hema.be',
+    logoSrc: '/logos/hema.png',
+    logoBg: '#e3001b',
     name: 'HEMA Veldstraat',
     street: 'Veldstraat 88, Ghent',
     department: 'toys',
@@ -63,6 +69,7 @@ export const stores = [
   {
     id: 'delhaize',
     logoDomain: 'delhaize.be',
+    logoSrc: '/logos/delhaize.png',
     name: 'Delhaize Sint-Pieters',
     street: 'Sint-Pietersplein 12, Ghent',
     department: 'groceries',
