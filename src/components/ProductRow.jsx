@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 
+function voorraadLabel(product) {
+  if (product.voorraadStatus === 'magazijn') return 'Vraag medewerker om bij te halen'
+  if (product.voorraadStatus === 'op') return 'Niet op voorraad'
+  return null
+}
+
 // Eén regel in de zoekresultaten van een winkel.
 export default function ProductRow({ product }) {
   const { inCart, addToCart, removeFromCart } = useStore()
   const zit = inCart(product.id)
+  const label = voorraadLabel(product)
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
@@ -27,8 +34,14 @@ export default function ProductRow({ product }) {
           {product._waarschuwing && (
             <span className="mt-0.5 block text-[11px] text-amber-600">⚠ {product._waarschuwing}</span>
           )}
-          {!product.opVoorraad && (
-            <span className="mt-0.5 block text-[11px] font-medium text-rose-500">Niet op voorraad</span>
+          {label && (
+            <span
+              className={`mt-0.5 block text-[11px] font-medium ${
+                product.voorraadStatus === 'magazijn' ? 'text-amber-700' : 'text-rose-500'
+              }`}
+            >
+              {label}
+            </span>
           )}
         </span>
       </Link>
@@ -48,7 +61,7 @@ export default function ProductRow({ product }) {
           to={`product/${product.id}`}
           className="shrink-0 rounded-full bg-amber-100 px-3 py-2 text-xs font-medium text-amber-700"
         >
-          Alternatief
+          {product.voorraadStatus === 'magazijn' ? 'Info' : 'Alternatief'}
         </Link>
       )}
     </div>

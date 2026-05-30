@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { getProfile } from '../data/profiles.js'
 import { getProduct, products } from '../data/products.js'
 import { buildInitialInventory, enrichProduct } from '../lib/inventory.js'
+import { isGekwalificeerdeBediende } from '../lib/staffAccess.js'
 
 const StoreContext = createContext(null)
 
@@ -58,6 +59,7 @@ export function StoreProvider({ children }) {
   }, [staffLog])
 
   const activeProfile = useMemo(() => getProfile(profielId), [profielId])
+  const gekwalificeerdPersoneel = useMemo(() => isGekwalificeerdeBediende(activeProfile), [activeProfile])
 
   const getStock = useCallback((productId) => inventory[productId] ?? { magazijn: 0, schap: 0 }, [inventory])
 
@@ -146,6 +148,7 @@ export function StoreProvider({ children }) {
     () => ({
       activeProfile,
       isIngelogd: !!activeProfile,
+      isGekwalificeerdeBediende: gekwalificeerdPersoneel,
       login: (id) => setProfielId(id),
       logout: () => setProfielId('gast'),
       cart,
@@ -167,6 +170,7 @@ export function StoreProvider({ children }) {
     }),
     [
       activeProfile,
+      gekwalificeerdPersoneel,
       cart,
       cartIds,
       inventory,

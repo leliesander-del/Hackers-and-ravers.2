@@ -147,6 +147,30 @@ export function rankAlternatives(product, allProducts, profile) {
   return verrijkt
 }
 
+function normalizeTekst(tekst) {
+  return tekst
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+}
+
+// Zelfde product (naam + merk) bij andere winkels die wél op schap liggen.
+export function findZelfdeProductAndereWinkels(product, allProducts) {
+  const naam = normalizeTekst(product.naam)
+  const merk = normalizeTekst(product.merk)
+
+  return allProducts
+    .filter(
+      (p) =>
+        p.id !== product.id &&
+        p.storeId !== product.storeId &&
+        normalizeTekst(p.naam) === naam &&
+        normalizeTekst(p.merk) === merk &&
+        p.opVoorraad,
+    )
+    .map((p) => ({ ...p, _reden: 'Zelfde product' }))
+}
+
 // =========================================================================
 // Deals (Wallet)
 // =========================================================================

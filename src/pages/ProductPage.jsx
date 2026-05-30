@@ -2,10 +2,20 @@ import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { rankAlternatives } from '../lib/personalization.js'
+import { rankAlternatives, findZelfdeProductAndereWinkels } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import Floorplan from '../components/Floorplan.jsx'
 import AlternativeCard from '../components/AlternativeCard.jsx'
+
+function VoorraadBadge({ status }) {
+  if (status === 'schap') {
+    return <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">Op voorraad</span>
+  }
+  if (status === 'magazijn') {
+    return <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">Niet op schap</span>
+  }
+  return <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-600">Niet op voorraad</span>
+}
 
 export default function ProductPage() {
   const { id, pid } = useParams()
@@ -14,35 +24,44 @@ export default function ProductPage() {
   const store = getStore(id)
   const product = getProductLive(pid)
 
+  const volledigOp = product?.voorraadStatus === 'op'
+
   const alternatieven = useMemo(
-    () => (product && !product.opVoorraad ? rankAlternatives(product, allProductsLive, activeProfile) : []),
-    [product, activeProfile, allProductsLive],
+    () => (product && volledigOp ? rankAlternatives(product, allProductsLive, activeProfile) : []),
+    [product, volledigOp, activeProfile, allProductsLive],
+  )
+
+  const zelfdeProductAndereWinkels = useMemo(
+    () => (product && volledigOp ? findZelfdeProductAndereWinkels(product, allProductsLive) : []),
+    [product, volledigOp, allProductsLive],
   )
 
   if (!store || !product) return <Navigate to={`/store/${id}`} replace />
 
   const zit = inCart(product.id)
+  const opSchap = product.voorraadStatus === 'schap'
+  const inMagazijn = product.voorraadStatus === 'magazijn'
 
   return (
     <div>
       <PageHeader title={product.naam} subtitle={`${product.merk} · ${store.naam}`} back />
 
       <div className="space-y-4 px-4 py-4">
-        {/* Productkaart */}
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-2xl font-bold text-slate-800">€ {product.prijs.toFixed(2)}</p>
               <p className="text-sm text-slate-500">{product.schaplocatie?.label}</p>
             </div>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                product.opVoorraad ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
-              }`}
-            >
-              {product.opVoorraad ? 'Op voorraad' : 'Niet op voorraad'}
-            </span>
+            <VoorraadBadge status={product.voorraadStatus} />
           </div>
+
+          {inMagazijn && (
+            <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Dit product ligt niet op het schap, maar er is nog voorraad in het magazijn. Vraag een medewerker om het
+              voor je bij te halen.
+            </div>
+          )}
 
           {product.dieet.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
@@ -54,7 +73,7 @@ export default function ProductPage() {
             </div>
           )}
 
-          {product.opVoorraad && (
+          {opSchap && (
             <button
               onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
               className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition ${
@@ -66,30 +85,48 @@ export default function ProductPage() {
           )}
         </div>
 
-        {/* Op voorraad -> route op plattegrond */}
-        {product.opVoorraad && store.heeftPlattegrond && (
+        {opSchap && store.heeftPlattegrond && (
           <div>
             <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
             <Floorplan products={productsByStoreLive(id)} highlightId={product.id} />
           </div>
         )}
 
-        {/* Niet op voorraad -> gepersonaliseerde alternatieven */}
-        {!product.opVoorraad && (
-          <div>
-            <div className="mb-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Dit product is op.{' '}
-              {activeProfile.type === 'gast'
-                ? 'Hier zijn vergelijkbare producten:'
-                : 'Hier zijn alternatieven die bij jouw profiel passen:'}
+        {volledigOp && (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
+              Dit product is op in deze winkel — zowel op schap als in het magazijn.
             </div>
-            <div className="space-y-2">
-              {alternatieven.length ? (
-                alternatieven.map((p) => <AlternativeCard key={p.id} product={p} />)
-              ) : (
-                <p className="text-sm text-slate-400">Geen alternatieven gevonden.</p>
-              )}
-            </div>
+
+            {alternatieven.length > 0 && (
+              <section>
+                <h2 className="mb-2 text-sm font-semibold text-slate-500">
+                  {activeProfile.type === 'gast'
+                    ? 'Vergelijkbare producten in deze winkel'
+                    : 'Alternatieven in deze winkel die bij jou passen'}
+                </h2>
+                <div className="space-y-2">
+                  {alternatieven.map((p) => (
+                    <AlternativeCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {zelfdeProductAndereWinkels.length > 0 && (
+              <section>
+                <h2 className="mb-2 text-sm font-semibold text-slate-500">Hetzelfde product bij andere winkels</h2>
+                <div className="space-y-2">
+                  {zelfdeProductAndereWinkels.map((p) => (
+                    <AlternativeCard key={p.id} product={p} andereWinkel />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {alternatieven.length === 0 && zelfdeProductAndereWinkels.length === 0 && (
+              <p className="text-sm text-slate-400">Geen alternatieven gevonden.</p>
+            )}
           </div>
         )}
       </div>

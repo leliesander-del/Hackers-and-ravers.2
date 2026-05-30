@@ -11,12 +11,13 @@ const tabs = [
 ]
 
 export default function BottomNav() {
-  const { cartCount } = useStore()
+  const { cartCount, isGekwalificeerdeBediende } = useStore()
+  const zichtbareTabs = tabs.filter((t) => t.to !== '/personeel' || isGekwalificeerdeBediende)
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white">
       <div className="flex items-stretch justify-around px-2 py-2">
-        {tabs.map((t) => (
+        {zichtbareTabs.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}

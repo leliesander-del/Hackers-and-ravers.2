@@ -15,11 +15,20 @@ export function enrichProduct(product, stock) {
   if (!product) return null
   const magazijn = stock?.magazijn ?? product.magazijnVoorraad ?? 0
   const schap = stock?.schap ?? product.schapVoorraad ?? 0
+  const opSchap = schap > 0
+  const inMagazijn = magazijn > 0
+  let voorraadStatus = 'schap'
+  if (!opSchap && inMagazijn) voorraadStatus = 'magazijn'
+  if (!opSchap && !inMagazijn) voorraadStatus = 'op'
+
   return {
     ...product,
     magazijnVoorraad: magazijn,
     schapVoorraad: schap,
-    opVoorraad: schap > 0,
+    opVoorraad: opSchap,
+    opSchap,
+    inMagazijn,
+    voorraadStatus,
   }
 }
 

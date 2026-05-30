@@ -10,6 +10,7 @@ import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import CartPage from './pages/CartPage.jsx'
+import StaffRoute from './components/StaffRoute.jsx'
 import StaffPage from './pages/StaffPage.jsx'
 
 // Het "telefoon"-frame met onderbalk. Wie nog geen profiel koos, gaat naar /login.
@@ -38,7 +39,14 @@ export default function App() {
         <Route path="store/:id" element={<StorePage />} />
         <Route path="store/:id/product/:pid" element={<ProductPage />} />
         <Route path="mandje" element={<CartPage />} />
-        <Route path="personeel" element={<StaffPage />} />
+        <Route
+          path="personeel"
+          element={
+            <StaffRoute>
+              <StaffPage />
+            </StaffRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
