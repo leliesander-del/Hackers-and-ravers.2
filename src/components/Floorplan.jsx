@@ -121,10 +121,10 @@ function buildMultiRoute(ordered) {
   return pts.map((p, k) => `${k === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
 }
 
-export default function Floorplan({ products, highlightId, highlight, routeIds }) {
+export default function Floorplan({ products, highlightId, routeIds }) {
   const { racks, headers } = useMemo(() => buildLayout(products), [products])
 
-  // Doelen: meerdere (routeIds) of één (highlightId / legacy highlight).
+  // Doelen: meerdere (routeIds) of één (highlightId).
   const targets = useMemo(() => {
     if (routeIds?.length) {
       const gevonden = routeIds.map((id) => racks.find((r) => r.productId === id)).filter(Boolean)
@@ -134,12 +134,8 @@ export default function Floorplan({ products, highlightId, highlight, routeIds }
       const r = racks.find((x) => x.productId === highlightId)
       return r ? [r] : []
     }
-    if (highlight) {
-      const r = racks.find((x) => x.label === highlight.label)
-      return r ? [r] : []
-    }
     return []
-  }, [racks, routeIds, highlightId, highlight])
+  }, [racks, routeIds, highlightId])
 
   const multi = targets.length > 1
   const actieveIds = useMemo(() => new Set(targets.map((t) => t.productId)), [targets])

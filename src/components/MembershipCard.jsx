@@ -26,7 +26,7 @@ export default function MembershipCard({ profile }) {
         <div className="flex gap-1 text-lg">🛍️</div>
         <div>
           <p className="text-sm font-semibold leading-snug">Klaar voor je volgende aankoop</p>
-          <Link to="/lijst" className="mt-1 inline-block text-xs underline">
+          <Link to="/kaart" className="mt-1 inline-block text-xs underline">
             Shop nu
           </Link>
         </div>
