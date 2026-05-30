@@ -109,6 +109,15 @@ export default function SignupPage() {
 
   function maakAccount() {
     const emailLower = email.trim().toLowerCase()
+
+    // Laatste controle: één account per e-mailadres. Voorkomt dat een
+    // bestaand account stil overschreven wordt als de flow wordt hervat.
+    if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
+      setStap(1)
+      setFout('Er bestaat al een account met dit e-mailadres.')
+      return
+    }
+
     const accent = ACCENT_KLEUREN[emailLower.charCodeAt(0) % ACCENT_KLEUREN.length]
     const omschrijving = [prijsklasse, ...dieet].filter(Boolean).join(' · ') || 'Standaard account'
 

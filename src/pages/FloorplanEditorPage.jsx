@@ -9,6 +9,7 @@ import ElementPalette from '../components/floorplan/ElementPalette.jsx'
 import EditorCanvas from '../components/floorplan/EditorCanvas.jsx'
 import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel.jsx'
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
+import BeheerNav from '../components/BeheerNav.jsx'
 import { productsByStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
@@ -120,6 +121,7 @@ export default function FloorplanEditorPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <BeheerNav />
             {selected && getFloorplanType(selected.type)?.rotatable && (
               <button
                 type="button"
