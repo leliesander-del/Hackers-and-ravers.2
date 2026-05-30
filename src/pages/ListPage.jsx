@@ -4,6 +4,7 @@ import { useStore } from '../context/StoreContext.jsx'
 import { stores, afstandTotGebruiker } from '../data/stores.js'
 import StoreLogo from '../components/StoreLogo.jsx'
 import SearchBar from '../components/SearchBar.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import {
   KOK_BEGROETING,
   KOK_VRAGEN,
@@ -31,11 +32,12 @@ export default function ListPage() {
   const [tab, setTab] = useState('winkels')
 
   return (
-    <div className="px-4 pb-6 pt-7">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight text-slate-900">Home</h1>
+    <div>
+      <PageHeader title="Home" subtitle="Winkels om de hoek & een kok die met je meedenkt" />
 
-      {/* Tab-switcher (pill-stijl) */}
-      <div className="mb-5 flex gap-1 rounded-full bg-slate-100 p-1">
+      <div className="px-4 pb-6 pt-4">
+        {/* Tab-switcher (pill-stijl) */}
+        <div className="mb-5 flex gap-1 rounded-full bg-slate-100 p-1">
         {[
           { id: 'winkels', label: 'Winkels' },
           { id: 'kok', label: '✨ Kok' },
@@ -52,8 +54,9 @@ export default function ListPage() {
         ))}
       </div>
 
-      {tab === 'winkels' && <WinkelsTab />}
-      {tab === 'kok' && <KokTab naarLijst={() => navigate('/mandje')} />}
+        {tab === 'winkels' && <WinkelsTab />}
+        {tab === 'kok' && <KokTab naarLijst={() => navigate('/mandje')} />}
+      </div>
     </div>
   )
 }

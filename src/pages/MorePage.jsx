@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import PageHeader from '../components/PageHeader.jsx'
-import ProfileSwitcher from '../components/ProfileSwitcher.jsx'
 
 const AFDELINGEN = ['boodschappen', 'elektronica', 'sport', 'speelgoed']
 const DIEETEN = ['glutenvrij', 'lactosevrij', 'vegetarisch', 'veganistisch', 'notenvrij']
@@ -28,7 +27,7 @@ function Veld({ label, value, onChange, type = 'text', placeholder }) {
 }
 
 export default function MorePage() {
-  const { activeProfile, updateProfile, isEigenAccount, logout } = useStore()
+  const { activeProfile, updateProfile, logout } = useStore()
   const navigate = useNavigate()
   const [nieuwMerk, setNieuwMerk] = useState('')
 
@@ -176,24 +175,14 @@ export default function MorePage() {
           </>
         )}
 
-        {/* Wissel profiel — alleen beschikbaar voor de demo-profielen, niet voor
-            een echt ingelogd account. Wie met een eigen account is ingelogd,
-            wisselt via uitloggen en opnieuw inloggen. */}
-        {!isEigenAccount && (
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-slate-500">Wissel profiel</h2>
-            <ProfileSwitcher />
-          </section>
-        )}
-
         <button
           onClick={() => {
-            if (isEigenAccount) logout()
+            logout()
             navigate('/login')
           }}
-          className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200 active:scale-[0.98]"
+          className="w-full rounded-full bg-brand-100 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-200 active:scale-[0.98]"
         >
-          {isEigenAccount ? 'Uitloggen' : 'Naar inlogscherm'}
+          Log out
         </button>
       </div>
     </div>
