@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { productsByStore } from '../data/products.js'
 import { rankProducts } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
@@ -23,13 +22,13 @@ const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
 
 export default function StorePage() {
   const { id } = useParams()
-  const { activeProfile, cartCount, cart } = useStore()
+  const { activeProfile, cartCount, cart, productsByStoreLive } = useStore()
   const [zoek, setZoek] = useState('')
   const [categorie, setCategorie] = useState(null)
   const [toonMap, setToonMap] = useState(false)
 
   const store = getStore(id)
-  const winkelProducten = useMemo(() => productsByStore(id), [id])
+  const winkelProducten = useMemo(() => productsByStoreLive(id), [productsByStoreLive, id])
 
   // Producten uit je mandje die in déze winkel liggen -> route op de plattegrond.
   const mijnStops = useMemo(() => cart.filter((p) => p.storeId === id).map((p) => p.id), [cart, id])

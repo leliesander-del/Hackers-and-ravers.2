@@ -2,21 +2,20 @@ import { useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { getProduct, products as alleProducten } from '../data/products.js'
 import { rankAlternatives } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import AlternativeCard from '../components/AlternativeCard.jsx'
 
 export default function ProductPage() {
   const { id, pid } = useParams()
-  const { activeProfile, inCart, addToCart, removeFromCart } = useStore()
+  const { activeProfile, inCart, addToCart, removeFromCart, getProductLive, allProductsLive } = useStore()
 
   const store = getStore(id)
-  const product = getProduct(pid)
+  const product = getProductLive(pid)
 
   const alternatieven = useMemo(
-    () => (product && !product.opVoorraad ? rankAlternatives(product, alleProducten, activeProfile) : []),
-    [product, activeProfile],
+    () => (product && !product.opVoorraad ? rankAlternatives(product, allProductsLive, activeProfile) : []),
+    [product, activeProfile, allProductsLive],
   )
 
   if (!store || !product) return <Navigate to={`/store/${id}`} replace />

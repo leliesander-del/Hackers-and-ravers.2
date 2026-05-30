@@ -8,8 +8,9 @@ import StoreLogo from '../components/StoreLogo.jsx'
 import Floorplan from '../components/Floorplan.jsx'
 
 export default function CartPage() {
-  const { cart, cartTotaal, removeFromCart, clearCart } = useStore()
+  const { cart, cartTotaal, removeFromCart, clearCart, betaalMandje } = useStore()
   const [openMap, setOpenMap] = useState(null) // storeId waarvan de route open staat
+  const [betaalStatus, setBetaalStatus] = useState(null)
 
   // Groepeer het mandje per winkel, zodat we per winkel een route kunnen tonen.
   const perWinkel = useMemo(() => {
@@ -21,11 +22,31 @@ export default function CartPage() {
     return [...m.entries()]
   }, [cart])
 
+  function handleBetaal() {
+    const result = betaalMandje()
+    if (result.ok) {
+      setOpenMap(null)
+      setBetaalStatus({ type: 'ok', tekst: 'Betaling gelukt! Voorraad op schap is bijgewerkt.' })
+    } else {
+      setBetaalStatus({ type: 'fout', tekst: result.fout })
+    }
+  }
+
   return (
     <div>
       <PageHeader title="Boodschappen" subtitle={`${cart.length} ${cart.length === 1 ? 'product' : 'producten'} in je mandje`} />
 
       <div className="space-y-5 px-4 py-4">
+        {betaalStatus && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm ${
+              betaalStatus.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'
+            }`}
+          >
+            {betaalStatus.tekst}
+          </div>
+        )}
+
         {cart.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
             <p className="text-4xl">🛍️</p>
@@ -94,6 +115,13 @@ export default function CartPage() {
               <span className="text-slate-500">Totaal</span>
               <span className="text-2xl font-bold text-violet-700">€ {cartTotaal.toFixed(2)}</span>
             </div>
+
+            <button
+              onClick={handleBetaal}
+              className="w-full rounded-full bg-violet-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 active:scale-[0.98]"
+            >
+              Betaal € {cartTotaal.toFixed(2)}
+            </button>
 
             <button
               onClick={() => {

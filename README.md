@@ -351,8 +351,8 @@ In deze volgorde:
 
 ### Vereisten
 
-* Node.js 20+
-* npm of pnpm
+* **Node.js 20+** met npm ([nodejs.org](https://nodejs.org/) of `winget install OpenJS.NodeJS.LTS`)
+* Na installatie: **nieuwe terminal** openen zodat `node` en `npm` in PATH staan
 
 ### Installatie
 
@@ -362,11 +362,28 @@ cd Hackers-and-ravers.2
 npm install
 ```
 
+**Windows (PowerShell)** — als `npm` niet wordt herkend:
+
+```powershell
+.\scripts\setup.ps1   # eenmalig: dependencies installeren
+.\scripts\dev.ps1     # dev-server starten
+```
+
+**TLS-fout bij `npm install`** (school/uni-netwerk): in de repo staat een `.npmrc` met `strict-ssl=false`. Verwijder die regel zodra je op een netwerk zit waar npm normaal werkt.
+
 ### Draaien
 
 ```bash
 npm run dev
 ```
+
+Open daarna **http://localhost:5173** in je browser.
+
+| Commando | Doel |
+|---|---|
+| `npm run dev` | Ontwikkelserver met hot reload |
+| `npm run build` | Productie-build in `dist/` |
+| `npm run preview` | Lokaal de productie-build bekijken |
 
 Voor het testen op mobiel: deploy naar Vercel/Netlify (gratis) en open de URL op je telefoon. Locatie-API werkt alleen op HTTPS.
 

@@ -62,10 +62,11 @@ export default function MorePage() {
           </div>
         </div>
 
-        {isGast ? (
-          <div className="rounded-2xl bg-white p-4 text-sm text-slate-400 shadow-sm">
-            Als gast bewaren we geen gegevens en personaliseren we niets. Log in met een klantenkaart om je profiel in te
-            stellen.
+        {!v ? (
+          <div className="rounded-2xl bg-white p-4 text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
+            {isGast
+              ? 'Als gast bewaren we geen gegevens en personaliseren we niets. Log in met een klantenkaart om je profiel in te stellen.'
+              : 'Dit profiel heeft geen persoonlijke voorkeuren om in te stellen.'}
           </div>
         ) : (
           <>

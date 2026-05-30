@@ -8,7 +8,7 @@ export default function LoginPage() {
 
   function kies(id) {
     login(id)
-    navigate('/')
+    navigate(id === 'bediende' ? '/personeel' : '/')
   }
 
   return (

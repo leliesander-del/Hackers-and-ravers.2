@@ -9,13 +9,17 @@ const tabs = [
   { to: '/meer', label: 'Profiel', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
 ]
 
+// Extra tab, alleen zichtbaar voor een winkelbediende.
+const personeelTab = { to: '/personeel', label: 'Personeel', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11h-6' }
+
 export default function BottomNav() {
-  const { cartCount } = useStore()
+  const { cartCount, activeProfile } = useStore()
+  const zichtbareTabs = activeProfile?.type === 'bediende' ? [...tabs, personeelTab] : tabs
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200/70 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
       <div className="flex items-stretch justify-around px-2 py-1.5">
-        {tabs.map((t) => (
+        {zichtbareTabs.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}
