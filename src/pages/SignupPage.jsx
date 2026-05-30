@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, ChevronRight, Compass } from '../components/icons.jsx'
 import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
+import { Button, Input } from '../components/ui/index.js'
 import {
   RECEPTEN,
   THEMAS,
@@ -51,12 +52,13 @@ const STAP_TITELS = [
   'Winkels',
 ]
 const AANTAL_STAPPEN = STAP_TITELS.length
-const ACCENT_KLEUREN = ['#7c3aed', '#0ea5e9', '#ec4899', '#f59e0b', '#10b981']
+// Vaste merk-accentkleur (violet) voor nieuwe accounts.
+const ACCENT_KLEUR = '#7c3aed'
 const DEMO_EMAILS = ['sander@neverlost.be', 'marc@neverlost.be', 'gast@neverlost.be']
 
 function CheckBadge() {
   return (
-    <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-fuchsia-500">
+    <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600">
       <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
     </span>
   )
@@ -64,7 +66,7 @@ function CheckBadge() {
 
 // Sectiekop binnen een stap.
 function VeldKop({ titel }) {
-  return <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">{titel}</p>
+  return <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{titel}</p>
 }
 
 // Herbruikbaar raster van keuzekaarten met emoji + label (+ optioneel subtekst).
@@ -80,13 +82,13 @@ function KaartGrid({ opties, geselecteerd, onToggle, kolommen = 2, enkel = false
             key={o.id}
             onClick={() => onToggle(o.id)}
             className={`relative rounded-xl px-3 py-4 text-left transition active:scale-[0.97] ${
-              aan ? 'bg-white/15 ring-2 ring-fuchsia-400/70' : 'bg-white/5 ring-1 ring-white/10 hover:bg-white/10'
+              aan ? 'bg-brand-50 ring-2 ring-brand-400' : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
             }`}
           >
             {aan && <CheckBadge />}
-            <span className="block text-2xl mb-1.5">{o.emoji}</span>
-            <span className="block text-sm text-white/80 font-medium leading-tight">{o.label}</span>
-            {o.sub && <span className="block text-xs text-white/40 mt-0.5">{o.sub}</span>}
+            <span className="mb-1.5 block text-2xl">{o.emoji}</span>
+            <span className="block text-sm font-medium leading-tight text-slate-800">{o.label}</span>
+            {o.sub && <span className="mt-0.5 block text-xs text-slate-400">{o.sub}</span>}
           </button>
         )
       })}
@@ -109,8 +111,8 @@ function PillGroep({ opties, geselecteerd, onToggle }) {
             onClick={() => onToggle(id)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.97] ${
               aan
-                ? 'bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-md shadow-fuchsia-500/20'
-                : 'bg-white/10 text-white/60 ring-1 ring-white/10 hover:bg-white/15 hover:text-white/80'
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200'
             }`}
           >
             {emoji && <span className="mr-1">{emoji}</span>}
@@ -218,7 +220,6 @@ export default function SignupPage() {
       return
     }
 
-    const accent = ACCENT_KLEUREN[emailLower.charCodeAt(0) % ACCENT_KLEUREN.length]
     const omschrijving = [prijsklasse, ...dieet].filter(Boolean).join(' · ') || 'Standaard account'
 
     const profiel = {
@@ -226,8 +227,8 @@ export default function SignupPage() {
       naam: naam.trim(),
       type: 'lid',
       omschrijving,
-      kleur: accent,
-      accent,
+      kleur: ACCENT_KLEUR,
+      accent: ACCENT_KLEUR,
       persoon: { email: emailLower, telefoon: '', adres: '' },
       voorkeuren: {
         dieet,
@@ -264,14 +265,14 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0c24] via-[#1a1240] to-[#2a1463] flex flex-col items-center px-5 py-8">
+    <div className="flex min-h-screen flex-col items-center bg-surface px-5 py-8">
       <div className="w-full max-w-md space-y-5">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-400 to-indigo-500 shadow-md shadow-fuchsia-500/25">
-            <Compass className="h-4.5 w-4.5 text-white" strokeWidth={1.8} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-md shadow-brand-600/25">
+            <Compass className="h-4.5 w-4.5" strokeWidth={1.8} />
           </div>
-          <span className="text-base font-bold text-white">Never Lost</span>
+          <span className="text-base font-bold text-slate-900">Never Lost</span>
         </div>
 
         {/* Voortgangsbalk */}
@@ -281,56 +282,45 @@ export default function SignupPage() {
               <div
                 key={n}
                 className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                  n <= stap ? 'bg-gradient-to-r from-fuchsia-400 to-indigo-500' : 'bg-white/15'
+                  n <= stap ? 'bg-brand-600' : 'bg-slate-200'
                 }`}
               />
             ))}
           </div>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-slate-400">
             Stap {stap} van {AANTAL_STAPPEN} &middot;{' '}
-            <span className="text-white/60">{STAP_TITELS[stap - 1]}</span>
+            <span className="text-slate-600">{STAP_TITELS[stap - 1]}</span>
             {naam && stap > 1 && (
-              <> &middot; <span className="text-white/60">{naam}</span></>
+              <> &middot; <span className="text-slate-600">{naam}</span></>
             )}
           </p>
         </div>
 
         {/* Stap inhoud */}
-        <div className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-6">
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
 
           {/* Stap 1 — Account */}
           {stap === 1 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Maak je account aan</h2>
-                <p className="text-sm text-white/40 mt-0.5">We personaliseren jouw winkelervaring</p>
+                <h2 className="text-lg font-semibold text-slate-900">Maak je account aan</h2>
+                <p className="mt-0.5 text-sm text-slate-500">We personaliseren jouw winkelervaring</p>
               </div>
               <div className="space-y-3">
-                <input
-                  type="text"
-                  value={naam}
-                  onChange={(e) => setNaam(e.target.value)}
-                  placeholder="Naam"
-                  className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-fuchsia-400/50 transition"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="E-mailadres"
-                  className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-fuchsia-400/50 transition"
-                />
-                <input
+                <Input type="text" value={naam} onChange={(e) => setNaam(e.target.value)} placeholder="Naam" aria-label="Naam" autoComplete="name" />
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mailadres" aria-label="E-mailadres" autoComplete="email" />
+                <Input
                   type="password"
                   value={wachtwoord}
                   onChange={(e) => setWachtwoord(e.target.value)}
                   placeholder="Wachtwoord (min. 4 tekens)"
-                  className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-fuchsia-400/50 transition"
+                  aria-label="Wachtwoord"
+                  autoComplete="new-password"
                 />
               </div>
-              <p className="text-sm text-white/30">
+              <p className="text-sm text-slate-500">
                 Al een account?{' '}
-                <Link to="/login" className="text-fuchsia-400 hover:text-fuchsia-300 transition">
+                <Link to="/login" className="font-medium text-brand-600 transition hover:text-brand-700">
                   Inloggen
                 </Link>
               </p>
@@ -341,8 +331,8 @@ export default function SignupPage() {
           {stap === 2 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-semibold text-white">Voor wie kook je?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Zo stemmen we porties en hoeveelheden af</p>
+                <h2 className="text-lg font-semibold text-slate-900">Voor wie kook je?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Zo stemmen we porties en hoeveelheden af</p>
               </div>
               <div>
                 <VeldKop titel="Aantal personen" />
@@ -359,8 +349,8 @@ export default function SignupPage() {
           {stap === 3 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Hoelang wil je koken?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Zo stemmen we de gerechten af op je tijd</p>
+                <h2 className="text-lg font-semibold text-slate-900">Hoelang wil je koken?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Zo stemmen we de gerechten af op je tijd</p>
               </div>
               <KaartGrid opties={KOOKTIJD_OPTIES} geselecteerd={kooktijd} enkel onToggle={(id) => setKooktijd((c) => (c === id ? '' : id))} />
             </div>
@@ -370,8 +360,8 @@ export default function SignupPage() {
           {stap === 4 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Welke keuken spreekt aan?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Kies een of meerdere stijlen</p>
+                <h2 className="text-lg font-semibold text-slate-900">Welke keuken spreekt aan?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Kies een of meerdere stijlen</p>
               </div>
               <KaartGrid opties={THEMAS} geselecteerd={themas} onToggle={toggleThema} />
             </div>
@@ -381,8 +371,8 @@ export default function SignupPage() {
           {stap === 5 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Wat wil je klaarmaken?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Kies een of meerdere momenten</p>
+                <h2 className="text-lg font-semibold text-slate-900">Wat wil je klaarmaken?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Kies een of meerdere momenten</p>
               </div>
               <KaartGrid opties={MAALTIJDEN} geselecteerd={maaltijden} kolommen={3} onToggle={toggleMaaltijd} />
             </div>
@@ -392,8 +382,8 @@ export default function SignupPage() {
           {stap === 6 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Waar kook je graag mee?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Selecteer je favoriete basisingrediënten</p>
+                <h2 className="text-lg font-semibold text-slate-900">Waar kook je graag mee?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Selecteer je favoriete basisingrediënten</p>
               </div>
               <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={ingredienten} onToggle={toggleIngredient} />
             </div>
@@ -403,8 +393,8 @@ export default function SignupPage() {
           {stap === 7 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Iets dat je liever vermijdt?</h2>
-                <p className="text-sm text-white/40 mt-0.5">Deze ingrediënten laten we uit je gerechten — sla over als er niets is</p>
+                <h2 className="text-lg font-semibold text-slate-900">Iets dat je liever vermijdt?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Deze ingrediënten laten we uit je gerechten — sla over als er niets is</p>
               </div>
               <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={vermijden} onToggle={toggleVermijden} />
             </div>
@@ -414,8 +404,8 @@ export default function SignupPage() {
           {stap === 8 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-semibold text-white">Dieet &amp; prijsklasse</h2>
-                <p className="text-sm text-white/40 mt-0.5">Selecteer wat op jou van toepassing is</p>
+                <h2 className="text-lg font-semibold text-slate-900">Dieet &amp; prijsklasse</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Selecteer wat op jou van toepassing is</p>
               </div>
 
               <div>
@@ -432,8 +422,8 @@ export default function SignupPage() {
                       onClick={() => setPrijsklasse((cur) => (cur === item ? '' : item))}
                       className={`flex-1 rounded-full py-2.5 text-sm font-medium transition active:scale-[0.97] ${
                         prijsklasse === item
-                          ? 'bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-md shadow-fuchsia-500/20'
-                          : 'bg-white/10 text-white/60 ring-1 ring-white/10 hover:bg-white/15 hover:text-white/80'
+                          ? 'bg-brand-600 text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200'
                       }`}
                     >
                       {item}
@@ -448,14 +438,14 @@ export default function SignupPage() {
           {stap === 9 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Welke gerechten spreken aan?</h2>
-                <p className="text-sm text-white/40 mt-0.5">
+                <h2 className="text-lg font-semibold text-slate-900">Welke gerechten spreken aan?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">
                   Op maat van je keuzes — de beste matches staan bovenaan
                 </p>
               </div>
 
               {gerechtenGefilterd.length === 0 ? (
-                <p className="text-center text-sm text-white/30 py-6">
+                <p className="py-6 text-center text-sm text-slate-400">
                   Geen gerechten gevonden voor deze combinatie.<br />Ga terug om je dieet, kooktijd of vermeden ingrediënten aan te passen.
                 </p>
               ) : (
@@ -468,14 +458,14 @@ export default function SignupPage() {
                         onClick={() => toggleGerecht(g.naam)}
                         className={`relative rounded-xl px-3 py-3.5 text-left transition active:scale-[0.97] ${
                           geselecteerd
-                            ? 'bg-white/15 ring-2 ring-fuchsia-400/70'
-                            : 'bg-white/5 ring-1 ring-white/10 hover:bg-white/10'
+                            ? 'bg-brand-50 ring-2 ring-brand-400'
+                            : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
                         }`}
                       >
                         {geselecteerd && <CheckBadge />}
-                        <span className="block text-2xl mb-1.5">{g.emoji}</span>
-                        <span className="block text-xs text-white/80 font-medium leading-tight capitalize">{g.naam}</span>
-                        <span className="block text-[10px] text-white/35 mt-1">{g.tijd} min</span>
+                        <span className="mb-1.5 block text-2xl">{g.emoji}</span>
+                        <span className="block text-xs font-medium capitalize leading-tight text-slate-800">{g.naam}</span>
+                        <span className="mt-1 block text-[10px] text-slate-400">{g.tijd} min</span>
                       </button>
                     )
                   })}
@@ -488,8 +478,8 @@ export default function SignupPage() {
           {stap === 10 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Favoriete winkels</h2>
-                <p className="text-sm text-white/40 mt-0.5">Selecteer je vaste supermarkten</p>
+                <h2 className="text-lg font-semibold text-slate-900">Favoriete winkels</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Selecteer je vaste supermarkten</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {WINKELS.map((w) => {
@@ -500,15 +490,15 @@ export default function SignupPage() {
                       onClick={() => toggleWinkel(w.id)}
                       className={`relative rounded-xl px-3 py-4 text-left transition active:scale-[0.97] ${
                         geselecteerd
-                          ? 'bg-white/15 ring-2 ring-fuchsia-400/70'
-                          : 'bg-white/5 ring-1 ring-white/10 hover:bg-white/10'
+                          ? 'bg-brand-50 ring-2 ring-brand-400'
+                          : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       {geselecteerd && <CheckBadge />}
                       <span className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${w.kleur} text-lg shadow-sm`}>
                         {w.emoji}
                       </span>
-                      <span className="block text-sm text-white/80 font-medium">{w.naam}</span>
+                      <span className="block text-sm font-medium text-slate-800">{w.naam}</span>
                     </button>
                   )
                 })}
@@ -519,7 +509,7 @@ export default function SignupPage() {
 
         {/* Foutmelding */}
         {fout && (
-          <div className="rounded-xl bg-red-500/15 ring-1 ring-red-500/30 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 ring-1 ring-rose-200">
             {fout}
           </div>
         )}
@@ -527,21 +517,15 @@ export default function SignupPage() {
         {/* Navigatieknoppen */}
         <div className="flex gap-3">
           {stap > 1 && (
-            <button
-              onClick={vorige}
-              className="flex items-center gap-1.5 rounded-xl bg-white/10 px-5 py-3.5 text-sm font-medium text-white/70 ring-1 ring-white/10 transition hover:bg-white/15 active:scale-[0.98]"
-            >
+            <Button variant="secondary" size="lg" onClick={vorige} className="px-5">
               <ChevronLeft className="h-4 w-4" />
               Vorige
-            </button>
+            </Button>
           )}
-          <button
-            onClick={volgende}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition active:scale-[0.98]"
-          >
+          <Button size="lg" onClick={volgende} className="flex-1">
             {stap === AANTAL_STAPPEN ? 'Account aanmaken' : 'Volgende'}
             {stap < AANTAL_STAPPEN && <ChevronRight className="h-4 w-4" />}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

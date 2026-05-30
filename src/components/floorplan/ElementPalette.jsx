@@ -6,23 +6,23 @@ function PalettePreview({ preview }) {
   }
   if (preview === 'shelf-dark') {
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg bg-gradient-to-b from-violet-500 to-violet-800 px-1 shadow-sm">
-        <div className="h-px w-full bg-violet-300/60" />
-        <div className="h-px w-full bg-violet-300/60" />
+      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg bg-gradient-to-b from-brand-500 to-brand-800 px-1 shadow-sm">
+        <div className="h-px w-full bg-brand-300/60" />
+        <div className="h-px w-full bg-brand-300/60" />
       </div>
     )
   }
   if (preview === 'shelf-light') {
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg border border-dashed border-violet-300 bg-gradient-to-b from-violet-100 to-violet-200 px-1">
-        <div className="h-px w-full bg-violet-400/50" />
-        <div className="h-px w-full bg-violet-400/50" />
+      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg border border-dashed border-brand-300 bg-gradient-to-b from-brand-100 to-brand-200 px-1">
+        <div className="h-px w-full bg-brand-400/50" />
+        <div className="h-px w-full bg-brand-400/50" />
       </div>
     )
   }
   if (preview === 'kassa') {
     return (
-      <div className="flex h-9 w-12 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-violet-400 to-violet-700 shadow-sm">
+      <div className="flex h-9 w-12 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-700 shadow-sm">
         <div className="mb-0.5 h-3 w-8 rounded-sm bg-white" />
         <span className="text-[8px] font-bold text-white">KASSA</span>
       </div>
@@ -56,7 +56,7 @@ export default function ElementPalette({ onDragStart }) {
             <div
               draggable
               onDragStart={(e) => handleDragStart(e, item.type)}
-              className="flex cursor-grab items-center gap-3 rounded-xl border border-slate-100 bg-[#f6f4fc] px-3 py-3 transition hover:border-violet-200 hover:bg-violet-50 active:cursor-grabbing"
+              className="flex cursor-grab items-center gap-3 rounded-xl border border-slate-100 bg-[#f6f4fc] px-3 py-3 transition hover:border-brand-200 hover:bg-brand-50 active:cursor-grabbing"
             >
               <div className="flex h-10 w-16 shrink-0 items-center justify-center">
                 <PalettePreview preview={item.preview} />

@@ -17,7 +17,7 @@ export default function ProfileSwitcher() {
             key={p.id}
             onClick={() => login(p.id)}
             className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition ${
-              actief ? 'border-violet-500 bg-violet-50' : 'border-transparent bg-white'
+              actief ? 'border-brand-500 bg-brand-50' : 'border-transparent bg-white'
             }`}
           >
             <span

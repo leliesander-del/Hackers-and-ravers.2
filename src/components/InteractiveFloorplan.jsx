@@ -306,7 +306,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
         {targets.length > 0 && (
           <button
             onClick={zoomNaarDoel}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-white shadow-md"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-md"
             aria-label="Zoom naar de producten"
             title="Zoom naar de producten"
           >

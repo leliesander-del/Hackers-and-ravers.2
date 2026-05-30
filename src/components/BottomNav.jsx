@@ -27,7 +27,7 @@ export default function BottomNav() {
             end={t.to === '/'}
             className={({ isActive }) =>
               `relative flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium transition ${
-                isActive ? 'text-violet-600' : 'text-slate-400'
+                isActive ? 'text-brand-600' : 'text-slate-400'
               }`
             }
           >
@@ -35,7 +35,7 @@ export default function BottomNav() {
               <>
                 <span
                   className={`flex h-8 w-12 items-center justify-center rounded-full transition ${
-                    isActive ? 'bg-violet-100' : 'bg-transparent'
+                    isActive ? 'bg-brand-100' : 'bg-transparent'
                   }`}
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -43,7 +43,7 @@ export default function BottomNav() {
                   </svg>
                 </span>
                 {t.badge && productCount > 0 && (
-                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
                     {productCount}
                   </span>
                 )}

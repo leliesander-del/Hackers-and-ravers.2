@@ -124,7 +124,7 @@ export default function StaffVerkoopPage() {
                 ? 'bg-emerald-50 text-emerald-800'
                 : melding.type === 'fout'
                   ? 'bg-rose-50 text-rose-700'
-                  : 'bg-violet-50 text-violet-800'
+                  : 'bg-brand-50 text-brand-800'
             }`}
           >
             {melding.tekst}
@@ -150,7 +150,7 @@ export default function StaffVerkoopPage() {
             />
             <button
               onClick={scanQr}
-              className="shrink-0 rounded-xl bg-emerald-100 px-4 py-2.5 text-sm font-semibold text-emerald-800"
+              className="shrink-0 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Scan
             </button>
@@ -174,7 +174,7 @@ export default function StaffVerkoopPage() {
                       type="button"
                       onClick={() => kiesProduct(p.id)}
                       className={`flex w-full items-center gap-3 rounded-xl p-3 text-left shadow-sm ring-1 transition ${
-                        actief ? 'bg-violet-100 ring-violet-400' : 'bg-white ring-slate-100'
+                        actief ? 'bg-brand-100 ring-brand-400' : 'bg-white ring-slate-100'
                       }`}
                     >
                       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-lg">

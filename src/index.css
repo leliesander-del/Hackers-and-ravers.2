@@ -1,11 +1,46 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Designtokens — één bron van waarheid voor de hele app.
+   Het merk-accent is violet; groen/amber/rood blijven enkel status-kleuren.
+   Gebruik in JSX via Tailwind-utilities, bv. bg-brand-600, text-brand-700,
+   ring-brand-300, bg-surface, text-ink.
+--------------------------------------------------------------------------- */
+@theme {
+  /* Merk-accent (violet-schaal) */
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+
+  /* Oppervlakken & tekst */
+  --color-surface: #f7f5fd;
+  --color-surface-card: #ffffff;
+  --color-ink: #1e293b;
+  --color-ink-soft: #64748b;
+
+  /* Status-kleuren (semantisch, niet als merk gebruiken) */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+
+  /* Radius-afspraak: kaarten 2xl, knoppen/inputs xl, pills full */
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+}
+
 :root {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  color: #1e293b;
+  color: var(--color-ink);
 }
 
 html,
@@ -32,7 +67,7 @@ button {
 
 /* Zichtbare maar subtiele focus voor toetsenbordgebruik */
 :focus-visible {
-  outline: 2px solid #7c3aed;
+  outline: 2px solid var(--color-brand-600);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -51,4 +86,24 @@ button {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
+}
+
+/* Toegankelijke tap-target-helper: minimaal 44x44px (Apple HIG / WCAG 2.5.5). */
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Respecteer de motie-voorkeur van de gebruiker (prefers-reduced-motion).
+   Belangrijk voor wie gevoelig is voor beweging — schakelt niet-essentiële
+   animaties en transities uit. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -30,10 +30,10 @@ export default function AlternativeCard({ product, andereWinkel = false }) {
     return (
       <Link
         to={`/store/${product.storeId}/product/${product.id}`}
-        className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-200 active:scale-[0.99]"
+        className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-200 active:scale-[0.99]"
       >
         {inhoud}
-        <span className="shrink-0 text-violet-600">→</span>
+        <span className="shrink-0 text-brand-600">→</span>
       </Link>
     )
   }
@@ -43,8 +43,8 @@ export default function AlternativeCard({ product, andereWinkel = false }) {
       {inhoud}
       <button
         onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
-          zit ? 'bg-violet-600 text-white shadow-sm shadow-violet-300' : 'bg-violet-100 text-violet-600'
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
+          zit ? 'bg-brand-600 text-white shadow-sm shadow-brand-300' : 'bg-brand-100 text-brand-600'
         }`}
         aria-label={zit ? 'Verwijder uit mandje' : 'Voeg toe aan mandje'}
       >

@@ -105,12 +105,12 @@ export default function CatalogPage() {
               value={zoek}
               onChange={(e) => setZoek(e.target.value)}
               placeholder="Zoek op naam, merk, categorie of locatie…"
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
             <select
               value={categorie}
               onChange={(e) => setCategorie(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium capitalize text-slate-700 outline-none focus:border-violet-400"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium capitalize text-slate-700 outline-none focus:border-brand-400"
             >
               {categorieen.map((c) => (
                 <option key={c} value={c} className="capitalize">

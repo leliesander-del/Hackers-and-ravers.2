@@ -275,6 +275,9 @@ export function StoreProvider({ children }) {
     () => ({
       activeProfile,
       isIngelogd: !!activeProfile,
+      // Echte gebruiker met een eigen account (via signup/login), géén demo-profiel.
+      // Zo'n gebruiker mag niet zomaar tussen de demo-profielen wisselen.
+      isEigenAccount: !!dynamischProfiel,
       isGekwalificeerdeBediende: gekwalificeerdPersoneel,
       login: (arg) => {
         if (typeof arg === 'string') {
@@ -371,6 +374,7 @@ export function StoreProvider({ children }) {
     }),
     [
       activeProfile,
+      dynamischProfiel,
       activeManager,
       gekwalificeerdPersoneel,
       cart,

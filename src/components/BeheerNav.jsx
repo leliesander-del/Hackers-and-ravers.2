@@ -15,7 +15,7 @@ export default function BeheerNav() {
           to={l.to}
           className={({ isActive }) =>
             `rounded-md px-3 py-1.5 text-sm font-medium transition ${
-              isActive ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              isActive ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`
           }
         >

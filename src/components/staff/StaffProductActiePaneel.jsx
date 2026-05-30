@@ -1,18 +1,19 @@
 import { useEffect, useRef } from 'react'
 import StockBadge from './StockBadge.jsx'
 
+// Eén violet merk-accent voor beide personeelsflows (bijvullen én verkopen).
 const THEMES = {
   emerald: {
-    border: 'border-emerald-300',
-    bg: 'bg-emerald-50',
-    bijvullen: 'bg-emerald-600 text-white',
-    verwijderen: 'bg-violet-600 text-white',
+    border: 'border-brand-300',
+    bg: 'bg-brand-50',
+    bijvullen: 'bg-brand-600 text-white',
+    verwijderen: 'bg-brand-600 text-white',
   },
   violet: {
-    border: 'border-violet-300',
-    bg: 'bg-violet-50',
-    bijvullen: 'bg-emerald-600 text-white',
-    verwijderen: 'bg-violet-600 text-white',
+    border: 'border-brand-300',
+    bg: 'bg-brand-50',
+    bijvullen: 'bg-brand-600 text-white',
+    verwijderen: 'bg-brand-600 text-white',
   },
 }
 

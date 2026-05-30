@@ -23,7 +23,7 @@ export default function ProductRow({ product }) {
           <span className="flex items-center gap-2">
             <span className="font-medium text-slate-800">{product.naam}</span>
             {product._reden && (
-              <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-600">
+              <span className="rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-medium text-brand-600">
                 {product._reden}
               </span>
             )}
@@ -49,8 +49,8 @@ export default function ProductRow({ product }) {
       {product.opVoorraad ? (
         <button
           onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
-            zit ? 'bg-violet-600 text-white shadow-sm shadow-violet-300' : 'bg-violet-100 text-violet-600'
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
+            zit ? 'bg-brand-600 text-white shadow-sm shadow-brand-300' : 'bg-brand-100 text-brand-600'
           }`}
           aria-label={zit ? 'Verwijder uit mandje' : 'Voeg toe aan mandje'}
         >

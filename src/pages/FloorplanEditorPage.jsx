@@ -121,7 +121,7 @@ export default function FloorplanEditorPage() {
               <button
                 type="button"
                 onClick={() => roteerElement(selected.id)}
-                className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
+                className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100"
               >
                 ↻ Draaien (90°)
               </button>
@@ -188,7 +188,7 @@ export default function FloorplanEditorPage() {
             <button
               type="button"
               onClick={() => setToonVoorbeeld(false)}
-              className="mt-4 w-full rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white"
+              className="mt-4 w-full rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white"
             >
               Sluiten
             </button>
