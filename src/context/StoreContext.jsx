@@ -8,11 +8,25 @@ import { isGekwalificeerdeBediende } from '../lib/staffAccess.js'
 const StoreContext = createContext(null)
 
 const PROFIEL_KEY = 'storenav.profielId'
+const DYNAMISCH_PROFIEL_KEY = 'storenav.profiel'
+export const ACCOUNTS_KEY = 'storenav.accounts'
 const CART_KEY = 'storenav.cart'
+const AFGEVINKT_KEY = 'storenav.afgevinkt'
 const MANAGER_KEY = 'storenav.managerId'
 const EDITS_KEY = 'storenav.profielEdits'
 const INVENTORY_KEY = 'storenav.inventory'
 const STAFF_LOG_KEY = 'storenav.staffLog'
+
+export function getAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || {} }
+  catch { return {} }
+}
+
+export function saveAccount(email, data) {
+  const accounts = getAccounts()
+  accounts[email.toLowerCase()] = data
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
+}
 
 // Voegt de door de gebruiker bewerkte velden samen met het basisprofiel.
 function mergeProfile(base, edit) {
@@ -45,9 +59,20 @@ function loadStaffLog() {
 
 export function StoreProvider({ children }) {
   const [profielId, setProfielId] = useState(() => localStorage.getItem(PROFIEL_KEY) || null)
+  const [dynamischProfiel, setDynamischProfiel] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(DYNAMISCH_PROFIEL_KEY)) || null }
+    catch { return null }
+  })
   const [cartIds, setCartIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(CART_KEY)) || []
+    } catch {
+      return []
+    }
+  })
+  const [afgevinkt, setAfgevinkt] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(AFGEVINKT_KEY)) || []
     } catch {
       return []
     }
@@ -69,8 +94,17 @@ export function StoreProvider({ children }) {
   }, [profielId])
 
   useEffect(() => {
+    if (dynamischProfiel) localStorage.setItem(DYNAMISCH_PROFIEL_KEY, JSON.stringify(dynamischProfiel))
+    else localStorage.removeItem(DYNAMISCH_PROFIEL_KEY)
+  }, [dynamischProfiel])
+
+  useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(cartIds))
   }, [cartIds])
+
+  useEffect(() => {
+    localStorage.setItem(AFGEVINKT_KEY, JSON.stringify(afgevinkt))
+  }, [afgevinkt])
 
   useEffect(() => {
     if (managerId) localStorage.setItem(MANAGER_KEY, managerId)
@@ -89,7 +123,10 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STAFF_LOG_KEY, JSON.stringify(staffLog.slice(0, 50)))
   }, [staffLog])
 
-  const activeProfile = useMemo(() => mergeProfile(getProfile(profielId), edits[profielId]), [profielId, edits])
+  const activeProfile = useMemo(
+    () => dynamischProfiel || mergeProfile(getProfile(profielId), edits[profielId]),
+    [dynamischProfiel, profielId, edits],
+  )
   const activeManager = useMemo(() => getManager(managerId), [managerId])
   const gekwalificeerdPersoneel = useMemo(() => isGekwalificeerdeBediende(activeProfile), [activeProfile])
 
@@ -171,15 +208,41 @@ export function StoreProvider({ children }) {
       activeProfile,
       isIngelogd: !!activeProfile,
       isGekwalificeerdeBediende: gekwalificeerdPersoneel,
-      login: (id) => setProfielId(id),
-      logout: () => setProfielId('gast'),
+      login: (arg) => {
+        if (typeof arg === 'string') {
+          setDynamischProfiel(null)
+          setProfielId(arg)
+        } else if (arg && typeof arg === 'object') {
+          setProfielId(null)
+          setDynamischProfiel(arg)
+        }
+      },
+      logout: () => {
+        setDynamischProfiel(null)
+        setProfielId(null)
+      },
       cart,
       cartCount: cartIds.length,
       cartTotaal: cart.reduce((som, p) => som + p.prijs, 0),
       inCart: (id) => cartIds.includes(id),
       addToCart: (id) => setCartIds((ids) => (ids.includes(id) ? ids : [...ids, id])),
-      removeFromCart: (id) => setCartIds((ids) => ids.filter((x) => x !== id)),
-      clearCart: () => setCartIds([]),
+      addManyToCart: (ids) =>
+        setCartIds((cur) => {
+          const aanwezig = new Set(cur)
+          const nieuw = (ids || []).filter((id) => !aanwezig.has(id) && getProduct(id))
+          return nieuw.length ? [...cur, ...nieuw] : cur
+        }),
+      removeFromCart: (id) => {
+        setCartIds((ids) => ids.filter((x) => x !== id))
+        setAfgevinkt((a) => a.filter((x) => x !== id))
+      },
+      clearCart: () => {
+        setCartIds([])
+        setAfgevinkt([])
+      },
+      isAfgevinkt: (id) => afgevinkt.includes(id),
+      toggleAfgevinkt: (id) =>
+        setAfgevinkt((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id])),
       activeManager,
       isManagerIngelogd: !!activeManager,
       managerLogin: (id) => setManagerId(id),
@@ -214,6 +277,7 @@ export function StoreProvider({ children }) {
       gekwalificeerdPersoneel,
       cart,
       cartIds,
+      afgevinkt,
       profielId,
       inventory,
       getStock,

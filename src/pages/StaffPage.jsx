@@ -114,7 +114,7 @@ export default function StaffPage() {
 
   return (
     <div>
-      <PageHeader title="Personeel" subtitle="Voorraad magazijn ↔ schap" />
+      <PageHeader title="Voorraad" subtitle="Magazijn ↔ schap" />
 
       <div className="space-y-4 px-4 py-4">
         {melding && (
