@@ -7,6 +7,7 @@ import { rankProducts } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import ProductRow from '../components/ProductRow.jsx'
+import Floorplan from '../components/Floorplan.jsx'
 
 // Iconen + nette labels per categorie.
 const CAT_EMOJI = {
@@ -22,12 +23,16 @@ const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
 
 export default function StorePage() {
   const { id } = useParams()
-  const { activeProfile, cartCount } = useStore()
+  const { activeProfile, cartCount, cart } = useStore()
   const [zoek, setZoek] = useState('')
   const [categorie, setCategorie] = useState(null)
+  const [toonMap, setToonMap] = useState(false)
 
   const store = getStore(id)
   const winkelProducten = useMemo(() => productsByStore(id), [id])
+
+  // Producten uit je mandje die in déze winkel liggen -> route op de plattegrond.
+  const mijnStops = useMemo(() => cart.filter((p) => p.storeId === id).map((p) => p.id), [cart, id])
 
   // Categorieën met aantal producten.
   const categorieen = useMemo(() => {
@@ -75,7 +80,29 @@ export default function StorePage() {
       <div className="space-y-4 px-4 py-4">
         <SearchBar value={zoek} onChange={setZoek} placeholder={`Zoek in ${store.naam}`} />
 
-        {!toonProducten ? (
+        {/* Snelkoppeling: rechtstreeks naar de plattegrond */}
+        {store.heeftPlattegrond && (
+          <button
+            onClick={() => setToonMap((v) => !v)}
+            className={`w-full rounded-full py-2.5 text-sm font-semibold ${
+              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-700'
+            }`}
+          >
+            {toonMap ? 'Verberg plattegrond' : '🗺️ Bekijk de plattegrond'}
+          </button>
+        )}
+
+        {toonMap ? (
+          // ---- Plattegrond ----
+          <div>
+            <p className="mb-2 text-xs text-slate-400">
+              {mijnStops.length > 0
+                ? 'De snelste route langs de producten uit je mandje — de cijfers tonen de volgorde.'
+                : 'Voeg producten toe aan je mandje om de route te zien.'}
+            </p>
+            <Floorplan products={winkelProducten} routeIds={mijnStops} />
+          </div>
+        ) : !toonProducten ? (
           // ---- Categorie-overzicht ----
           <div>
             <h2 className="mb-3 text-sm font-semibold text-slate-500">Categorieën</h2>

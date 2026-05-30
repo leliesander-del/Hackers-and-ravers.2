@@ -1,38 +1,30 @@
 import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
-import { getProduct } from '../data/products.js'
 import { getStore } from '../data/stores.js'
 import PageHeader from '../components/PageHeader.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function ListPage() {
-  const { activeProfile, inCart, addToCart } = useStore()
-  const items = activeProfile.boodschappenlijst.map(getProduct).filter(Boolean)
+  const { cart, removeFromCart } = useStore()
 
-  // Groepeer per winkel zodat "toon route" per winkel kan.
+  // Groepeer het mandje per winkel zodat "toon route" per winkel kan.
   const perWinkel = {}
-  for (const p of items) {
+  for (const p of cart) {
     ;(perWinkel[p.storeId] ||= []).push(p)
   }
 
   return (
     <div>
-      <PageHeader title="Boodschappen" subtitle={activeProfile.type === 'gast' ? 'Gast' : activeProfile.naam} />
+      <PageHeader title="Boodschappen" subtitle={`${cart.length} ${cart.length === 1 ? 'product' : 'producten'} in je mandje`} />
 
       <div className="space-y-5 px-4 py-4">
-        {items.length === 0 ? (
+        {cart.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
             <p className="text-4xl">📝</p>
-            <p className="mt-3 text-slate-500">
-              {activeProfile.type === 'gast'
-                ? 'Als gast heb je geen opgeslagen lijst. Log in met een klantenkaart.'
-                : 'Je lijst is leeg.'}
-            </p>
-            {activeProfile.type === 'gast' && (
-              <Link to="/meer" className="mt-4 inline-block rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white">
-                Wissel profiel
-              </Link>
-            )}
+            <p className="mt-3 text-slate-500">Je boodschappenlijst is leeg. Voeg producten toe in een winkel.</p>
+            <Link to="/kaart" className="mt-4 inline-block rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white">
+              Bekijk winkels
+            </Link>
           </div>
         ) : (
           Object.entries(perWinkel).map(([storeId, lijst]) => {
@@ -61,13 +53,11 @@ export default function ListPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => addToCart(p.id)}
-                        disabled={inCart(p.id)}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold ${
-                          inCart(p.id) ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-600'
-                        }`}
+                        onClick={() => removeFromCart(p.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-500"
+                        aria-label="Verwijderen"
                       >
-                        {inCart(p.id) ? '✓' : '+'}
+                        ✕
                       </button>
                     </div>
                   ))}
