@@ -47,7 +47,7 @@ export default function StaffVerkoopPage() {
   function scanQr() {
     const id = parseProductQr(qrInput)
     if (!id) {
-      toonMelding('QR niet herkend. Scan opnieuw of kies een product hieronder.', 'fout')
+      toonMelding('Barcode niet herkend. Scan opnieuw of kies een product hieronder.', 'fout')
       return
     }
     const product = getProductLive(id)
@@ -137,15 +137,15 @@ export default function StaffVerkoopPage() {
         </p>
 
         <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          <p className="mb-1 text-sm font-semibold text-slate-700">QR-code scannen</p>
-          <p className="mb-3 text-xs text-slate-400">Scan de product-QR, of druk op het product hieronder.</p>
+          <p className="mb-1 text-sm font-semibold text-slate-700">Barcode scannen</p>
+          <p className="mb-3 text-xs text-slate-400">Scan de productbarcode, of druk op het product hieronder.</p>
           <div className="flex gap-2">
             <input
               type="text"
               value={qrInput}
               onChange={(e) => setQrInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && scanQr()}
-              placeholder="Scan QR-code…"
+              placeholder="Scan barcode…"
               className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
             />
             <button
