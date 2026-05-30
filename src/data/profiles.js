@@ -1,0 +1,56 @@
+// Mock-profielen. Elk profiel stuurt de personalisatie aan: de voorkeuren bepalen
+// de volgorde van winkels, zoekresultaten, alternatieven en deals.
+// "Gast" heeft geen voorkeuren -> de app valt terug op afstand/alfabetisch.
+
+export const profiles = [
+  {
+    id: 'sander',
+    naam: 'Sander',
+    type: 'lid',
+    omschrijving: 'Premium · glutenvrij',
+    kleur: '#7c3aed',
+    voorkeuren: {
+      afdelingen: ['boodschappen', 'elektronica'],
+      merken: ['Schär', 'Lavazza', 'Apple', 'Alpro'],
+      dieet: ['glutenvrij'],
+      prijsklasse: 'premium',
+    },
+    boodschappenlijst: ['p-glutenvrije-pasta', 'p-sojadrink', 'p-koffiebonen', 'p-glutenvrij-stokbrood'],
+    loyaltyPunten: 1240,
+    cashbackSaldo: 18.5,
+    cashbackTier: 'Premium',
+  },
+  {
+    id: 'marc',
+    naam: 'Marc',
+    type: 'lid',
+    omschrijving: 'Gezin · prijsbewust',
+    kleur: '#0ea5e9',
+    voorkeuren: {
+      afdelingen: ['boodschappen', 'speelgoed'],
+      merken: ['Boni', 'Lego', 'Coca-Cola'],
+      dieet: [],
+      prijsklasse: 'budget',
+    },
+    boodschappenlijst: ['p-spaghetti-boni', 'p-cola-6pack', 'p-witbrood', 'p-lego-classic', 'p-chips'],
+    loyaltyPunten: 540,
+    cashbackSaldo: 7.2,
+    cashbackTier: 'Standaard',
+  },
+  {
+    id: 'gast',
+    naam: 'Gast',
+    type: 'gast',
+    omschrijving: 'Geen personalisatie',
+    kleur: '#64748b',
+    voorkeuren: null,
+    boodschappenlijst: [],
+    loyaltyPunten: 0,
+    cashbackSaldo: 0,
+    cashbackTier: '—',
+  },
+]
+
+export function getProfile(id) {
+  return profiles.find((p) => p.id === id) || null
+}
