@@ -1,7 +1,7 @@
 import { ENTRANCE_CORRIDOR_Y, EXIT, RACK_H } from './floorplanLayout.js'
 import { demoRackFrontApproach } from './shelfFront.js'
 
-const AISLE_BAND = 3.2
+const AISLE_BAND = 4.5
 
 /** Horizontale doorgangen alleen in vrije zones — nooit door rekblokken. */
 function buildCorridorRowYs(racks) {

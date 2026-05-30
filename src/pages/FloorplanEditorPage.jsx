@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
@@ -11,7 +11,7 @@ import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
 import BeheerNav from '../components/BeheerNav.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
-import { productsByStore } from '../data/products.js'
+import { productsByStore, categoriesForStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
   const { activeManager, isManagerIngelogd, managerLogout } = useStore()
@@ -65,6 +65,10 @@ export default function FloorplanEditorPage() {
   if (!store) return <Navigate to="/beheer/login" replace />
 
   const selected = elements.find((el) => el.id === selectedId)
+  const storeCategories = useMemo(
+    () => (store ? categoriesForStore(store.id) : []),
+    [store],
+  )
 
   function roteerElement(elId) {
     setElements((els) =>
@@ -171,6 +175,7 @@ export default function FloorplanEditorPage() {
         />
         <EditorPropertiesPanel
           selected={selected}
+          categories={storeCategories}
           snapEnabled={snapEnabled}
           onSnapToggle={setSnapEnabled}
           onLabelChange={handleLabelChange}
@@ -192,7 +197,7 @@ export default function FloorplanEditorPage() {
               Zo zien klanten je plattegrond (mobiel)
             </p>
             <p className="mb-3 text-center text-[11px] text-slate-400">
-              Geef rekken hetzelfde label als in je productdata (bv. Gang A1) zodat routes kloppen.
+              Geef elk rek een categorie uit je assortiment (bv. pasta, brood) zodat routes kloppen.
             </p>
             <FloorplanRenderer
               elements={elements}

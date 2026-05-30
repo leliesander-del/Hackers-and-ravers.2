@@ -43,19 +43,18 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
     const states = new Map()
     for (const el of elements) {
       if (!isShelf(el.type)) continue
-      const label = rackLabel(el)
-      const norm = normLabel(label)
-      const visited = visitedIds.has(label)
+      const slug = normLabel(rackLabel(el))
+      const visited = visitedIds.has(slug)
       const currentStop = orderedStops[currentIndex]
-      const current = currentStop?.rackId === label && !visited
-      const inRoute = routeActive && orderedStops.some((s) => s.rackId === label)
+      const current = currentStop?.rackId === slug && !visited
+      const inRoute = routeActive && orderedStops.some((s) => s.rackId === slug)
 
       if (visited) states.set(el.id, 'visited')
       else if (current) states.set(el.id, 'current')
       else if (inRoute) states.set(el.id, 'route')
       else if (highlightId) {
         const prod = products.find((p) => p.id === highlightId)
-        if (prod?.rekkenlocatie && normLabel(prod.rekkenlocatie.label) === norm) {
+        if (prod && normLabel(prod.categorie) === slug) {
           states.set(el.id, 'current')
         }
       }

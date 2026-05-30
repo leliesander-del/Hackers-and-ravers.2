@@ -2,8 +2,8 @@ import { elementSize, localToWorld } from './floorplanGeometry.js'
 import { getDefaultStyleForType } from './floorplanElementStyle.js'
 import { RACK_H, RACK_W } from './floorplanLayout.js'
 
-export const SHELF_APPROACH_MARGIN = 0.8
-export const SHELF_PRE_APPROACH_STANDOFF = 3.5
+export const SHELF_APPROACH_MARGIN = 1.2
+export const SHELF_PRE_APPROACH_STANDOFF = 5
 
 /**
  * In rek-lokale coördinaten: labelbalk bovenaan (y = -h/2).

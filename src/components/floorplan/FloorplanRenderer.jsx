@@ -51,11 +51,7 @@ function truncateLabel(label, max = 18) {
 function KassaVisual({ el, w, h, selected }) {
   const style = getElementStyle(el)
   const label = resolveElementLabel(el)
-  const screenH = h * 0.42
-  const baseH = h * 0.18
-  const labelBandH = Math.max(1.2, h - screenH - baseH - 1.6)
-  const labelY = -h / 2 + screenH + 0.8 + labelBandH / 2
-  const fontSize = Math.min(style.textSize, w / 5, labelBandH * 0.85)
+  const fontSize = Math.min(style.textSize ?? 2.4, w / 4.5, h / 3.5)
 
   return (
     <>
@@ -66,33 +62,14 @@ function KassaVisual({ el, w, h, selected }) {
         height={h}
         fill={style.fillColor}
         stroke={selected ? '#f8fafc' : style.strokeColor}
-        strokeWidth={selected ? 0.75 : 0.55}
+        strokeWidth={selected ? 0.7 : 0.5}
       />
-      <rect
-        x={-w / 2 + 0.8}
-        y={-h / 2 + 0.8}
-        width={w - 1.6}
-        height={screenH}
-        fill={style.screenColor}
-        stroke={style.strokeColor}
-        strokeWidth="0.3"
-      />
-      <rect
-        x={-w / 2 + 0.8}
-        y={h / 2 - baseH - 0.8}
-        width={w - 1.6}
-        height={baseH}
-        fill={style.accentColor}
-        stroke="none"
-      />
-      <rect x={w / 2 - 2.4} y={-h / 2 + 0.8} width="1.2" height="1.2" fill="#22c55e" />
       <text
-        y={labelY}
+        y={0}
         textAnchor="middle"
         dominantBaseline="middle"
         fontSize={fontSize}
-        fontWeight="800"
-        letterSpacing="0.08"
+        fontWeight="700"
         fill={style.textColor}
         pointerEvents="none"
       >

@@ -1,21 +1,4 @@
-const CAT_LABEL = {
-  pasta: 'Pasta',
-  brood: 'Brood',
-  zuivel: 'Zuivel',
-  koffie: 'Koffie',
-  frisdrank: 'Frisdrank',
-  snacks: 'Snacks',
-  fruit: 'Fruit',
-  groenten: 'Groenten',
-  vlees: 'Vlees',
-  vis: 'Vis',
-  ontbijt: 'Ontbijt',
-  tv: 'TV & Beeld',
-}
-
-function catLabel(c) {
-  return CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
-}
+import { formatCategoryLabel } from '../lib/productCategories.js'
 
 export default function RouteOverviewPanel({
   orderedStops,
@@ -84,7 +67,7 @@ export default function RouteOverviewPanel({
                     {stop.label}
                   </span>
                   {!compact && (
-                    <span className="block text-[11px] text-slate-400">{stop.categorieën.map(catLabel).join(' · ')}</span>
+                    <span className="block text-[11px] text-slate-400">{stop.categorieën.map(formatCategoryLabel).join(' · ')}</span>
                   )}
                   <ul className="mt-0.5 space-y-0">
                     {stop.products.map((p) => (
