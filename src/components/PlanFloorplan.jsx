@@ -4,6 +4,7 @@ import {
   collectCustomStops,
   computeCustomShoppingRoute,
   getExitFromElements,
+  getKassaFromElements,
   rackLabel,
 } from '../lib/floorplanCustomRoute.js'
 import { isShelf } from '../lib/floorplanGeometry.js'
@@ -19,6 +20,7 @@ function normLabel(s) {
 export default function PlanFloorplan({ elements, products, highlightId, routeIds }) {
   const hasRouteList = routeIds?.length > 0
   const end = useMemo(() => getExitFromElements(elements), [elements])
+  const kassa = useMemo(() => getKassaFromElements(elements), [elements])
 
   const [startPos, setStartPos] = useState(null)
   const [routeActive, setRouteActive] = useState(false)
@@ -33,6 +35,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
   const orderedStops = route?.ordered ?? []
   const routeD = route?.pathD ?? null
   const endLabel = route?.end?.label ?? end.label
+  const kassaLabel = route?.kassa?.label ?? kassa?.label ?? null
 
   const previewStops = useMemo(
     () => (hasRouteList ? collectCustomStops(products, routeIds, elements) : []),
@@ -109,7 +112,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
 
   function zoomNaarRoute() {
     const points = startPos
-      ? [startPos, ...orderedStops.map((s) => ({ x: s.element.x, y: s.element.y })), end]
+      ? [startPos, ...orderedStops.map((s) => ({ x: s.element.x, y: s.element.y })), ...(kassa ? [kassa] : []), end]
       : []
     if (!points.length) return
     const xs = points.map((p) => p.x)
@@ -165,7 +168,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
     <div className="flex flex-col gap-3">
       {wachtOpKlik && (
         <p className="rounded-xl bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-700">
-          Tik op de kaart (niet op een rek) om je startpunt te kiezen. De route volgt de plattegrond van de winkel.
+          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna langs je producten, kassa en uitgang.
         </p>
       )}
 
@@ -215,6 +218,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
           orderedStops={routeActive ? orderedStops : previewStops}
           currentIndex={currentIndex}
           visitedIds={visitedIds}
+          kassaLabel={kassaLabel}
           endLabel={endLabel}
           onSelectStop={setCurrentIndex}
           onMarkVisited={markVisited}

@@ -2,6 +2,8 @@ import { getBounds, isShelf } from './floorplanGeometry.js'
 import { resolveElementLabel } from './floorplanElementStyle.js'
 import { formatCategoryLabel } from './productCategories.js'
 import {
+  approachTowardStoreCenter,
+  doorInwardApproachWorld,
   SHELF_PRE_APPROACH_STANDOFF,
   shelfFrontApproachWorld,
   shelfFrontNormalWorld,
@@ -14,12 +16,14 @@ const H = 104
 /** Minimale afstand van de route tot muren, rekken en rand. */
 const FLOOR_MARGIN = 2.5
 const OBSTACLE_PAD = {
-  muur: 2,
-  kassa: 1.8,
-  'vast-rek': 1.8,
-  'tijdelijk-rek': 1.8,
+  muur: 2.2,
+  kassa: 2,
+  'vast-rek': 2,
+  'tijdelijk-rek': 2,
+  ingang: 1.2,
+  uitgang: 1.2,
 }
-const WALK_CLEARANCE = 1.4
+const WALK_CLEARANCE = 1.5
 
 function normLabel(s) {
   return (s || '').trim().toLowerCase()
@@ -48,7 +52,7 @@ function buildWalkGrid(elements) {
   }
 
   for (const el of elements) {
-    if (!['muur', 'kassa', 'vast-rek', 'tijdelijk-rek'].includes(el.type)) continue
+    if (!['muur', 'kassa', 'vast-rek', 'tijdelijk-rek', 'ingang', 'uitgang'].includes(el.type)) continue
     const b = getBounds(el)
     const pad = OBSTACLE_PAD[el.type] ?? 1.8
     const x0 = Math.max(0, Math.floor(b.left - pad))
@@ -60,31 +64,7 @@ function buildWalkGrid(elements) {
     }
   }
 
-  // Vrijmaken rond ingang/uitgang (vóór clearance)
-  for (const el of elements) {
-    if (el.type !== 'ingang' && el.type !== 'uitgang') continue
-    const b = getBounds(el)
-    for (let x = Math.floor(b.left - 2); x <= Math.ceil(b.right + 2); x++) {
-      for (let y = Math.floor(b.top - 2); y <= Math.ceil(b.bottom + 2); y++) {
-        if (x >= 0 && x < W && y >= 0 && y < H) raw[idx(x, y)] = 1
-      }
-    }
-  }
-
-  const grid = applyWalkClearance(raw, WALK_CLEARANCE)
-
-  // Ingang/uitgang opnieuw openen na clearance-buffer
-  for (const el of elements) {
-    if (el.type !== 'ingang' && el.type !== 'uitgang') continue
-    const b = getBounds(el)
-    for (let x = Math.floor(b.left - 1.5); x <= Math.ceil(b.right + 1.5); x++) {
-      for (let y = Math.floor(b.top - 1.5); y <= Math.ceil(b.bottom + 1.5); y++) {
-        if (x >= 0 && x < W && y >= 0 && y < H) grid[idx(x, y)] = 1
-      }
-    }
-  }
-
-  return grid
+  return applyWalkClearance(raw, WALK_CLEARANCE)
 }
 
 /** Houd loopgebied weg van obstakels — route loopt midden in gangen. */
@@ -192,7 +172,7 @@ function astar(grid, start, end) {
     }
   }
 
-  return [[s.x, s.y], [e.x, e.y]]
+  return [[s.x, s.y]]
 }
 
 function simplifyPath(path) {
@@ -229,7 +209,7 @@ function markDiskWalkable(grid, cx, cy, r) {
 }
 
 function segmentBlocked(grid, x0, y0, x1, y1) {
-  const steps = Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2))
+  const steps = Math.max(4, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 4))
   for (let i = 0; i <= steps; i++) {
     const t = i / steps
     const x = x0 + (x1 - x0) * t
@@ -237,6 +217,24 @@ function segmentBlocked(grid, x0, y0, x1, y1) {
     if (!grid[idx(Math.round(x), Math.round(y))]) return true
   }
   return false
+}
+
+function lastPt(pts) {
+  const p = pts[pts.length - 1]
+  return { x: p[0], y: p[1] }
+}
+
+/** Alleen via A* — nooit rechte diagonalen tekenen. */
+function routeSegment(pts, grid, from, to) {
+  const landing = gridWithApproachLanding(grid, to.x, to.y)
+  const dest = nearestWalkable(landing, to.x, to.y)
+  appendPath(pts, astar(landing, from, dest))
+  const pos = lastPt(pts)
+  const manhattan = Math.abs(pos.x - to.x) + Math.abs(pos.y - to.y)
+  if (manhattan === 1 && !segmentBlocked(grid, pos.x, pos.y, to.x, to.y)) {
+    pushPt(pts, to.x, to.y)
+  }
+  return { x: to.x, y: to.y }
 }
 
 function gridWithApproachLanding(baseGrid, x, y) {
@@ -270,39 +268,66 @@ function resolvePreApproach(grid, el) {
 }
 
 /**
- * Naar rek: A* rond obstakels → langs voorkant (raaklijn) → korte stap loodrecht naar voorkant.
- * Het rek zelf blijft altijd onbegaanbaar (geen shortcut door zijkant/achterkant).
+ * Naar rek/kassa/uitgang: uitsluitend A*-segmenten (horizontaal/verticaal), geen diagonalen.
  */
-function appendShelfVisit(pts, grid, cur, el) {
+function appendShelfVisit(pts, grid, _cur, el) {
   const approach = shelfFrontApproachWorld(el)
   const { nx, ny } = shelfFrontNormalWorld(el)
   const tangX = -ny
   const tangY = nx
 
   const { point: pre, grid: visitGrid } = resolvePreApproach(grid, el)
-  appendPath(pts, astar(visitGrid, cur, pre))
+  let pos = lastPt(pts)
+  routeSegment(pts, visitGrid, pos, pre)
 
   const tangentDelta = (approach.x - pre.x) * tangX + (approach.y - pre.y) * tangY
   const aligned = { x: pre.x + tangX * tangentDelta, y: pre.y + tangY * tangentDelta }
 
-  if (Math.hypot(aligned.x - pre.x, aligned.y - pre.y) > 0.08) {
-    if (!segmentBlocked(grid, pre.x, pre.y, aligned.x, aligned.y)) {
-      pushPt(pts, aligned.x, aligned.y)
-    } else {
-      const slideGrid = gridWithApproachLanding(grid, aligned.x, aligned.y)
-      appendPath(pts, astar(slideGrid, pre, aligned))
+  pos = lastPt(pts)
+  if (Math.hypot(aligned.x - pos.x, aligned.y - pos.y) > 0.08) {
+    routeSegment(pts, grid, pos, aligned)
+  }
+
+  pos = lastPt(pts)
+  routeSegment(pts, gridWithApproachLanding(grid, approach.x, approach.y), pos, approach)
+
+  return approach
+}
+
+/** Grid voor laatste stuk naar uitgang: deurgebied tijdelijk begaanbaar. */
+function gridForExitLeg(baseGrid, el, approach) {
+  const g = cloneGrid(baseGrid)
+  markDiskWalkable(g, approach.x, approach.y, 2.5)
+  markDiskWalkable(g, el.x, el.y, 2)
+  const b = getBounds(el)
+  for (let x = Math.floor(b.left - 1.5); x <= Math.ceil(b.right + 1.5); x++) {
+    for (let y = Math.floor(b.top - 2); y <= Math.ceil(b.bottom + 1.5); y++) {
+      if (x >= 0 && x < W && y >= 0 && y < H) g[idx(x, y)] = 1
+    }
+  }
+  return g
+}
+
+/** Uitgang: vanuit winkel naar binnenkant van de deur, daarna naar de uitgang. */
+function appendExitVisit(pts, grid, el) {
+  const center = { x: el.x, y: el.y }
+  const candidates = [doorInwardApproachWorld(el, 1.2), approachTowardStoreCenter(el, 1.2)]
+  let pos = lastPt(pts)
+  const startLen = pts.length
+
+  for (const approach of candidates) {
+    const exitGrid = gridForExitLeg(grid, el, approach)
+    routeSegment(pts, exitGrid, pos, approach)
+    if (pts.length > startLen) {
+      pos = lastPt(pts)
+      break
     }
   }
 
-  const from = pts.length ? { x: pts[pts.length - 1][0], y: pts[pts.length - 1][1] } : pre
-  if (!segmentBlocked(grid, from.x, from.y, approach.x, approach.y)) {
-    pushPt(pts, approach.x, approach.y)
-  } else {
-    const finalGrid = gridWithApproachLanding(grid, approach.x, approach.y)
-    appendPath(pts, astar(finalGrid, from, approach))
-  }
+  const exitGrid = gridForExitLeg(grid, el, pos)
+  routeSegment(pts, exitGrid, pos, center)
 
-  return approach
+  return center
 }
 
 function approachPoint(el) {
@@ -417,21 +442,43 @@ function optimizeStopOrder(start, stops, grid) {
   return ordered
 }
 
-function buildCustomPolyline(start, orderedStops, elements, end) {
+function buildCustomPolyline(start, orderedStops, elements, checkout, exit) {
   const pts = []
   const grid = buildWalkGrid(elements)
-  let cur = nearestWalkable(grid, start.x, start.y)
+  const startWalk = nearestWalkable(grid, start.x, start.y)
   pushPt(pts, start.x, start.y)
-  if (Math.hypot(cur.x - start.x, cur.y - start.y) > 0.1) pushPt(pts, cur.x, cur.y)
+  if (Math.hypot(startWalk.x - start.x, startWalk.y - start.y) > 0.1) {
+    routeSegment(pts, grid, { x: start.x, y: start.y }, startWalk)
+  }
+  let cur = startWalk
 
   for (const stop of orderedStops) {
     cur = appendShelfVisit(pts, grid, cur, stop.element)
   }
 
-  appendPath(pts, astar(grid, cur, { x: end.x, y: end.y }))
-  pushPt(pts, end.x, end.y)
+  if (checkout?.element) {
+    appendShelfVisit(pts, grid, cur, checkout.element)
+  }
+
+  const uitgangEl = elements.find((el) => el.type === 'uitgang')
+  if (uitgangEl) {
+    appendExitVisit(pts, grid, uitgangEl)
+  } else {
+    routeSegment(pts, grid, lastPt(pts), { x: exit.x, y: exit.y })
+  }
 
   return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
+}
+
+export function getKassaFromElements(elements) {
+  const kassa = elements.find((el) => el.type === 'kassa')
+  if (!kassa) return null
+  return {
+    element: kassa,
+    x: kassa.x,
+    y: kassa.y,
+    label: resolveElementLabel(kassa),
+  }
 }
 
 export function getExitFromElements(elements) {
@@ -442,11 +489,12 @@ export function getExitFromElements(elements) {
 
 export function computeCustomShoppingRoute(elements, products, routeProductIds, startPos) {
   const stops = collectCustomStops(products, routeProductIds, elements)
+  const kassa = getKassaFromElements(elements)
   const end = getExitFromElements(elements)
   const grid = buildWalkGrid(elements)
 
   const ordered = stops.length ? optimizeStopOrder(startPos, stops, grid) : []
-  const pathD = buildCustomPolyline(startPos, ordered, elements, end)
+  const pathD = buildCustomPolyline(startPos, ordered, elements, kassa, end)
 
-  return { stops, ordered, pathD, end }
+  return { stops, ordered, pathD, kassa, end }
 }

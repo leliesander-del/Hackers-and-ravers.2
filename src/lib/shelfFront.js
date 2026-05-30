@@ -38,6 +38,22 @@ export function shelfPreApproachWorld(el, standoff = SHELF_PRE_APPROACH_STANDOFF
   }
 }
 
+/** Aanloop aan de binnenkant van een deur (uitgang/ingang) — vanuit de winkel. */
+export function doorInwardApproachWorld(el, margin = 1) {
+  const { h } = elementSize(el)
+  return localToWorld(0, -h / 2 - margin, el)
+}
+
+/** Fallback: aanloopkant richting winkelcentrum. */
+export function approachTowardStoreCenter(el, margin = 1, storeCenter = { x: 50, y: 52 }) {
+  const { w, h } = elementSize(el)
+  const dx = storeCenter.x - el.x
+  const dy = storeCenter.y - el.y
+  const len = Math.hypot(dx, dy) || 1
+  const off = Math.max(w, h) / 2 + margin
+  return { x: el.x + (dx / len) * off, y: el.y + (dy / len) * off }
+}
+
 /** Demo-rek: roteer zodat voorkant naar het gangpad wijst (side -1 = links van gang). */
 export function demoRackAsElement(rack) {
   const def = getDefaultStyleForType('vast-rek')
