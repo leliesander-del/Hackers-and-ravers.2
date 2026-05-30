@@ -1,3 +1,5 @@
+import { normalizeElement } from './floorplanGeometry.js'
+
 const PREFIX = 'storenav.floorplan.'
 export const FLOORPLAN_CHANGE_EVENT = 'storenav-floorplan-change'
 
@@ -8,7 +10,10 @@ export function loadFloorplan(storeId) {
     if (!raw) return null
     const data = JSON.parse(raw)
     if (!data?.elements || !Array.isArray(data.elements)) return null
-    return data
+    return {
+      ...data,
+      elements: data.elements.map(normalizeElement),
+    }
   } catch {
     return null
   }

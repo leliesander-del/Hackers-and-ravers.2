@@ -4,8 +4,10 @@ import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { getFloorplanType } from '../data/floorplanTypes.js'
 import { loadFloorplan, saveFloorplan } from '../lib/floorplanStorage.js'
+import { normalizeElement } from '../lib/floorplanGeometry.js'
 import ElementPalette from '../components/floorplan/ElementPalette.jsx'
 import EditorCanvas from '../components/floorplan/EditorCanvas.jsx'
+import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel.jsx'
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
 import { productsByStore } from '../data/products.js'
 
@@ -18,12 +20,13 @@ export default function FloorplanEditorPage() {
   const [selectedId, setSelectedId] = useState(null)
   const [opgeslagen, setOpgeslagen] = useState(false)
   const [toonVoorbeeld, setToonVoorbeeld] = useState(false)
+  const [snapEnabled, setSnapEnabled] = useState(true)
   const geladenRef = useRef(false)
 
   useEffect(() => {
     if (!store || geladenRef.current) return
     const saved = loadFloorplan(store.id)
-    setElements(saved?.elements || [])
+    setElements((saved?.elements || []).map(normalizeElement))
     geladenRef.current = true
   }, [store])
 
@@ -47,7 +50,7 @@ export default function FloorplanEditorPage() {
             const def = getFloorplanType(el.type)
             if (!def?.rotatable) return el
             const huidig = Number(el.rotation) || 0
-            return { ...el, rotation: (huidig + 90) % 360 }
+            return normalizeElement({ ...el, rotation: (huidig + 90) % 360 })
           }),
         )
       }
@@ -60,7 +63,6 @@ export default function FloorplanEditorPage() {
   if (!store) return <Navigate to="/beheer/login" replace />
 
   const selected = elements.find((el) => el.id === selectedId)
-  const selectedType = selected ? getFloorplanType(selected.type) : null
 
   function roteerElement(elId) {
     setElements((els) =>
@@ -69,14 +71,9 @@ export default function FloorplanEditorPage() {
         const def = getFloorplanType(el.type)
         if (!def?.rotatable) return el
         const huidig = Number(el.rotation) || 0
-        return { ...el, rotation: (huidig + 90) % 360 }
+        return normalizeElement({ ...el, rotation: (huidig + 90) % 360 })
       }),
     )
-  }
-
-  function roteer() {
-    if (!selectedId) return
-    roteerElement(selectedId)
   }
 
   function verwijder() {
@@ -85,8 +82,14 @@ export default function FloorplanEditorPage() {
     setSelectedId(null)
   }
 
-  function handleElementsUpdate(updater) {
-    setElements((prev) => (typeof updater === 'function' ? updater(prev) : updater))
+  function handleLabelChange(elId, label) {
+    setElements((els) => els.map((el) => (el.id === elId ? { ...el, label } : el)))
+  }
+
+  function handleSizeChange(elId, { w, h }) {
+    setElements((els) =>
+      els.map((el) => (el.id === elId ? normalizeElement({ ...el, w, h }) : el)),
+    )
   }
 
   function uitloggen() {
@@ -111,10 +114,10 @@ export default function FloorplanEditorPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {selected && selectedType?.rotatable && (
+            {selected && getFloorplanType(selected.type)?.rotatable && (
               <button
                 type="button"
-                onClick={roteer}
+                onClick={() => roteerElement(selected.id)}
                 className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
               >
                 ↻ Draaien (90°)
@@ -151,10 +154,18 @@ export default function FloorplanEditorPage() {
         <ElementPalette />
         <EditorCanvas
           elements={elements}
-          onChange={handleElementsUpdate}
+          onChange={setElements}
           selectedId={selectedId}
           onSelect={setSelectedId}
           onRotate={roteerElement}
+          snapEnabled={snapEnabled}
+        />
+        <EditorPropertiesPanel
+          selected={selected}
+          snapEnabled={snapEnabled}
+          onSnapToggle={setSnapEnabled}
+          onLabelChange={handleLabelChange}
+          onSizeChange={handleSizeChange}
         />
       </div>
 
@@ -170,11 +181,7 @@ export default function FloorplanEditorPage() {
             <p className="mb-3 text-center text-sm font-semibold text-slate-600">
               Zo zien klanten je plattegrond (mobiel)
             </p>
-            <FloorplanRenderer
-              elements={elements}
-              products={productsByStore(store.id)}
-              showShelves
-            />
+            <FloorplanRenderer elements={elements} products={productsByStore(store.id)} showShelves />
             <button
               type="button"
               onClick={() => setToonVoorbeeld(false)}
