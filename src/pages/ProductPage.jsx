@@ -1,11 +1,10 @@
 import { useMemo } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { getProduct, products as alleProducten, productsByStore } from '../data/products.js'
+import { getProduct, products as alleProducten } from '../data/products.js'
 import { rankAlternatives } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
-import Floorplan from '../components/Floorplan.jsx'
 import AlternativeCard from '../components/AlternativeCard.jsx'
 
 export default function ProductPage() {
@@ -67,12 +66,11 @@ export default function ProductPage() {
           )}
         </div>
 
-        {/* Op voorraad -> route op plattegrond */}
+        {/* Op voorraad -> tip dat de route in het mandje zit */}
         {product.opVoorraad && store.heeftPlattegrond && (
-          <div>
-            <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
-            <Floorplan products={productsByStore(id)} highlightId={product.id} />
-          </div>
+          <Link to="/mandje" className="block rounded-xl bg-violet-50 px-4 py-3 text-sm text-violet-700">
+            🗺️ Voeg toe aan je mandje en bekijk daar de route langs al je producten →
+          </Link>
         )}
 
         {/* Niet op voorraad -> gepersonaliseerde alternatieven */}

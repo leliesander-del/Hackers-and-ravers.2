@@ -6,29 +6,53 @@ import { productsByStore } from '../data/products.js'
 import { rankProducts } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
-import Floorplan from '../components/Floorplan.jsx'
 import ProductRow from '../components/ProductRow.jsx'
+
+// Iconen + nette labels per categorie.
+const CAT_EMOJI = {
+  pasta: '🍝', brood: '🍞', zuivel: '🥛', koffie: '☕', frisdrank: '🥤', snacks: '🍿',
+  fruit: '🍎', groenten: '🥦', vlees: '🥩', vis: '🐟', ontbijt: '🥣',
+  audio: '🎧', accessoires: '🔌', smartphones: '📱', computers: '💻', tv: '📺', gaming: '🎮',
+  balsport: '⚽', sportvoeding: '🥨', schoenen: '👟', kleding: '👕', fitness: '🏋️', fietsen: '🚲',
+  bouwspeelgoed: '🧱', knuffels: '🧸', spellen: '🎲', hobby: '🎨',
+}
+const CAT_LABEL = { tv: 'TV & Beeld' }
+const catEmoji = (c) => CAT_EMOJI[c] || '🛒'
+const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
 
 export default function StorePage() {
   const { id } = useParams()
   const { activeProfile, cartCount } = useStore()
   const [zoek, setZoek] = useState('')
+  const [categorie, setCategorie] = useState(null)
 
   const store = getStore(id)
   const winkelProducten = useMemo(() => productsByStore(id), [id])
 
+  // Categorieën met aantal producten.
+  const categorieen = useMemo(() => {
+    const m = new Map()
+    for (const p of winkelProducten) m.set(p.categorie, (m.get(p.categorie) || 0) + 1)
+    return [...m.entries()].map(([cat, aantal]) => ({ cat, aantal })).sort((a, b) => a.cat.localeCompare(b.cat))
+  }, [winkelProducten])
+
+  const zoekActief = zoek.trim().length > 0
+
   const resultaten = useMemo(() => {
-    const gefilterd = zoek
-      ? winkelProducten.filter(
-          (p) =>
-            p.naam.toLowerCase().includes(zoek.toLowerCase()) ||
-            p.merk.toLowerCase().includes(zoek.toLowerCase()),
-        )
-      : winkelProducten
-    return rankProducts(gefilterd, activeProfile)
-  }, [winkelProducten, zoek, activeProfile])
+    let lijst = winkelProducten
+    if (zoekActief) {
+      const q = zoek.toLowerCase()
+      lijst = lijst.filter((p) => p.naam.toLowerCase().includes(q) || p.merk.toLowerCase().includes(q))
+    } else if (categorie) {
+      lijst = lijst.filter((p) => p.categorie === categorie)
+    }
+    return rankProducts(lijst, activeProfile)
+  }, [winkelProducten, zoek, zoekActief, categorie, activeProfile])
 
   if (!store) return <Navigate to="/" replace />
+
+  // Toon producten zodra er gezocht wordt of een categorie gekozen is.
+  const toonProducten = zoekActief || categorie
 
   return (
     <div>
@@ -51,27 +75,53 @@ export default function StorePage() {
       <div className="space-y-4 px-4 py-4">
         <SearchBar value={zoek} onChange={setZoek} placeholder={`Zoek in ${store.naam}`} />
 
-        {store.heeftPlattegrond ? (
-          <Floorplan products={winkelProducten} />
+        {!toonProducten ? (
+          // ---- Categorie-overzicht ----
+          <div>
+            <h2 className="mb-3 text-sm font-semibold text-slate-500">Categorieën</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {categorieen.map(({ cat, aantal }) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategorie(cat)}
+                  className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xl">
+                    {catEmoji(cat)}
+                  </span>
+                  <span>
+                    <span className="block font-semibold text-slate-800">{catLabel(cat)}</span>
+                    <span className="block text-xs text-slate-400">{aantal} producten</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         ) : (
-          <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-400 shadow-sm">
-            🗺️ Plattegrond komt eraan voor deze winkel
+          // ---- Producten (na zoeken of categoriekeuze) ----
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-500">
+                {zoekActief ? `Resultaten voor "${zoek}"` : `${catEmoji(categorie)} ${catLabel(categorie)}`}
+                {!zoekActief && activeProfile.type !== 'gast' && (
+                  <span className="font-normal"> · op jouw voorkeur</span>
+                )}
+              </h2>
+              {!zoekActief && categorie && (
+                <button onClick={() => setCategorie(null)} className="text-xs font-medium text-violet-600">
+                  ← Categorieën
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {resultaten.length ? (
+                resultaten.map((p) => <ProductRow key={p.id} product={p} />)
+              ) : (
+                <p className="text-sm text-slate-400">Niets gevonden.</p>
+              )}
+            </div>
           </div>
         )}
-
-        <div>
-          <h2 className="mb-2 text-sm font-semibold text-slate-500">
-            {zoek ? `Resultaten voor "${zoek}"` : 'Producten'}
-            {activeProfile.type !== 'gast' && <span className="font-normal"> · gesorteerd op jouw voorkeur</span>}
-          </h2>
-          <div className="space-y-2">
-            {resultaten.length ? (
-              resultaten.map((p) => <ProductRow key={p.id} product={p} />)
-            ) : (
-              <p className="text-sm text-slate-400">Niets gevonden.</p>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   )
