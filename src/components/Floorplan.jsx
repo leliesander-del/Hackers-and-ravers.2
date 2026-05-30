@@ -1,20 +1,18 @@
-import { getEntrancePosition } from '../lib/floorplanStorage.js'
 import { useFloorplan } from '../lib/useFloorplan.js'
-import FloorplanRenderer from './floorplan/FloorplanRenderer.jsx'
 import InteractiveFloorplan from './InteractiveFloorplan.jsx'
+import PlanFloorplan from './PlanFloorplan.jsx'
 
-// Toont de door de winkelbeheerder opgeslagen plattegrond, of anders de interactieve demo-plattegrond.
+// Demo-plattegrond uit productdata, of opgeslagen editor-plattegrond (zelfde weergave als beheer).
 export default function Floorplan({ storeId, products, highlightId, highlight, routeIds }) {
   const { elements, hasPlan } = useFloorplan(storeId)
 
   if (hasPlan) {
-    const entrance = getEntrancePosition(storeId)
     return (
-      <FloorplanRenderer
+      <PlanFloorplan
         elements={elements}
         products={products}
-        highlight={highlight}
-        entrance={entrance}
+        highlightId={highlightId}
+        routeIds={routeIds}
       />
     )
   }

@@ -63,7 +63,7 @@ export default function ElementPalette({ onDragStart }) {
     <aside className="flex w-56 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-4 py-4">
         <h2 className="text-sm font-bold text-slate-800">Elementen</h2>
-        <p className="mt-0.5 text-xs text-slate-500">Sleep naar je winkel</p>
+        <p className="mt-0.5 text-xs text-slate-500">Sleep muur, rekken, kassa, ingang of uitgang naar je winkel</p>
       </div>
       <ul className="flex-1 space-y-1 overflow-y-auto p-3">
         {floorplanTypes.map((item) => (

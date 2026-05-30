@@ -1,5 +1,7 @@
-import { elementSize, isResizable, rotationDegrees } from '../../lib/floorplanGeometry.js'
+import { elementSize, isResizable, isShelf, rotationDegrees } from '../../lib/floorplanGeometry.js'
 import { getElementStyle, resolveElementLabel } from '../../lib/floorplanElementStyle.js'
+import { shelfFrontApproachWorld } from '../../lib/shelfFront.js'
+import ShelfVisual from './ShelfVisual.jsx'
 
 // Zichtbare hoekgreep vs. grotere onzichtbare klikzone (viewBox 100×104)
 const HANDLE_R = 0.55
@@ -44,93 +46,6 @@ function EditorGrid() {
 function truncateLabel(label, max = 18) {
   if (!label) return ''
   return label.length > max ? `${label.slice(0, max - 1)}…` : label
-}
-
-function ShelfVisual({ el, w, h, selected }) {
-  const isTemp = el.type === 'tijdelijk-rek'
-  const style = getElementStyle(el)
-  const rows = Math.max(2, Math.floor(h / 2.6))
-  const capH = Math.min(h * 0.22, 2.4)
-  const label = el.label?.trim()
-  const fontSize = Math.min(style.textSize, w / 5, h / 2.5)
-
-  return (
-    <>
-      <rect
-        x={-w / 2}
-        y={-h / 2}
-        width={w}
-        height={h}
-        fill={style.fillColor}
-        stroke={selected ? '#f8fafc' : style.strokeColor}
-        strokeWidth={selected ? 0.75 : 0.55}
-        strokeDasharray={isTemp ? '1.2 0.7' : undefined}
-      />
-      <rect
-        x={-w / 2}
-        y={-h / 2}
-        width={w}
-        height={capH}
-        fill={style.accentColor}
-        stroke="none"
-      />
-      <line
-        x1={-w / 2}
-        y1={-h / 2 + capH}
-        x2={w / 2}
-        y2={-h / 2 + capH}
-        stroke={style.strokeColor}
-        strokeWidth="0.35"
-        opacity="0.85"
-      />
-      {Array.from({ length: rows }).map((_, i) => {
-        const y = -h / 2 + capH + ((h - capH) / (rows + 1)) * (i + 1)
-        return (
-          <line
-            key={i}
-            x1={-w / 2 + 0.6}
-            y1={y}
-            x2={w / 2 - 0.6}
-            y2={y}
-            stroke={style.shelfLineColor}
-            strokeWidth="0.3"
-            opacity="0.9"
-          />
-        )
-      })}
-      <line
-        x1={-w / 2}
-        y1={-h / 2}
-        x2={-w / 2}
-        y2={h / 2}
-        stroke={style.strokeColor}
-        strokeWidth="0.25"
-        opacity="0.5"
-      />
-      <line
-        x1={w / 2}
-        y1={-h / 2}
-        x2={w / 2}
-        y2={h / 2}
-        stroke={style.strokeColor}
-        strokeWidth="0.25"
-        opacity="0.5"
-      />
-      {label && (
-        <text
-          y={capH > 1.8 ? -h / 2 + capH / 2 + 0.15 : 0}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={fontSize}
-          fontWeight="700"
-          fill={style.textColor}
-          pointerEvents="none"
-        >
-          {truncateLabel(label)}
-        </text>
-      )}
-    </>
-  )
 }
 
 function KassaVisual({ el, w, h, selected }) {
@@ -259,6 +174,7 @@ function FloorplanElement({
   el,
   selected,
   editorMode,
+  rackState,
   onSelect,
   onPointerDown,
   onDoubleClick,
@@ -266,6 +182,9 @@ function FloorplanElement({
 }) {
   const { w, h } = elementSize(el)
   const rot = rotationDegrees(el)
+
+  const isRack = isShelf(el.type)
+  const customerMode = !editorMode
 
   const handlers = onPointerDown
     ? {
@@ -289,9 +208,11 @@ function FloorplanElement({
           },
           style: { cursor: 'pointer' },
         }
-      : {}
+      : customerMode
+        ? { style: { pointerEvents: isRack ? 'all' : 'none' } }
+        : {}
 
-  const transform = rot ? `rotate(${rot} ${el.x} ${el.y})` : undefined
+  const rotTransform = rot ? `rotate(${rot})` : undefined
   const showHandles = editorMode && selected && isResizable(el.type)
 
   const inner = () => {
@@ -308,8 +229,8 @@ function FloorplanElement({
         />
       )
     }
-    if (el.type === 'vast-rek' || el.type === 'tijdelijk-rek') {
-      return <ShelfVisual el={el} w={w} h={h} selected={selected} />
+    if (isRack) {
+      return <ShelfVisual el={el} w={w} h={h} selected={selected} rackState={rackState} />
     }
     if (el.type === 'kassa') {
       return <KassaVisual el={el} w={w} h={h} selected={selected} />
@@ -320,10 +241,8 @@ function FloorplanElement({
     return null
   }
 
-  const rotTransform = rot ? `rotate(${rot})` : undefined
-
   return (
-    <g transform={`translate(${el.x} ${el.y})`}>
+    <g transform={`translate(${el.x} ${el.y})`} data-rack={isRack && customerMode ? 'true' : undefined}>
       <g transform={rotTransform} {...handlers}>
         {inner()}
         {selected && !showHandles && (
@@ -360,11 +279,20 @@ export default function FloorplanRenderer({
   onElementDoubleClick,
   onResizePointerDown,
   className = 'w-full bg-white shadow-sm',
-  showShelves = true,
+  showShelves = false,
+  rackStates,
+  viewBox,
   svgRef,
   onSvgPointerDown,
+  onSvgPointerMove,
+  onSvgPointerUp,
   onDragOver,
   onDrop,
+  routePath,
+  startPos,
+  orderedStops = [],
+  currentIndex = 0,
+  visitedIds,
 }) {
   const schappen = []
   if (showShelves) {
@@ -377,15 +305,19 @@ export default function FloorplanRenderer({
 
   const ingangEl = elements.find((el) => el.type === 'ingang')
   const ingang = entrance || (ingangEl ? { x: ingangEl.x, y: ingangEl.y } : { x: 50, y: 96 })
+  const vb = viewBox ? `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}` : '0 0 100 104'
 
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 100 104"
+      viewBox={vb}
       className={className}
       role="img"
       aria-label="Plattegrond"
       onPointerDown={onSvgPointerDown}
+      onPointerMove={onSvgPointerMove}
+      onPointerUp={onSvgPointerUp}
+      onPointerLeave={onSvgPointerUp}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -397,6 +329,7 @@ export default function FloorplanRenderer({
       </defs>
 
       <rect
+        data-floor="true"
         x="2"
         y="2"
         width="96"
@@ -404,7 +337,7 @@ export default function FloorplanRenderer({
         fill="url(#vloerGrad)"
         stroke="#0f172a"
         strokeWidth="1.2"
-        onPointerDown={onSvgPointerDown}
+        pointerEvents={editorMode ? undefined : 'all'}
       />
 
       {editorMode && <EditorGrid />}
@@ -415,6 +348,7 @@ export default function FloorplanRenderer({
           el={el}
           selected={selectedId === el.id}
           editorMode={editorMode}
+          rackState={rackStates?.get(el.id)}
           onSelect={onSelectElement}
           onPointerDown={onElementPointerDown}
           onDoubleClick={onElementDoubleClick}
@@ -422,7 +356,48 @@ export default function FloorplanRenderer({
         />
       ))}
 
-      {highlight && (
+      {routePath && (
+        <>
+          <path
+            d={routePath}
+            fill="none"
+            stroke="#7c3aed"
+            strokeWidth="1.4"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+            pointerEvents="none"
+          />
+          <circle r="1.4" fill="#7c3aed" pointerEvents="none">
+            <animateMotion path={routePath} dur={`${Math.max(5, orderedStops.length * 2.5)}s`} repeatCount="indefinite" />
+          </circle>
+        </>
+      )}
+
+      {orderedStops.map((stop, k) => {
+        const done = visitedIds?.has(stop.rackId)
+        const current = k === currentIndex && !done
+        if (done) return null
+        const front = shelfFrontApproachWorld(stop.element)
+        return (
+          <g key={`stop-${stop.rackId}`} pointerEvents="none">
+            <circle cx={front.x} cy={front.y} r={current ? 2.8 : 2.2} fill={current ? '#7c3aed' : '#a78bfa'} stroke="#fff" strokeWidth="0.4" />
+            <text x={front.x} y={front.y + 0.85} textAnchor="middle" fontSize="2.6" fontWeight="700" fill="#fff">
+              {k + 1}
+            </text>
+          </g>
+        )
+      })}
+
+      {startPos && (
+        <g pointerEvents="none">
+          <circle cx={startPos.x} cy={startPos.y} r="2.8" fill="#2563eb" stroke="#fff" strokeWidth="0.8" />
+          <circle cx={startPos.x} cy={startPos.y} r="4.2" fill="none" stroke="#2563eb" strokeWidth="0.35" opacity="0.5">
+            <animate attributeName="r" values="4.2;5.5;4.2" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      )}
+
+      {highlight && !routePath && (
         <line
           x1={ingang.x}
           y1={ingang.y}

@@ -190,7 +190,14 @@ export default function FloorplanEditorPage() {
             <p className="mb-3 text-center text-sm font-semibold text-slate-600">
               Zo zien klanten je plattegrond (mobiel)
             </p>
-            <FloorplanRenderer elements={elements} products={productsByStore(store.id)} showShelves />
+            <p className="mb-3 text-center text-[11px] text-slate-400">
+              Geef rekken hetzelfde label als in je productdata (bv. Gang A1) zodat routes kloppen.
+            </p>
+            <FloorplanRenderer
+              elements={elements}
+              products={productsByStore(store.id)}
+              className="aspect-[100/104] w-full rounded-2xl bg-white shadow-sm"
+            />
             <button
               type="button"
               onClick={() => setToonVoorbeeld(false)}
