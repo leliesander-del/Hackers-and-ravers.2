@@ -307,3 +307,12 @@ export function getProduct(id) {
 export function productsByStore(storeId) {
   return products.filter((p) => p.storeId === storeId)
 }
+
+/** Unieke productcategorieën per winkel (voor rek-labels op de plattegrond). */
+export function categoriesForStore(storeId) {
+  const cats = new Set()
+  for (const p of products) {
+    if (p.storeId === storeId && p.categorie) cats.add(p.categorie)
+  }
+  return [...cats].sort((a, b) => a.localeCompare(b, 'nl'))
+}

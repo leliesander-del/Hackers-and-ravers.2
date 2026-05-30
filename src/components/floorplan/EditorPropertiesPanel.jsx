@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCategoryLabel } from '../../lib/productCategories.js'
 import { getFloorplanType } from '../../data/floorplanTypes.js'
 import { getDefaultStyleForType, isStyleable } from '../../lib/floorplanElementStyle.js'
 import { clampSize, format2, isResizable } from '../../lib/floorplanGeometry.js'
@@ -31,6 +32,7 @@ function ColorField({ id, label, value, onChange }) {
 
 export default function EditorPropertiesPanel({
   selected,
+  categories = [],
   snapEnabled,
   onSnapToggle,
   onLabelChange,
@@ -67,6 +69,7 @@ export default function EditorPropertiesPanel({
 
   const def = getFloorplanType(selected.type)
   const kanLabel = def?.labelable
+  const isShelf = selected.type === 'vast-rek' || selected.type === 'tijdelijk-rek'
   const kanResize = isResizable(selected.type)
   const kanStijl = isStyleable(selected.type)
   const styleDefaults = getDefaultStyleForType(selected.type)
@@ -119,24 +122,43 @@ export default function EditorPropertiesPanel({
               ? 'Tekst op kassa'
               : selected.type === 'ingang' || selected.type === 'uitgang'
                 ? 'Label'
-                : 'Naam van het rek'}
+                : 'Categorie van het rek'}
           </label>
-          <input
-            id="el-label"
-            type="text"
-            value={selected.label || ''}
-            onChange={(e) => onLabelChange(selected.id, e.target.value)}
-            placeholder={
-              selected.type === 'kassa'
-                ? 'KASSA'
-                : selected.type === 'ingang'
-                  ? 'Ingang'
-                  : selected.type === 'uitgang'
-                    ? 'Uitgang'
-                    : 'bv. Zuivel, Brood…'
-            }
-            className="w-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-          />
+          {isShelf ? (
+            <select
+              id="el-label"
+              value={selected.label || ''}
+              onChange={(e) => onLabelChange(selected.id, e.target.value)}
+              className="w-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            >
+              <option value="">— Kies categorie —</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {formatCategoryLabel(cat)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id="el-label"
+              type="text"
+              value={selected.label || ''}
+              onChange={(e) => onLabelChange(selected.id, e.target.value)}
+              placeholder={
+                selected.type === 'kassa'
+                  ? 'KASSA'
+                  : selected.type === 'ingang'
+                    ? 'Ingang'
+                    : 'Uitgang'
+              }
+              className="w-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            />
+          )}
+          {isShelf && (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+              Kies een categorie uit je assortiment. Producten en ingrediënten uit het mandje worden hier naartoe gerouteerd.
+            </p>
+          )}
         </div>
       )}
 
@@ -238,7 +260,7 @@ export default function EditorPropertiesPanel({
       </label>
 
       <p className="mt-4 text-[11px] leading-relaxed text-slate-400">
-        Rekken en kassa zijn hoekig getekend. Pas kleuren en tekst aan in het paneel; sleep witte hoeken om te schalen.
+        Kies een categorie per rek. Sleep hoeken om te schalen of typ breedte en diepte hierboven.
       </p>
     </aside>
   )

@@ -1,4 +1,9 @@
 // Bloktypes voor de plattegrond-editor (palet links).
+
+/** Standaardafmeting voor nieuwe rekken (vrij schaalbaar daarna). */
+export const UNIFORM_SHELF_W = 10
+export const UNIFORM_SHELF_H = 10
+
 export const floorplanTypes = [
   {
     type: 'muur',
@@ -18,11 +23,11 @@ export const floorplanTypes = [
     type: 'vast-rek',
     label: 'Vast rek',
     preview: 'shelf-dark',
-    defaultW: 22,
-    defaultH: 10,
-    minW: 6,
+    defaultW: UNIFORM_SHELF_W,
+    defaultH: UNIFORM_SHELF_H,
+    minW: 4,
     minH: 4,
-    maxW: 90,
+    maxW: 40,
     maxH: 40,
     rotatable: true,
     resizable: true,
@@ -32,11 +37,11 @@ export const floorplanTypes = [
     type: 'tijdelijk-rek',
     label: 'Tijdelijk rek',
     preview: 'shelf-light',
-    defaultW: 22,
-    defaultH: 10,
-    minW: 6,
+    defaultW: UNIFORM_SHELF_W,
+    defaultH: UNIFORM_SHELF_H,
+    minW: 4,
     minH: 4,
-    maxW: 90,
+    maxW: 40,
     maxH: 40,
     rotatable: true,
     resizable: true,

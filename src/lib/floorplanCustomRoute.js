@@ -1,5 +1,6 @@
 import { getBounds, isShelf } from './floorplanGeometry.js'
 import { resolveElementLabel } from './floorplanElementStyle.js'
+import { formatCategoryLabel } from './productCategories.js'
 import {
   SHELF_PRE_APPROACH_STANDOFF,
   shelfFrontApproachWorld,
@@ -9,6 +10,16 @@ import {
 
 const W = 100
 const H = 104
+
+/** Minimale afstand van de route tot muren, rekken en rand. */
+const FLOOR_MARGIN = 2.5
+const OBSTACLE_PAD = {
+  muur: 2,
+  kassa: 1.8,
+  'vast-rek': 1.8,
+  'tijdelijk-rek': 1.8,
+}
+const WALK_CLEARANCE = 1.4
 
 function normLabel(s) {
   return (s || '').trim().toLowerCase()
@@ -26,33 +37,80 @@ function idx(x, y) {
 }
 
 function buildWalkGrid(elements) {
-  const grid = new Uint8Array(W * H).fill(1)
+  const raw = new Uint8Array(W * H).fill(1)
+
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) {
+      if (x < FLOOR_MARGIN || x >= W - FLOOR_MARGIN || y < FLOOR_MARGIN || y >= H - FLOOR_MARGIN) {
+        raw[idx(x, y)] = 0
+      }
+    }
+  }
 
   for (const el of elements) {
     if (!['muur', 'kassa', 'vast-rek', 'tijdelijk-rek'].includes(el.type)) continue
     const b = getBounds(el)
-    const pad = el.type === 'muur' ? 0.2 : 0.35
+    const pad = OBSTACLE_PAD[el.type] ?? 1.8
     const x0 = Math.max(0, Math.floor(b.left - pad))
     const x1 = Math.min(W - 1, Math.ceil(b.right + pad))
     const y0 = Math.max(0, Math.floor(b.top - pad))
     const y1 = Math.min(H - 1, Math.ceil(b.bottom + pad))
     for (let x = x0; x <= x1; x++) {
-      for (let y = y0; y <= y1; y++) grid[y * W + x] = 0
+      for (let y = y0; y <= y1; y++) raw[y * W + x] = 0
     }
   }
 
-  // Vrijmaken rond ingang/uitgang
+  // Vrijmaken rond ingang/uitgang (vóór clearance)
   for (const el of elements) {
     if (el.type !== 'ingang' && el.type !== 'uitgang') continue
     const b = getBounds(el)
     for (let x = Math.floor(b.left - 2); x <= Math.ceil(b.right + 2); x++) {
       for (let y = Math.floor(b.top - 2); y <= Math.ceil(b.bottom + 2); y++) {
+        if (x >= 0 && x < W && y >= 0 && y < H) raw[idx(x, y)] = 1
+      }
+    }
+  }
+
+  const grid = applyWalkClearance(raw, WALK_CLEARANCE)
+
+  // Ingang/uitgang opnieuw openen na clearance-buffer
+  for (const el of elements) {
+    if (el.type !== 'ingang' && el.type !== 'uitgang') continue
+    const b = getBounds(el)
+    for (let x = Math.floor(b.left - 1.5); x <= Math.ceil(b.right + 1.5); x++) {
+      for (let y = Math.floor(b.top - 1.5); y <= Math.ceil(b.bottom + 1.5); y++) {
         if (x >= 0 && x < W && y >= 0 && y < H) grid[idx(x, y)] = 1
       }
     }
   }
 
   return grid
+}
+
+/** Houd loopgebied weg van obstakels — route loopt midden in gangen. */
+function applyWalkClearance(grid, clearance) {
+  const result = new Uint8Array(W * H)
+  const r = Math.ceil(clearance)
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!grid[idx(x, y)]) continue
+      let ok = true
+      for (let dy = -r; dy <= r && ok; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (dx * dx + dy * dy > clearance * clearance) continue
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || nx >= W || ny < 0 || ny >= H || !grid[idx(nx, ny)]) {
+            ok = false
+          }
+        }
+      }
+      if (ok) result[idx(x, y)] = 1
+    }
+  }
+
+  return result
 }
 
 function nearestWalkable(grid, x, y) {
@@ -251,23 +309,30 @@ function approachPoint(el) {
   return shelfFrontApproachWorld(el)
 }
 
-function nearestShelf(shelves, x, y) {
-  let best = null
-  let bestD = Infinity
-  for (const el of shelves) {
-    const d = Math.hypot(el.x - x, el.y - y)
-    if (d < bestD) {
-      bestD = d
-      best = el
+function findShelfForProduct(shelves, product) {
+  const catKey = normLabel(product.categorie)
+  if (catKey) {
+    const matches = shelves.filter((s) => normLabel(rackLabel(s)) === catKey)
+    if (matches.length === 1) return matches[0]
+    if (matches.length > 1) {
+      return matches.find((s) => s.type === 'vast-rek') || matches[0]
     }
   }
-  return best
+
+  if (product.rekkenlocatie?.label) {
+    const locKey = normLabel(product.rekkenlocatie.label)
+    const byLoc = shelves.find((s) => normLabel(rackLabel(s)) === locKey)
+    if (byLoc) return byLoc
+  }
+
+  return null
 }
 
 function makeStop(el) {
-  const label = rackLabel(el)
+  const slug = normLabel(rackLabel(el)) || el.id
+  const label = formatCategoryLabel(slug)
   return {
-    rackId: label,
+    rackId: slug,
     label,
     elementId: el.id,
     gangX: el.x,
@@ -296,34 +361,20 @@ export function collectCustomStops(products, routeProductIds, elements) {
 
   const idSet = new Set(routeProductIds)
   const byElementId = new Map()
-  const matchedProductIds = new Set()
 
   function getOrCreateStop(el) {
     if (!byElementId.has(el.id)) byElementId.set(el.id, makeStop(el))
     return byElementId.get(el.id)
   }
 
-  // 1) Koppeling via label (product rekkenlocatie.label = rek-label)
+  // Koppeling via rek-categorie (= product.categorie), vast én tijdelijk rek
   for (const p of products) {
-    if (!idSet.has(p.id) || !p.rekkenlocatie) continue
-    const key = normLabel(p.rekkenlocatie.label)
-    const el = shelves.find((s) => normLabel(rackLabel(s)) === key)
+    if (!idSet.has(p.id)) continue
+    const el = findShelfForProduct(shelves, p)
     if (!el) continue
     const stop = getOrCreateStop(el)
     stop.categorieën.add(p.categorie)
     stop.products.push(p)
-    matchedProductIds.add(p.id)
-  }
-
-  // 2) Fallback: dichtstbijzijnd rek op coördinaat
-  for (const p of products) {
-    if (!idSet.has(p.id) || matchedProductIds.has(p.id) || !p.rekkenlocatie) continue
-    const el = nearestShelf(shelves, p.rekkenlocatie.x, p.rekkenlocatie.y)
-    if (!el) continue
-    const stop = getOrCreateStop(el)
-    stop.categorieën.add(p.categorie)
-    stop.products.push(p)
-    matchedProductIds.add(p.id)
   }
 
   return [...byElementId.values()]

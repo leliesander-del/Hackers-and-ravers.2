@@ -5,35 +5,13 @@ function PalettePreview({ preview }) {
     return <div className="h-1.5 w-14 bg-slate-800" />
   }
   if (preview === 'shelf-dark') {
-    return (
-      <div className="flex h-8 w-14 flex-col border border-[#312e81] bg-[#4c1d95] shadow-sm">
-        <div className="h-2 w-full bg-[#7c3aed]" />
-        <div className="flex flex-1 flex-col justify-center gap-0.5 px-0.5">
-          <div className="h-px w-full bg-violet-200/70" />
-          <div className="h-px w-full bg-violet-200/70" />
-        </div>
-      </div>
-    )
+    return <div className="h-9 w-9 border border-[#5b21b6] bg-[#7c3aed] shadow-sm" />
   }
   if (preview === 'shelf-light') {
-    return (
-      <div className="flex h-8 w-14 flex-col border border-dashed border-violet-500 bg-violet-100">
-        <div className="h-2 w-full bg-violet-300" />
-        <div className="flex flex-1 flex-col justify-center gap-0.5 px-0.5">
-          <div className="h-px w-full bg-violet-500/50" />
-          <div className="h-px w-full bg-violet-500/50" />
-        </div>
-      </div>
-    )
+    return <div className="h-9 w-9 border border-[#7c3aed] bg-[#a78bfa]" style={{ borderWidth: '1px' }} />
   }
   if (preview === 'kassa') {
-    return (
-      <div className="flex h-9 w-12 flex-col border border-[#4c1d95] bg-[#5b21b6] shadow-sm">
-        <div className="m-0.5 h-3 flex-1 border border-violet-900/30 bg-slate-50" />
-        <div className="h-1.5 w-full bg-violet-400" />
-        <span className="py-0.5 text-center text-[7px] font-bold tracking-wide text-white">KASSA</span>
-      </div>
-    )
+    return <div className="flex h-9 w-12 items-center justify-center border border-[#4c1d95] bg-[#5b21b6] text-[7px] font-bold text-white">KASSA</div>
   }
   if (preview === 'ingang') {
     return (
