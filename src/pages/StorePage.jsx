@@ -22,7 +22,7 @@ const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
 
 export default function StorePage() {
   const { id } = useParams()
-  const { activeProfile, cartCount, cart, productsByStoreLive } = useStore()
+  const { activeProfile, cartCount, productsByStoreLive, resolveCartVoorWinkel } = useStore()
   const [zoek, setZoek] = useState('')
   const [categorie, setCategorie] = useState(null)
   const [toonMap, setToonMap] = useState(false)
@@ -31,7 +31,12 @@ export default function StorePage() {
   const { hasPlan } = useFloorplan(id)
   const winkelProducten = useMemo(() => productsByStoreLive(id), [productsByStoreLive, id])
 
-  const mijnStops = useMemo(() => cart.filter((p) => p.storeId === id).map((p) => p.id), [cart, id])
+  // Los de boodschappenlijst hier pas op tegen dit winkel-assortiment: dít is
+  // waar de winkel aan de lijst gekoppeld wordt en de route ontstaat.
+  const mijnStops = useMemo(() => {
+    const resolved = resolveCartVoorWinkel(id)
+    return [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
+  }, [resolveCartVoorWinkel, id])
 
   const categorieen = useMemo(() => {
     const m = new Map()

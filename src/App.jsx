@@ -10,8 +10,11 @@ import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
+import BeheerHomePage from './pages/BeheerHomePage.jsx'
+import ConnectionsPage from './pages/ConnectionsPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
 import StaffVerkoopPage from './pages/StaffVerkoopPage.jsx'
+import CatalogPage from './pages/CatalogPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 
 // De klant-shell met onderbalk. Wie niet ingelogd is gaat naar /login;
@@ -45,9 +48,12 @@ export default function App() {
         <Route path="/personeel/dashboard" element={<Navigate to="/personeel" replace />} />
       </Route>
 
-      {/* Winkelbeheer (plattegrond) */}
+      {/* Winkelbeheer (plattegrond + catalogus) */}
       <Route path="/beheer/login" element={<ManagerLoginPage />} />
+      <Route path="/beheer" element={<BeheerHomePage />} />
+      <Route path="/beheer/connecties" element={<ConnectionsPage />} />
       <Route path="/beheer/plattegrond" element={<FloorplanEditorPage />} />
+      <Route path="/beheer/catalogus" element={<CatalogPage />} />
 
       {/* Klant-app: de boodschappenlijst is de startpagina */}
       <Route element={<AppShell />}>
