@@ -2,26 +2,32 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, ChevronRight, Compass } from '../components/icons.jsx'
 import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
+import {
+  RECEPTEN,
+  THEMAS,
+  MAALTIJDEN,
+  BASIS_INGREDIENTEN,
+  KOOKTIJD_OPTIES,
+  rangschikRecepten,
+  ingredientenVoorGerechten,
+} from '../lib/assistent.js'
 
 const DIEET_OPTIES = ['Glutenvrij', 'Lactosevrij', 'Vegetarisch', 'Veganistisch', 'Suikervrij']
 const PRIJS_OPTIES = ['Budget', 'Middenklasse', 'Premium']
 
-const GERECHTEN = [
-  { id: 'spaghetti', naam: 'Spaghetti bolognese', emoji: '🍝', dieet: [] },
-  { id: 'buddha', naam: 'Buddha bowl', emoji: '🥗', dieet: ['Vegetarisch', 'Veganistisch', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'pizza', naam: 'Pizza margherita', emoji: '🍕', dieet: ['Vegetarisch'] },
-  { id: 'zalm', naam: 'Gegrilde zalm', emoji: '🐟', dieet: ['Glutenvrij', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'falafel', naam: 'Falafel wrap', emoji: '🌯', dieet: ['Vegetarisch', 'Veganistisch', 'Lactosevrij'] },
-  { id: 'biefstuk', naam: 'Biefstuk met friet', emoji: '🥩', dieet: [] },
-  { id: 'miso', naam: 'Miso soep', emoji: '🍜', dieet: ['Vegetarisch', 'Veganistisch', 'Glutenvrij'] },
-  { id: 'wortel', naam: 'Wortelsoep', emoji: '🥕', dieet: ['Vegetarisch', 'Veganistisch', 'Glutenvrij', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'roerei', naam: 'Roerei met groenten', emoji: '🍳', dieet: ['Vegetarisch', 'Glutenvrij', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'curry', naam: 'Groentecurry', emoji: '🫕', dieet: ['Vegetarisch', 'Veganistisch', 'Glutenvrij', 'Lactosevrij'] },
-  { id: 'sushi', naam: 'Sushi', emoji: '🍣', dieet: ['Glutenvrij', 'Lactosevrij'] },
-  { id: 'avocado', naam: 'Avocadosalade', emoji: '🥑', dieet: ['Vegetarisch', 'Veganistisch', 'Glutenvrij', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'quinoa', naam: 'Quinoa bowl', emoji: '🫙', dieet: ['Vegetarisch', 'Veganistisch', 'Glutenvrij', 'Lactosevrij', 'Suikervrij'] },
-  { id: 'pannenkoeken', naam: 'Pannenkoeken', emoji: '🥞', dieet: ['Vegetarisch'] },
-  { id: 'griekse', naam: 'Griekse salade', emoji: '🥙', dieet: ['Vegetarisch', 'Glutenvrij', 'Suikervrij'] },
+// Stap 2 — voor hoeveel personen kook je? (breed, één keuze)
+const PERSONEN_OPTIES = [
+  { id: '1', label: 'Voor mezelf', sub: '1 persoon', emoji: '🧑' },
+  { id: '2', label: "Met z'n tweeën", sub: '2 personen', emoji: '👫' },
+  { id: '3-4', label: 'Klein gezin', sub: '3 – 4 personen', emoji: '👨‍👩‍👧' },
+  { id: '5+', label: 'Groot gezin', sub: '5+ personen', emoji: '👨‍👩‍👧‍👦' },
+]
+
+// Stap 2 — hoe vaak kook je per week? (één keuze)
+const FREQUENTIE_OPTIES = [
+  { id: '1-2', label: '1 – 2×', sub: 'per week', emoji: '🗓️' },
+  { id: '3-4', label: '3 – 4×', sub: 'per week', emoji: '📅' },
+  { id: '5-7', label: '5 – 7×', sub: 'bijna dagelijks', emoji: '🔥' },
 ]
 
 const WINKELS = [
@@ -32,7 +38,19 @@ const WINKELS = [
   { id: 'lidl', naam: 'Lidl', emoji: '🌻', kleur: 'bg-yellow-500' },
 ]
 
-const STAP_TITELS = ['Account', 'Voorkeuren', 'Gerechten', 'Winkels']
+const STAP_TITELS = [
+  'Account',
+  'Huishouden',
+  'Kooktijd',
+  'Keukenstijl',
+  'Maaltijd',
+  'Ingrediënten',
+  'Vermijden',
+  'Dieet & prijs',
+  'Gerechten',
+  'Winkels',
+]
+const AANTAL_STAPPEN = STAP_TITELS.length
 const ACCENT_KLEUREN = ['#7c3aed', '#0ea5e9', '#ec4899', '#f59e0b', '#10b981']
 const DEMO_EMAILS = ['sander@neverlost.be', 'marc@neverlost.be', 'gast@neverlost.be']
 
@@ -44,41 +62,123 @@ function CheckBadge() {
   )
 }
 
+// Sectiekop binnen een stap.
+function VeldKop({ titel }) {
+  return <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">{titel}</p>
+}
+
+// Herbruikbaar raster van keuzekaarten met emoji + label (+ optioneel subtekst).
+// `enkel` = één keuze (radio-gedrag), anders meervoudige selectie.
+function KaartGrid({ opties, geselecteerd, onToggle, kolommen = 2, enkel = false }) {
+  const isAan = (id) => (enkel ? geselecteerd === id : geselecteerd.includes(id))
+  return (
+    <div className={`grid gap-2 ${kolommen === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      {opties.map((o) => {
+        const aan = isAan(o.id)
+        return (
+          <button
+            key={o.id}
+            onClick={() => onToggle(o.id)}
+            className={`relative rounded-xl px-3 py-4 text-left transition active:scale-[0.97] ${
+              aan ? 'bg-white/15 ring-2 ring-fuchsia-400/70' : 'bg-white/5 ring-1 ring-white/10 hover:bg-white/10'
+            }`}
+          >
+            {aan && <CheckBadge />}
+            <span className="block text-2xl mb-1.5">{o.emoji}</span>
+            <span className="block text-sm text-white/80 font-medium leading-tight">{o.label}</span>
+            {o.sub && <span className="block text-xs text-white/40 mt-0.5">{o.sub}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// Herbruikbare rij van pill-knoppen (meervoudige selectie).
+function PillGroep({ opties, geselecteerd, onToggle }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {opties.map((o) => {
+        const id = typeof o === 'string' ? o : o.id
+        const label = typeof o === 'string' ? o : o.label
+        const emoji = typeof o === 'string' ? null : o.emoji
+        const aan = geselecteerd.includes(id)
+        return (
+          <button
+            key={id}
+            onClick={() => onToggle(id)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.97] ${
+              aan
+                ? 'bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-md shadow-fuchsia-500/20'
+                : 'bg-white/10 text-white/60 ring-1 ring-white/10 hover:bg-white/15 hover:text-white/80'
+            }`}
+          >
+            {emoji && <span className="mr-1">{emoji}</span>}
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function SignupPage() {
-  const { login } = useStore()
+  const { login, addIngredients } = useStore()
   const navigate = useNavigate()
   const [stap, setStap] = useState(1)
   const [fout, setFout] = useState('')
 
-  // Stap 1
+  // Stap 1 — account
   const [naam, setNaam] = useState('')
   const [email, setEmail] = useState('')
   const [wachtwoord, setWachtwoord] = useState('')
 
-  // Stap 2
+  // Stap 2 — huishouden
+  const [personen, setPersonen] = useState('')
+  const [frequentie, setFrequentie] = useState('')
+
+  // Stap 3 — hoelang wil je koken?
+  const [kooktijd, setKooktijd] = useState('')
+
+  // Stap 4 — keukenstijl (thema's uit de echte recepten)
+  const [themas, setThemas] = useState([])
+
+  // Stap 5 — maaltijdmoment
+  const [maaltijden, setMaaltijden] = useState([])
+
+  // Stap 6 — met welke ingrediënten
+  const [ingredienten, setIngredienten] = useState([])
+
+  // Stap 7 — wat liever vermijden
+  const [vermijden, setVermijden] = useState([])
+
+  // Stap 8 — dieet & prijsklasse
   const [dieet, setDieet] = useState([])
   const [prijsklasse, setPrijsklasse] = useState('')
 
-  // Stap 3
+  // Stap 9 — favoriete gerechten
   const [gerechten, setGerechten] = useState([])
 
-  // Stap 4
+  // Stap 10 — favoriete winkels
   const [winkels, setWinkels] = useState([])
 
-  const gerechtenGefilterd = useMemo(() => {
-    if (dieet.length === 0) return GERECHTEN
-    return GERECHTEN.filter((g) => dieet.every((d) => g.dieet.includes(d)))
-  }, [dieet])
+  // Gerechten komen rechtstreeks uit de echte recepten via de gedeelde
+  // rangschik-functie (assistent.js) — dezelfde die de kok-chat gebruikt.
+  const gerechtenGefilterd = useMemo(
+    () => rangschikRecepten({ dieet, kooktijd, vermijden, themas, maaltijden, ingredienten, prijsklasse }),
+    [dieet, kooktijd, vermijden, themas, maaltijden, ingredienten, prijsklasse],
+  )
 
-  function toggleDieet(item) {
-    setDieet((prev) => (prev.includes(item) ? prev.filter((d) => d !== item) : [...prev, item]))
+  function toggleIn(setter) {
+    return (item) => setter((prev) => (prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]))
   }
-  function toggleGerecht(id) {
-    setGerechten((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]))
-  }
-  function toggleWinkel(id) {
-    setWinkels((prev) => (prev.includes(id) ? prev.filter((w) => w !== id) : [...prev, id]))
-  }
+  const toggleDieet = toggleIn(setDieet)
+  const toggleThema = toggleIn(setThemas)
+  const toggleMaaltijd = toggleIn(setMaaltijden)
+  const toggleIngredient = toggleIn(setIngredienten)
+  const toggleVermijden = toggleIn(setVermijden)
+  const toggleGerecht = toggleIn(setGerechten)
+  const toggleWinkel = toggleIn(setWinkels)
 
   function valideerStap() {
     if (stap === 1) {
@@ -98,7 +198,7 @@ export default function SignupPage() {
     const foutMsg = valideerStap()
     if (foutMsg) { setFout(foutMsg); return }
     setFout('')
-    if (stap < 4) { setStap((s) => s + 1); return }
+    if (stap < AANTAL_STAPPEN) { setStap((s) => s + 1); return }
     maakAccount()
   }
 
@@ -134,6 +234,13 @@ export default function SignupPage() {
         prijsklasse: prijsklasse ? prijsklasse.toLowerCase() : 'budget',
         merken: [],
         afdelingen: [],
+        personen,
+        frequentie,
+        kooktijd,
+        themas,
+        maaltijden,
+        ingredienten,
+        vermijden,
       },
       gerechten,
       geschiedenis: { winkels },
@@ -144,6 +251,15 @@ export default function SignupPage() {
 
     saveAccount(emailLower, { wachtwoord, profiel })
     login(profiel)
+
+    // Gekozen gerechten meteen omzetten naar ingrediënten op de boodschappenlijst,
+    // via dezelfde recepten-bron als de assistent.
+    if (gerechten.length) {
+      const gekozenRecepten = RECEPTEN.filter((r) => gerechten.includes(r.naam))
+      const { termen } = ingredientenVoorGerechten(gekozenRecepten)
+      if (termen.length) addIngredients(termen)
+    }
+
     navigate('/')
   }
 
@@ -161,7 +277,7 @@ export default function SignupPage() {
         {/* Voortgangsbalk */}
         <div className="space-y-2">
           <div className="flex gap-1.5">
-            {[1, 2, 3, 4].map((n) => (
+            {Array.from({ length: AANTAL_STAPPEN }, (_, i) => i + 1).map((n) => (
               <div
                 key={n}
                 className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
@@ -171,7 +287,7 @@ export default function SignupPage() {
             ))}
           </div>
           <p className="text-xs text-white/40">
-            Stap {stap} van 4 &middot;{' '}
+            Stap {stap} van {AANTAL_STAPPEN} &middot;{' '}
             <span className="text-white/60">{STAP_TITELS[stap - 1]}</span>
             {naam && stap > 1 && (
               <> &middot; <span className="text-white/60">{naam}</span></>
@@ -221,8 +337,81 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Stap 2 — Dieet & prijsklasse */}
+          {/* Stap 2 — Huishouden */}
           {stap === 2 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Voor wie kook je?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Zo stemmen we porties en hoeveelheden af</p>
+              </div>
+              <div>
+                <VeldKop titel="Aantal personen" />
+                <KaartGrid opties={PERSONEN_OPTIES} geselecteerd={personen} enkel onToggle={(id) => setPersonen((c) => (c === id ? '' : id))} />
+              </div>
+              <div>
+                <VeldKop titel="Hoe vaak kook je?" />
+                <KaartGrid opties={FREQUENTIE_OPTIES} geselecteerd={frequentie} enkel kolommen={3} onToggle={(id) => setFrequentie((c) => (c === id ? '' : id))} />
+              </div>
+            </div>
+          )}
+
+          {/* Stap 3 — Hoelang wil je koken? */}
+          {stap === 3 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Hoelang wil je koken?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Zo stemmen we de gerechten af op je tijd</p>
+              </div>
+              <KaartGrid opties={KOOKTIJD_OPTIES} geselecteerd={kooktijd} enkel onToggle={(id) => setKooktijd((c) => (c === id ? '' : id))} />
+            </div>
+          )}
+
+          {/* Stap 4 — Keukenstijl */}
+          {stap === 4 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Welke keuken spreekt aan?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Kies een of meerdere stijlen</p>
+              </div>
+              <KaartGrid opties={THEMAS} geselecteerd={themas} onToggle={toggleThema} />
+            </div>
+          )}
+
+          {/* Stap 5 — Maaltijdmoment */}
+          {stap === 5 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Wat wil je klaarmaken?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Kies een of meerdere momenten</p>
+              </div>
+              <KaartGrid opties={MAALTIJDEN} geselecteerd={maaltijden} kolommen={3} onToggle={toggleMaaltijd} />
+            </div>
+          )}
+
+          {/* Stap 6 — Ingrediënten */}
+          {stap === 6 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Waar kook je graag mee?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Selecteer je favoriete basisingrediënten</p>
+              </div>
+              <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={ingredienten} onToggle={toggleIngredient} />
+            </div>
+          )}
+
+          {/* Stap 7 — Vermijden */}
+          {stap === 7 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Iets dat je liever vermijdt?</h2>
+                <p className="text-sm text-white/40 mt-0.5">Deze ingrediënten laten we uit je gerechten — sla over als er niets is</p>
+              </div>
+              <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={vermijden} onToggle={toggleVermijden} />
+            </div>
+          )}
+
+          {/* Stap 8 — Dieet & prijsklasse */}
+          {stap === 8 && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-lg font-semibold text-white">Dieet &amp; prijsklasse</h2>
@@ -230,31 +419,17 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Dieetvoorkeur</p>
-                <div className="flex flex-wrap gap-2">
-                  {DIEET_OPTIES.map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => toggleDieet(item)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.97] ${
-                        dieet.includes(item)
-                          ? 'bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-md shadow-fuchsia-500/20'
-                          : 'bg-white/10 text-white/60 ring-1 ring-white/10 hover:bg-white/15 hover:text-white/80'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
+                <VeldKop titel="Dieetvoorkeur" />
+                <PillGroep opties={DIEET_OPTIES} geselecteerd={dieet} onToggle={toggleDieet} />
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Prijsklasse</p>
+                <VeldKop titel="Prijsklasse" />
                 <div className="flex gap-2">
                   {PRIJS_OPTIES.map((item) => (
                     <button
                       key={item}
-                      onClick={() => setPrijsklasse(item)}
+                      onClick={() => setPrijsklasse((cur) => (cur === item ? '' : item))}
                       className={`flex-1 rounded-full py-2.5 text-sm font-medium transition active:scale-[0.97] ${
                         prijsklasse === item
                           ? 'bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white shadow-md shadow-fuchsia-500/20'
@@ -269,33 +444,28 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Stap 3 — Favoriete gerechten */}
-          {stap === 3 && (
+          {/* Stap 9 — Favoriete gerechten */}
+          {stap === 9 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Favoriete gerechten</h2>
-                {dieet.length > 0 ? (
-                  <p className="text-sm text-white/40 mt-0.5">
-                    Gefilterd op:{' '}
-                    <span className="text-fuchsia-300 font-medium">{dieet.join(', ')}</span>
-                  </p>
-                ) : (
-                  <p className="text-sm text-white/40 mt-0.5">Selecteer je favorieten</p>
-                )}
+                <h2 className="text-lg font-semibold text-white">Welke gerechten spreken aan?</h2>
+                <p className="text-sm text-white/40 mt-0.5">
+                  Op maat van je keuzes — de beste matches staan bovenaan
+                </p>
               </div>
 
               {gerechtenGefilterd.length === 0 ? (
                 <p className="text-center text-sm text-white/30 py-6">
-                  Geen gerechten gevonden voor je dieetkeuze.<br />Ga terug om je filters aan te passen.
+                  Geen gerechten gevonden voor deze combinatie.<br />Ga terug om je dieet, kooktijd of vermeden ingrediënten aan te passen.
                 </p>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {gerechtenGefilterd.map((g) => {
-                    const geselecteerd = gerechten.includes(g.id)
+                    const geselecteerd = gerechten.includes(g.naam)
                     return (
                       <button
-                        key={g.id}
-                        onClick={() => toggleGerecht(g.id)}
+                        key={g.naam}
+                        onClick={() => toggleGerecht(g.naam)}
                         className={`relative rounded-xl px-3 py-3.5 text-left transition active:scale-[0.97] ${
                           geselecteerd
                             ? 'bg-white/15 ring-2 ring-fuchsia-400/70'
@@ -304,7 +474,8 @@ export default function SignupPage() {
                       >
                         {geselecteerd && <CheckBadge />}
                         <span className="block text-2xl mb-1.5">{g.emoji}</span>
-                        <span className="block text-xs text-white/80 font-medium leading-tight">{g.naam}</span>
+                        <span className="block text-xs text-white/80 font-medium leading-tight capitalize">{g.naam}</span>
+                        <span className="block text-[10px] text-white/35 mt-1">{g.tijd} min</span>
                       </button>
                     )
                   })}
@@ -313,8 +484,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Stap 4 — Favoriete winkels */}
-          {stap === 4 && (
+          {/* Stap 10 — Favoriete winkels */}
+          {stap === 10 && (
             <div className="space-y-4">
               <div>
                 <h2 className="text-lg font-semibold text-white">Favoriete winkels</h2>
@@ -368,8 +539,8 @@ export default function SignupPage() {
             onClick={volgende}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition active:scale-[0.98]"
           >
-            {stap === 4 ? 'Account aanmaken' : 'Volgende'}
-            {stap < 4 && <ChevronRight className="h-4 w-4" />}
+            {stap === AANTAL_STAPPEN ? 'Account aanmaken' : 'Volgende'}
+            {stap < AANTAL_STAPPEN && <ChevronRight className="h-4 w-4" />}
           </button>
         </div>
       </div>
