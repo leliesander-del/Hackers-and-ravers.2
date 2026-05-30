@@ -10,6 +10,7 @@ import EditorCanvas from '../components/floorplan/EditorCanvas.jsx'
 import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel.jsx'
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
 import BeheerNav from '../components/BeheerNav.jsx'
+import StoreLogo from '../components/StoreLogo.jsx'
 import { productsByStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
@@ -110,7 +111,7 @@ export default function FloorplanEditorPage() {
       <header className="relative z-20 shrink-0 border-b border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="text-2xl">{store.emoji}</span>
+            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold text-slate-800">Plattegrond bewerken</h1>
               <p className="truncate text-sm text-slate-500">

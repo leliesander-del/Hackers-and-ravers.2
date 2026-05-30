@@ -139,12 +139,6 @@ export const RECEPTEN = [
 ]
 
 // Alle gerechten die bij minstens één van de gekozen thema's horen.
-export function gerechtenVoorThemas(themaIds) {
-  if (!themaIds?.length) return RECEPTEN
-  const set = new Set(themaIds)
-  return RECEPTEN.filter((r) => r.themas.some((t) => set.has(t)))
-}
-
 // Centrale recept-aanbeveling, gedeeld door de aanmeldvragenlijst én de kok-chat.
 // Hard filter op dieet, kooktijd en vermeden ingrediënten; daarna rangschikken op
 // hoe goed een recept aansluit bij de keukenstijl, het maaltijdmoment, de gewenste
@@ -390,8 +384,3 @@ function lijstZin(items) {
 function hoofdletter(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 }
-
-export const BEGROETING =
-  'Hoi! Ik ben je boodschappen-assistent. Vertel me wat je wil koken of eten, dan zet ik de ingrediënten op je lijst. Je kan ook gewoon producten opnoemen. De winkel kies je later.'
-
-export const VOORBEELDEN = ['Spaghetti bolognese', 'Salade met kip', 'Ontbijt', 'Melk, kaas en appels']

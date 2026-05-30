@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
+import { stores, afstandTotGebruiker } from '../data/stores.js'
+import StoreLogo from '../components/StoreLogo.jsx'
 import {
   KOK_BEGROETING,
   KOK_VRAGEN,
@@ -20,22 +22,21 @@ function lijstZin(items) {
   return `${arr.slice(0, -1).join(', ')} en ${arr[arr.length - 1]}`
 }
 
-// Het centrale scherm van de app: je boodschappenlijst, met daarnaast de kok —
-// een gesprek dat je voorkeuren uitvraagt en je lijst samenstelt. De lijst is
-// winkel-onafhankelijk; `winkelsVoorLijst` (uit de context) berekent pas bij het
-// tonen welke winkels de lijst kunnen leveren — de koppeling gebeurt bij "Start route".
+// De home: bovenaan een keuze tussen de winkels (op afstand), daarnaast de kok —
+// een gesprek dat je voorkeuren uitvraagt en je lijst samenstelt. De lijst zelf
+// (ingrediënten + producten) leeft op de Mandje-pagina.
 export default function ListPage() {
-  const { cart, winkelsVoorLijst, removeFromCart, clearCart, isAfgevinkt, toggleAfgevinkt } = useStore()
-  const [tab, setTab] = useState('lijst')
+  const navigate = useNavigate()
+  const [tab, setTab] = useState('winkels')
 
   return (
     <div className="px-4 pb-6 pt-7">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight text-slate-900">Boodschappenlijst</h1>
+      <h1 className="mb-4 text-2xl font-bold tracking-tight text-slate-900">Home</h1>
 
       {/* Tab-switcher (pill-stijl) */}
       <div className="mb-5 flex gap-1 rounded-full bg-slate-100 p-1">
         {[
-          { id: 'lijst', label: 'Lijst' },
+          { id: 'winkels', label: 'Winkels' },
           { id: 'kok', label: '✨ Kok' },
         ].map((t) => (
           <button
@@ -50,211 +51,44 @@ export default function ListPage() {
         ))}
       </div>
 
-      {tab === 'lijst' && (
-        <LijstTab
-          cart={cart}
-          winkels={winkelsVoorLijst}
-          removeFromCart={removeFromCart}
-          clearCart={clearCart}
-          isAfgevinkt={isAfgevinkt}
-          toggleAfgevinkt={toggleAfgevinkt}
-          naarKok={() => setTab('kok')}
-        />
-      )}
-      {tab === 'kok' && <KokTab naarLijst={() => setTab('lijst')} />}
+      {tab === 'winkels' && <WinkelsTab />}
+      {tab === 'kok' && <KokTab naarLijst={() => navigate('/mandje')} />}
     </div>
   )
 }
 
-function LijstTab({ cart, winkels, removeFromCart, clearCart, isAfgevinkt, toggleAfgevinkt, naarKok }) {
+// De winkels gesorteerd op afstand tot de gebruiker, met logo, straat en afstand.
+// Tik op een winkel om het assortiment te bekijken en een route te starten.
+function WinkelsTab() {
   const navigate = useNavigate()
-
-  if (cart.length === 0) {
-    return (
-      <div className="space-y-5">
-        <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-100">
-          <p className="text-5xl">📝</p>
-          <p className="mt-3 text-slate-500">Je lijst is nog leeg.</p>
-          <button
-            onClick={naarKok}
-            className="mt-5 w-full rounded-full bg-violet-600 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 active:scale-[0.98]"
-          >
-            Praat met de kok
-          </button>
-          <button
-            onClick={() => navigate('/store/ah-xl')}
-            className="mt-2 w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200 active:scale-[0.98]"
-          >
-            Of blader door een winkel
-          </button>
-        </div>
-
-        {/* Zelf producten opzoeken en toevoegen — ook handig als startpunt. */}
-        <HandmatigToevoegen />
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-5">
-      {/* Eén platte boodschappenlijst van ingrediënten — nog niet aan een winkel
-          gekoppeld. Producten/prijzen verschijnen pas bij de winkelkeuze. */}
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-        <p className="mb-3 text-xs text-slate-400">
-          {cart.length} {cart.length === 1 ? 'item' : 'items'} op je lijst
-        </p>
-        <ul className="space-y-1">
-          {cart.map((it) => {
-            const af = isAfgevinkt(it.key)
-            return (
-              <li key={it.key} className="flex items-center gap-3 py-1.5">
-                <button
-                  onClick={() => toggleAfgevinkt(it.key)}
-                  aria-label={af ? 'Vink af' : 'Markeer als gepakt'}
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${
-                    af ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300 text-transparent'
-                  }`}
-                >
-                  ✓
-                </button>
-                <span className={`flex-1 text-sm ${af ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
-                  {it.label}
-                </span>
-                <button
-                  onClick={() => removeFromCart(it.key)}
-                  aria-label="Verwijderen"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
-                >
-                  ✕
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      {/* Zelf producten opzoeken en aan de lijst toevoegen. */}
-      <HandmatigToevoegen />
-
-      {/* Winkelkeuze: pas hier wordt de route gemaakt. De klant kiest waar hij
-          naartoe gaat; StorePage bouwt dan de route uit zijn lijst voor die winkel. */}
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-        <p className="mb-1 font-bold text-slate-800">Waar ga je naartoe?</p>
-        <p className="mb-3 text-xs text-slate-400">
-          Kies een winkel — dan matchen we je lijst met het assortiment en maken we de route.
-        </p>
-        {winkels.length === 0 ? (
-          <p className="rounded-xl bg-slate-50 px-3 py-4 text-center text-sm text-slate-400">
-            Nog geen winkel gevonden die deze lijst kan leveren.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {winkels.map(({ store, aantal, totaal, totaalPrijs }) => (
-              <button
-                key={store.id}
-                onClick={() => navigate(`/store/${store.id}`)}
-                className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
-              >
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                  style={{ backgroundColor: `${store.kleur}1a`, color: store.kleur }}
-                >
-                  {store.emoji}
-                </span>
-                <div className="flex-1">
-                  <p className="font-semibold text-slate-800">{store.naam}</p>
-                  <p className="text-xs text-slate-400">
-                    {aantal} van {totaal} items beschikbaar · ± € {totaalPrijs.toFixed(2)}
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm font-semibold text-violet-600">Start route →</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <button
-        onClick={clearCart}
-        className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-200 active:scale-[0.98]"
-      >
-        Lijst leegmaken
-      </button>
-    </div>
+  const gesorteerd = useMemo(
+    () =>
+      stores
+        .map((s) => ({ ...s, _afstand: afstandTotGebruiker(s) }))
+        .sort((a, b) => a._afstand - b._afstand),
+    [],
   )
-}
-
-// Laat de klant zelf producten opzoeken in het assortiment en handmatig aan de
-// lijst toevoegen — naast de kok. We zoeken in alle winkels op naam, merk en
-// categorie; toevoegen gebruikt dezelfde cart-logica, zodat de route- en
-// winkelkeuze gewoon blijven werken.
-function HandmatigToevoegen() {
-  const { allProductsLive, addToCart, inCart } = useStore()
-  const [zoek, setZoek] = useState('')
-
-  const resultaten = useMemo(() => {
-    const term = zoek.trim().toLowerCase()
-    if (!term) return []
-    return allProductsLive
-      .filter((p) => !inCart(p.id))
-      .filter((p) =>
-        [p.naam, p.merk, p.categorie].some((v) => v?.toLowerCase().includes(term)),
-      )
-      .slice(0, 6)
-  }, [zoek, allProductsLive, inCart])
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-      <p className="mb-1 font-bold text-slate-800">Zelf iets toevoegen</p>
-      <p className="mb-3 text-xs text-slate-400">Zoek een product en tik om het op je lijst te zetten.</p>
-
-      <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 ring-1 ring-slate-200 focus-within:ring-violet-300">
-        <span className="text-slate-400">🔍</span>
-        <input
-          value={zoek}
-          onChange={(e) => setZoek(e.target.value)}
-          placeholder="Bijv. melk, pasta, kipfilet…"
-          className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-        />
-        {zoek && (
-          <button
-            onClick={() => setZoek('')}
-            aria-label="Wissen"
-            className="text-slate-300 transition hover:text-slate-500"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
-      {zoek.trim() && (
-        <ul className="mt-3 space-y-1">
-          {resultaten.length === 0 ? (
-            <li className="px-1 py-2 text-sm text-slate-400">Geen product gevonden voor “{zoek.trim()}”.</li>
-          ) : (
-            resultaten.map((p) => (
-              <li key={p.id}>
-                <button
-                  onClick={() => {
-                    addToCart(p.id)
-                    setZoek('')
-                  }}
-                  className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
-                >
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium text-slate-800">{p.naam}</span>
-                    <span className="block text-xs text-slate-400">
-                      {p.merk} · € {p.prijs.toFixed(2)}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-lg font-semibold text-violet-600">＋</span>
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-    </section>
+    <div className="space-y-2">
+      {gesorteerd.map((s) => (
+        <button
+          key={s.id}
+          onClick={() => navigate(`/store/${s.id}`)}
+          className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
+        >
+          <StoreLogo store={s} sizeClass="h-12 w-12" emojiClass="text-xl" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-slate-800">{s.naam}</p>
+            <p className="truncate text-xs text-slate-500">{s.straat}</p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-sm font-semibold text-violet-600">{s._afstand} km</p>
+            <p className="text-[11px] text-slate-400">{s.type}</p>
+          </div>
+        </button>
+      ))}
+    </div>
   )
 }
 

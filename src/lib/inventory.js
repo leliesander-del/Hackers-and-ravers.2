@@ -50,7 +50,3 @@ export function parseProductQr(input) {
 
   return null
 }
-
-export function productQrPayload(productId) {
-  return `storenav://product/${productId}`
-}

@@ -33,11 +33,6 @@ export function saveFloorplan(storeId, elements) {
   return data
 }
 
-export function hasFloorplan(storeId) {
-  const plan = loadFloorplan(storeId)
-  return !!plan && plan.elements.length > 0
-}
-
 export function getEntrancePosition(storeId, fallback = { x: 50, y: 96 }) {
   const plan = loadFloorplan(storeId)
   if (!plan) return fallback

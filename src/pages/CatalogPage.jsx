@@ -4,6 +4,7 @@ import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { fuzzyZoekProducten } from '../lib/fuzzySearch.js'
 import BeheerNav from '../components/BeheerNav.jsx'
+import StoreLogo from '../components/StoreLogo.jsx'
 
 // Een product telt als "bijna op" zodra de totale voorraad hier of lager zit.
 const BIJNA_OP_DREMPEL = 5
@@ -68,7 +69,7 @@ export default function CatalogPage() {
       <header className="relative z-20 shrink-0 border-b border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="text-2xl">{store.emoji}</span>
+            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold text-slate-800">Catalogus</h1>
               <p className="truncate text-sm text-slate-500">{store.naam} · live voorraad</p>

@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import SignupPage from './pages/SignupPage.jsx'
 import StaffLoginPage from './pages/StaffLoginPage.jsx'
 import ListPage from './pages/ListPage.jsx'
+import MandjePage from './pages/MandjePage.jsx'
 import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
@@ -59,7 +60,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<ListPage />} />
         <Route path="lijst" element={<ListPage />} />
-        <Route path="mandje" element={<ListPage />} />
+        <Route path="mandje" element={<MandjePage />} />
         <Route path="meer" element={<MorePage />} />
         <Route path="store/:id" element={<StorePage />} />
         <Route path="store/:id/product/:pid" element={<ProductPage />} />
