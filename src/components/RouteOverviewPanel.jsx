@@ -26,7 +26,7 @@ export default function RouteOverviewPanel({
   return (
     <aside
       className={`flex flex-col rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 ${
-        compact ? 'max-h-44' : 'max-h-[min(70vh,520px)]'
+        compact ? 'max-h-64' : 'max-h-[min(70vh,520px)]'
       }`}
     >
       <div className="border-b border-slate-100 px-3 py-2">
