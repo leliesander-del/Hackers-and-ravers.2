@@ -92,6 +92,12 @@ export default function FloorplanEditorPage() {
     )
   }
 
+  function handleStyleChange(elId, patch) {
+    setElements((els) =>
+      els.map((el) => (el.id === elId ? normalizeElement({ ...el, ...patch }) : el)),
+    )
+  }
+
   function uitloggen() {
     saveFloorplan(store.id, elements)
     managerLogout()
@@ -166,6 +172,7 @@ export default function FloorplanEditorPage() {
           onSnapToggle={setSnapEnabled}
           onLabelChange={handleLabelChange}
           onSizeChange={handleSizeChange}
+          onStyleChange={handleStyleChange}
         />
       </div>
 
