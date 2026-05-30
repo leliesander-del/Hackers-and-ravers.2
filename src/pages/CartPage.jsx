@@ -23,7 +23,7 @@ export default function CartPage() {
 
   return (
     <div>
-      <PageHeader title="Mijn mandje" subtitle={`${cart.length} ${cart.length === 1 ? 'product' : 'producten'}`} back />
+      <PageHeader title="Boodschappen" subtitle={`${cart.length} ${cart.length === 1 ? 'product' : 'producten'} in je mandje`} />
 
       <div className="space-y-5 px-4 py-4">
         {cart.length === 0 ? (

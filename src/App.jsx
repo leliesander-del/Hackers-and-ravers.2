@@ -4,7 +4,6 @@ import BottomNav from './components/BottomNav.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import MapPage from './pages/MapPage.jsx'
-import ListPage from './pages/ListPage.jsx'
 import WalletPage from './pages/WalletPage.jsx'
 import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
@@ -31,7 +30,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="kaart" element={<MapPage />} />
-        <Route path="lijst" element={<ListPage />} />
+        <Route path="lijst" element={<CartPage />} />
         <Route path="wallet" element={<WalletPage />} />
         <Route path="meer" element={<MorePage />} />
         <Route path="store/:id" element={<StorePage />} />

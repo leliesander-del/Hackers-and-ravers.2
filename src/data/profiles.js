@@ -9,6 +9,7 @@ export const profiles = [
     type: 'lid',
     omschrijving: 'Premium · glutenvrij',
     kleur: '#7c3aed',
+    persoon: { email: 'sander@example.be', telefoon: '0470 12 34 56', adres: 'Korenmarkt 12, 9000 Gent' },
     voorkeuren: {
       afdelingen: ['boodschappen', 'elektronica'],
       merken: ['Schär', 'Lavazza', 'Apple', 'Alpro'],
@@ -26,6 +27,7 @@ export const profiles = [
     type: 'lid',
     omschrijving: 'Gezin · prijsbewust',
     kleur: '#0ea5e9',
+    persoon: { email: 'marc@example.be', telefoon: '0498 65 43 21', adres: 'Veldstraat 5, 9000 Gent' },
     voorkeuren: {
       afdelingen: ['boodschappen', 'speelgoed'],
       merken: ['Boni', 'Lego', 'Coca-Cola'],

@@ -6,7 +6,7 @@ const tabs = [
   { to: '/kaart', label: 'Winkels', icon: 'M4 4h16l1 5a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0L4 4ZM5 11v9h14v-9' },
   { to: '/lijst', label: 'Boodschappen', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
   { to: '/wallet', label: 'Wallet', icon: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm14 4h.01M3 9h18' },
-  { to: '/meer', label: 'Meer', icon: 'M5 12h.01M12 12h.01M19 12h.01' },
+  { to: '/meer', label: 'Profiel', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
 ]
 
 export default function BottomNav() {
