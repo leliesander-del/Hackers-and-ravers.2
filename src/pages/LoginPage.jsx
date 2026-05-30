@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Compass } from '../components/icons.jsx'
 import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
-import { DEMO_CUSTOMER_ACCOUNTS } from '../lib/demoCredentials.js'
 import {
   clearLoginAttempts,
   getLoginLockout,
   hashPassword,
   isLegacyPassword,
   recordFailedLogin,
-  verifyDemoPassword,
   verifyPassword,
 } from '../lib/security.js'
 import { AuthLayout, AuthLogo, Button, Input, Card } from '../components/ui/index.js'
@@ -36,14 +34,6 @@ export default function LoginPage() {
     const emailLower = email.trim().toLowerCase()
 
     try {
-      const demo = DEMO_CUSTOMER_ACCOUNTS.find((u) => u.email === emailLower)
-      if (demo && verifyDemoPassword(password, demo.passwordHash)) {
-        clearLoginAttempts()
-        login(demo.profileId, 'customer-demo')
-        navigate('/')
-        return
-      }
-
       const accounts = getAccounts()
       const account = accounts[emailLower]
       if (account && (await verifyPassword(password, account.password))) {
@@ -133,14 +123,6 @@ export default function LoginPage() {
             {loading ? 'Working…' : 'Log in'}
           </Button>
         </form>
-      </Card>
-
-      {/* Demo hints */}
-      <Card className="space-y-1.5 px-4 py-3.5">
-        <p className="mb-2 text-xs font-medium text-slate-400">Demo accounts</p>
-        <p className="font-mono text-xs text-slate-500">sander@neverlost.be / sander123</p>
-        <p className="font-mono text-xs text-slate-500">marc@neverlost.be / marc123</p>
-        <p className="font-mono text-xs text-slate-500">guest@neverlost.be / guest</p>
       </Card>
     </AuthLayout>
   )

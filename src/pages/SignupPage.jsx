@@ -55,8 +55,6 @@ const STEP_TITLES = [
 const STEP_COUNT = STEP_TITLES.length
 // Fixed brand accent color (violet) for new accounts.
 const ACCENT_COLOR = '#7c3aed'
-const DEMO_EMAILS = ['sander@neverlost.be', 'marc@neverlost.be', 'guest@neverlost.be']
-
 function CheckBadge() {
   return (
     <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600">
@@ -198,7 +196,7 @@ export default function SignupPage() {
     if (password.length > MAX_PASSWORD_LENGTH) return 'Password is too long (max. 128 characters).'
 
     const emailLower = trimmedEmail.toLowerCase()
-    if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
+    if (getAccounts()[emailLower]) {
       return 'An account with this email address already exists.'
     }
     return null
@@ -234,7 +232,7 @@ export default function SignupPage() {
 
     // Final check: one account per email address. Prevents silently overwriting
     // an existing account when the flow is resumed.
-    if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
+    if (getAccounts()[emailLower]) {
       setStep(1)
       setError('An account with this email address already exists.')
       return

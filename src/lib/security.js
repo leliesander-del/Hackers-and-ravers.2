@@ -5,28 +5,11 @@
 const SESSION_KEY = 'storenav.session'
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000 // 8 hours
 const PBKDF2_ITERATIONS = 120_000
-const DEMO_PEPPER = 'neverlost-demo-v1'
 export const MAX_PASSWORD_LENGTH = 128
 
 const LOGIN_ATTEMPTS_KEY = 'storenav.loginAttempts'
 const MAX_LOGIN_ATTEMPTS = 8
 const LOCKOUT_MS = 5 * 60 * 1000 // 5 minutes
-
-// ── Demo credential digests (FNV-1a over pepper + password) ──────────────────
-// Passwords are not stored as plaintext in source; digests are computed here.
-function demoPasswordDigest(password) {
-  let h = 0x811c9dc5
-  const s = DEMO_PEPPER + password
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i)
-    h = Math.imul(h, 0x01000193)
-  }
-  return (h >>> 0).toString(16).padStart(8, '0')
-}
-
-export function verifyDemoPassword(password, expectedHash) {
-  return demoPasswordDigest(password) === expectedHash
-}
 
 // ── User password hashing (PBKDF2-SHA256) ───────────────────────────────────
 function toBase64(bytes) {
@@ -92,7 +75,7 @@ export function isLegacyPassword(stored) {
 }
 
 // ── Session management (sessionStorage — not persistent across browser rest) ─
-/** @typedef {'customer-demo' | 'customer-account' | 'staff' | 'manager'} SessionType */
+/** @typedef {'customer-account' | 'staff' | 'manager'} SessionType */
 
 export function createSession(type, subject) {
   const session = {
@@ -148,7 +131,7 @@ export function isManagerSession() {
 
 export function isCustomerSession() {
   const session = getSession()
-  return session?.type === 'customer-demo' || session?.type === 'customer-account'
+  return session?.type === 'customer-account'
 }
 
 // ── Login rate limiting ─────────────────────────────────────────────────────
@@ -246,5 +229,3 @@ export function sanitizeHttpMethod(method) {
   return ALLOWED_HTTP_METHODS.has(upper) ? upper : 'GET'
 }
 
-// Pre-computed demo digests (used by demoCredentials.js and managers.js)
-export { demoPasswordDigest }

@@ -88,10 +88,6 @@ function loadAuthFromSession() {
     return { profileId: null, dynamicProfile: null, managerId: null }
   }
 
-  if (session.type === 'customer-demo') {
-    return { profileId: session.subject, dynamicProfile: null, managerId: null }
-  }
-
   clearSession()
   return { profileId: null, dynamicProfile: null, managerId: null }
 }
@@ -364,15 +360,14 @@ export function StoreProvider({ children }) {
     () => ({
       activeProfile,
       isLoggedIn: !!activeProfile,
-      // Real user with their own account (via signup/login), not a demo profile.
-      // Such a user may not freely switch between the demo profiles.
       isOwnAccount: !!dynamicProfile,
       isQualifiedStaff: qualifiedStaff,
-      login: (arg, sessionType = null) => {
+      login: (arg, sessionType) => {
         if (typeof arg === 'string') {
+          if (!sessionType) throw new Error('login(profileId) requires a session type.')
           setDynamicProfile(null)
           setProfileId(arg)
-          createSession(sessionType || 'customer-demo', arg)
+          createSession(sessionType, arg)
         } else if (arg && typeof arg === 'object') {
           setProfileId(null)
           setDynamicProfile(arg)

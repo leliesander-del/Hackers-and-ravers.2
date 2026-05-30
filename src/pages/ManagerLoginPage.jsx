@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useStore } from '../context/StoreContext.jsx'
+import { useStore, getAccounts } from '../context/StoreContext.jsx'
 import { stores, getStore } from '../data/stores.js'
-import { findManagerByCredentials, MANAGER_DEMO_HINTS } from '../data/managers.js'
+import { getManager } from '../data/managers.js'
 import StoreLogo from '../components/StoreLogo.jsx'
-import { clearLoginAttempts, getLoginLockout, recordFailedLogin } from '../lib/security.js'
+import {
+  clearLoginAttempts,
+  getLoginLockout,
+  recordFailedLogin,
+  verifyPassword,
+} from '../lib/security.js'
 import { AuthLayout, Button, Field, Select, Input, Card } from '../components/ui/index.js'
 
 export default function ManagerLoginPage() {
@@ -13,10 +18,12 @@ export default function ManagerLoginPage() {
   const [storeId, setStoreId] = useState(stores[0]?.id || '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const selectedStore = getStore(storeId)
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault()
+    setError('')
 
     const lockout = getLoginLockout()
     if (lockout.locked) {
@@ -24,17 +31,29 @@ export default function ManagerLoginPage() {
       return
     }
 
-    const manager = findManagerByCredentials(storeId, password.trim())
-    if (!manager) {
-      recordFailedLogin()
-      setError('Incorrect store or password.')
-      return
-    }
+    setLoading(true)
+    try {
+      const accounts = getAccounts()
+      let matchedManager = null
+      for (const account of Object.values(accounts)) {
+        if (account.role !== 'manager' || account.storeId !== storeId) continue
+        if (!(await verifyPassword(password.trim(), account.password))) continue
+        matchedManager = getManager(account.managerId)
+        if (matchedManager) break
+      }
 
-    clearLoginAttempts()
-    setError('')
-    managerLogin(manager.id)
-    navigate('/manage')
+      if (!matchedManager) {
+        recordFailedLogin()
+        setError('Incorrect store or password.')
+        return
+      }
+
+      clearLoginAttempts()
+      managerLogin(matchedManager.id)
+      navigate('/manage')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -71,30 +90,20 @@ export default function ManagerLoginPage() {
           <Field label="Password">
             <Input
               type="password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Demo password"
+              placeholder="Password"
               autoComplete="current-password"
             />
           </Field>
 
           {error && <p className="text-sm text-rose-600">{error}</p>}
 
-          <Button type="submit" size="lg" pill className="w-full">
-            Log in as manager
+          <Button type="submit" size="lg" pill disabled={loading} className="w-full">
+            {loading ? 'Working…' : 'Log in as manager'}
           </Button>
         </form>
-
-        <details className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
-          <summary className="cursor-pointer font-medium text-slate-600">Demo passwords</summary>
-          <ul className="mt-2 space-y-1">
-            {MANAGER_DEMO_HINTS.map(({ label, hint }) => (
-              <li key={label}>
-                {label} → <code className="text-brand-600">{hint}</code>
-              </li>
-            ))}
-          </ul>
-        </details>
       </Card>
     </AuthLayout>
   )
