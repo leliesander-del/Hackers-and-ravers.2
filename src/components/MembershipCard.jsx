@@ -5,10 +5,10 @@ export default function MembershipCard({ profile }) {
   const isGast = profile.type === 'gast'
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1">
+    <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
       <Link
         to="/wallet"
-        className="flex min-w-[60%] flex-col justify-between rounded-2xl bg-white p-4 shadow-sm"
+        className="flex min-w-[60%] flex-col justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 transition active:scale-[0.98]"
       >
         <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-violet-600">
           ◆
@@ -22,11 +22,11 @@ export default function MembershipCard({ profile }) {
         </div>
       </Link>
 
-      <div className="flex min-w-[55%] flex-col justify-between rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 p-4 text-white shadow-sm">
+      <div className="flex min-w-[55%] flex-col justify-between rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 p-4 text-white shadow-md shadow-violet-200">
         <div className="flex gap-1 text-lg">🛍️</div>
         <div>
           <p className="text-sm font-semibold leading-snug">Klaar voor je volgende aankoop</p>
-          <Link to="/lijst" className="mt-1 inline-block text-xs underline">
+          <Link to="/kaart" className="mt-1 inline-block text-xs underline">
             Shop nu
           </Link>
         </div>

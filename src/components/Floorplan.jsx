@@ -4,7 +4,7 @@ import FloorplanRenderer from './floorplan/FloorplanRenderer.jsx'
 import InteractiveFloorplan from './InteractiveFloorplan.jsx'
 
 // Toont de door de winkelbeheerder opgeslagen plattegrond, of anders de interactieve demo-plattegrond.
-export default function Floorplan({ storeId, products, highlightId, highlight }) {
+export default function Floorplan({ storeId, products, highlightId, highlight, routeIds }) {
   const { elements, hasPlan } = useFloorplan(storeId)
 
   if (hasPlan) {
@@ -20,6 +20,11 @@ export default function Floorplan({ storeId, products, highlightId, highlight })
   }
 
   return (
-    <InteractiveFloorplan products={products} highlightId={highlightId} highlight={highlight} />
+    <InteractiveFloorplan
+      products={products}
+      highlightId={highlightId}
+      highlight={highlight}
+      routeIds={routeIds}
+    />
   )
 }

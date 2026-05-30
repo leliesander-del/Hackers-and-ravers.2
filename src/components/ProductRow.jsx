@@ -14,9 +14,9 @@ export default function ProductRow({ product }) {
   const label = voorraadLabel(product)
 
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-slate-200">
       <Link to={`product/${product.id}`} className="flex flex-1 items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-lg">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">
           🛒
         </span>
         <span className="flex-1">
@@ -49,8 +49,8 @@ export default function ProductRow({ product }) {
       {product.opVoorraad ? (
         <button
           onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition ${
-            zit ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-600'
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
+            zit ? 'bg-violet-600 text-white shadow-sm shadow-violet-300' : 'bg-violet-100 text-violet-600'
           }`}
           aria-label={zit ? 'Verwijder uit mandje' : 'Voeg toe aan mandje'}
         >

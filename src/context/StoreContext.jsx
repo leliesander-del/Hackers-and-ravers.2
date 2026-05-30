@@ -10,8 +10,20 @@ const StoreContext = createContext(null)
 const PROFIEL_KEY = 'storenav.profielId'
 const CART_KEY = 'storenav.cart'
 const MANAGER_KEY = 'storenav.managerId'
+const EDITS_KEY = 'storenav.profielEdits'
 const INVENTORY_KEY = 'storenav.inventory'
 const STAFF_LOG_KEY = 'storenav.staffLog'
+
+// Voegt de door de gebruiker bewerkte velden samen met het basisprofiel.
+function mergeProfile(base, edit) {
+  if (!base || !edit) return base
+  return {
+    ...base,
+    ...edit,
+    voorkeuren: base.voorkeuren ? { ...base.voorkeuren, ...(edit.voorkeuren || {}) } : base.voorkeuren,
+    persoon: { ...(base.persoon || {}), ...(edit.persoon || {}) },
+  }
+}
 
 function loadInventory() {
   try {
@@ -41,6 +53,13 @@ export function StoreProvider({ children }) {
     }
   })
   const [managerId, setManagerId] = useState(() => localStorage.getItem(MANAGER_KEY) || null)
+  const [edits, setEdits] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(EDITS_KEY)) || {}
+    } catch {
+      return {}
+    }
+  })
   const [inventory, setInventory] = useState(loadInventory)
   const [staffLog, setStaffLog] = useState(loadStaffLog)
 
@@ -59,6 +78,10 @@ export function StoreProvider({ children }) {
   }, [managerId])
 
   useEffect(() => {
+    localStorage.setItem(EDITS_KEY, JSON.stringify(edits))
+  }, [edits])
+
+  useEffect(() => {
     localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory))
   }, [inventory])
 
@@ -66,34 +89,27 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STAFF_LOG_KEY, JSON.stringify(staffLog.slice(0, 50)))
   }, [staffLog])
 
-  const activeProfile = useMemo(() => getProfile(profielId), [profielId])
+  const activeProfile = useMemo(() => mergeProfile(getProfile(profielId), edits[profielId]), [profielId, edits])
   const activeManager = useMemo(() => getManager(managerId), [managerId])
   const gekwalificeerdPersoneel = useMemo(() => isGekwalificeerdeBediende(activeProfile), [activeProfile])
 
   const getStock = useCallback((productId) => inventory[productId] ?? { magazijn: 0, schap: 0 }, [inventory])
 
-  const getProductLive = useCallback(
-    (id) => enrichProduct(getProduct(id), getStock(id)),
-    [getStock],
-  )
+  const getProductLive = useCallback((id) => enrichProduct(getProduct(id), getStock(id)), [getStock])
 
   const productsByStoreLive = useCallback(
     (storeId) => products.filter((p) => p.storeId === storeId).map((p) => enrichProduct(p, getStock(p.id))),
     [getStock],
   )
 
-  const allProductsLive = useMemo(
-    () => products.map((p) => enrichProduct(p, getStock(p.id))),
-    [getStock],
-  )
+  const allProductsLive = useMemo(() => products.map((p) => enrichProduct(p, getStock(p.id))), [getStock])
 
   const cart = useMemo(() => cartIds.map(getProductLive).filter(Boolean), [cartIds, getProductLive])
 
   const logStaffActie = useCallback((tekst) => {
-    setStaffLog((log) => [
-      { id: Date.now(), tekst, tijd: new Date().toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) },
-      ...log,
-    ].slice(0, 50))
+    setStaffLog((log) =>
+      [{ id: Date.now(), tekst, tijd: new Date().toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) }, ...log].slice(0, 50),
+    )
   }, [])
 
   const verplaatsNaarSchap = useCallback(
@@ -107,10 +123,7 @@ export function StoreProvider({ children }) {
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: {
-          magazijn: stock.magazijn - aantal,
-          schap: stock.schap + aantal,
-        },
+        [productId]: { magazijn: stock.magazijn - aantal, schap: stock.schap + aantal },
       }))
       logStaffActie(`${aantal}× ${product.naam} → schap (magazijn −${aantal})`)
       return { ok: true }
@@ -129,10 +142,7 @@ export function StoreProvider({ children }) {
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: {
-          magazijn: stock.magazijn,
-          schap: stock.schap - aantal,
-        },
+        [productId]: { magazijn: stock.magazijn, schap: stock.schap - aantal },
       }))
       logStaffActie(`${aantal}× ${product.naam} verkocht (schap −${aantal})`)
       return { ok: true }
@@ -174,6 +184,20 @@ export function StoreProvider({ children }) {
       isManagerIngelogd: !!activeManager,
       managerLogin: (id) => setManagerId(id),
       managerLogout: () => setManagerId(null),
+      updateProfile: (patch) =>
+        setEdits((e) => {
+          if (!profielId) return e
+          const huidig = e[profielId] || {}
+          return {
+            ...e,
+            [profielId]: {
+              ...huidig,
+              ...patch,
+              voorkeuren: patch.voorkeuren ? { ...(huidig.voorkeuren || {}), ...patch.voorkeuren } : huidig.voorkeuren,
+              persoon: patch.persoon ? { ...(huidig.persoon || {}), ...patch.persoon } : huidig.persoon,
+            },
+          }
+        }),
       betaalMandje,
       inventory,
       getStock,
@@ -190,6 +214,7 @@ export function StoreProvider({ children }) {
       gekwalificeerdPersoneel,
       cart,
       cartIds,
+      profielId,
       inventory,
       getStock,
       getProductLive,

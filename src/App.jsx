@@ -4,7 +4,6 @@ import BottomNav from './components/BottomNav.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import MapPage from './pages/MapPage.jsx'
-import ListPage from './pages/ListPage.jsx'
 import WalletPage from './pages/WalletPage.jsx'
 import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
@@ -21,7 +20,7 @@ function AppShell() {
   if (!isIngelogd) return <Navigate to="/login" replace />
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-[#f6f4fc] pb-20 shadow-xl">
+    <div className="relative mx-auto min-h-screen max-w-md bg-[#f7f5fd] pb-24 shadow-[0_0_60px_rgba(76,29,149,0.08)] ring-1 ring-black/5">
       <Outlet />
       <BottomNav />
     </div>
@@ -37,7 +36,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="kaart" element={<MapPage />} />
-        <Route path="lijst" element={<ListPage />} />
+        <Route path="lijst" element={<CartPage />} />
         <Route path="wallet" element={<WalletPage />} />
         <Route path="meer" element={<MorePage />} />
         <Route path="store/:id" element={<StorePage />} />

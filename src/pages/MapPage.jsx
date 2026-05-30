@@ -33,7 +33,7 @@ export default function MapPage() {
               <Link
                 key={s.id}
                 to={`/store/${s.id}`}
-                className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
+                className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-200 active:scale-[0.99]"
               >
                 <StoreLogo store={s} sizeClass="h-12 w-12" emojiClass="text-2xl" />
                 <span className="flex-1">

@@ -2,8 +2,11 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  color: #1e293b;
 }
 
 html,
@@ -14,7 +17,34 @@ body,
 }
 
 body {
-  background: #f4f2fb;
+  /* Zachte verticale gradient als rustige achtergrond */
+  background: linear-gradient(180deg, #f3f0fc 0%, #f6f4fb 40%, #eef0f7 100%);
+  background-attachment: fixed;
+}
+
+/* Nettere mobiele interactie */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Zichtbare maar subtiele focus voor toetsenbordgebruik */
+:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Verberg scrollbars bij horizontale rijen (bv. de wallet-kaarten) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Volledig scherm voor winkelbeheer-editor (desktop) */
@@ -24,7 +54,6 @@ body {
   overflow: hidden;
 }
 
-/* Verberg de standaard Leaflet-attributie-rand netjes */
 .leaflet-container {
   font-family: inherit;
 }
