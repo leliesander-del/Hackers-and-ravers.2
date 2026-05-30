@@ -11,7 +11,7 @@ import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
-import StaffPage from './pages/StaffPage.jsx'
+import StaffVerkoopPage from './pages/StaffVerkoopPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 
 // De klant-shell met onderbalk. Wie niet ingelogd is gaat naar /login;
@@ -39,8 +39,10 @@ export default function App() {
       {/* Personeel — volledig eigen login en shell, gescheiden van klanten */}
       <Route path="/personeel/login" element={<StaffLoginPage />} />
       <Route element={<StaffShell />}>
-        <Route path="/personeel" element={<StaffPage />} />
-        <Route path="/personeel/dashboard" element={<DashboardPage />} />
+        <Route path="/personeel" element={<DashboardPage />} />
+        <Route path="/personeel/kassa" element={<StaffVerkoopPage />} />
+        <Route path="/personeel/verkoop" element={<Navigate to="/personeel/kassa" replace />} />
+        <Route path="/personeel/dashboard" element={<Navigate to="/personeel" replace />} />
       </Route>
 
       {/* Winkelbeheer (plattegrond) */}

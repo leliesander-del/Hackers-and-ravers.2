@@ -52,7 +52,7 @@ export function fuzzyZoekProducten(producten, query) {
 
   return producten
     .map((p) => {
-      const velden = [p.naam, p.merk, p.categorie, p.schaplocatie?.label, p.id?.replace(/^p-/, '').replace(/-/g, ' ')]
+      const velden = [p.naam, p.merk, p.categorie, p.rekkenlocatie?.label, p.id?.replace(/^p-/, '').replace(/-/g, ' ')]
       const score = Math.max(...velden.filter(Boolean).map((v) => scoreTekst(v, q)))
       return { product: p, score }
     })

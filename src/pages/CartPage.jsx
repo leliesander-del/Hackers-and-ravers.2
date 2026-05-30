@@ -26,7 +26,7 @@ export default function CartPage() {
     const result = betaalMandje()
     if (result.ok) {
       setOpenMap(null)
-      setBetaalStatus({ type: 'ok', tekst: 'Betaling gelukt! Voorraad op schap is bijgewerkt.' })
+      setBetaalStatus({ type: 'ok', tekst: 'Betaling gelukt! Voorraad op rekken is bijgewerkt.' })
     } else {
       setBetaalStatus({ type: 'fout', tekst: result.fout })
     }
@@ -74,7 +74,7 @@ export default function CartPage() {
                         <div className="flex-1">
                           <p className="font-medium text-slate-800">{p.naam}</p>
                           <p className="text-xs text-slate-500">
-                            {p.merk} · {p.schaplocatie?.label}
+                            {p.merk} · {p.rekkenlocatie?.label}
                           </p>
                         </div>
                         <span className="font-semibold text-slate-700">€ {p.prijs.toFixed(2)}</span>

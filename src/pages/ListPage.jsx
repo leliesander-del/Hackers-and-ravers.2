@@ -146,7 +146,7 @@ function LijstTab({ perWinkel, cartTotaal, removeFromCart, clearCart, isAfgevink
                     <span className={`flex-1 text-sm ${af ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                       {p.naam}
                     </span>
-                    <span className="text-[11px] text-slate-400">{p.schaplocatie?.label}</span>
+                    <span className="text-[11px] text-slate-400">{p.rekkenlocatie?.label}</span>
                     <button
                       onClick={() => removeFromCart(p.id)}
                       aria-label="Verwijderen"

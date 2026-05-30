@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 // Interactieve 2D-plattegrond.
 // - Elke "gang" heeft een looppad in het midden met aaneengesloten vierkante rekken
@@ -36,10 +36,10 @@ function kort(naam, max) {
 function buildLayout(products) {
   const gangen = new Map()
   for (const p of products) {
-    if (!p.schaplocatie) continue
-    const key = p.schaplocatie.label
+    if (!p.rekkenlocatie) continue
+    const key = p.rekkenlocatie.label
     if (!gangen.has(key)) {
-      gangen.set(key, { label: key, cx: p.schaplocatie.x, cy: p.schaplocatie.y, items: [] })
+      gangen.set(key, { label: key, cx: p.rekkenlocatie.x, cy: p.rekkenlocatie.y, items: [] })
     }
     gangen.get(key).items.push(p)
   }
