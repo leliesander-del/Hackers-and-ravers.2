@@ -54,7 +54,16 @@ export default function EditorCanvas({
       rotation: 0,
       w: def.defaultW,
       h: def.defaultH,
-      label: type === 'vast-rek' || type === 'tijdelijk-rek' ? '' : undefined,
+      label:
+        type === 'kassa'
+          ? 'KASSA'
+          : type === 'ingang'
+            ? 'Ingang'
+            : type === 'uitgang'
+              ? 'Uitgang'
+              : getFloorplanType(type)?.labelable
+                ? ''
+                : undefined,
     })
     const snapped = snapElement(draft, x, y, elements, snapEnabled)
     const el = { ...draft, ...snapped }
@@ -154,7 +163,7 @@ export default function EditorCanvas({
   return (
     <main className="min-h-0 flex-1 overflow-y-auto bg-[#f6f4fc]">
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-8">
-        <div className="rounded-2xl bg-white p-4 shadow-md ring-1 ring-violet-100">
+        <div className="border border-violet-100 bg-white p-4 shadow-md">
           <FloorplanRenderer
             svgRef={svgRef}
             elements={elements}

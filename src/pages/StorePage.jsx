@@ -104,7 +104,7 @@ export default function StorePage() {
           <div>
             <p className="mb-2 text-xs text-slate-400">
               {mijnStops.length > 0
-                ? 'De snelste route langs de producten uit je mandje — de cijfers tonen de volgorde.'
+                ? 'Tik op de kaart om je startpunt te kiezen — daarna loopt de route langs je producten naar de uitgang.'
                 : 'Voeg producten toe aan je mandje om de route te zien.'}
             </p>
             <Floorplan storeId={store.id} products={winkelProducten} routeIds={mijnStops} />

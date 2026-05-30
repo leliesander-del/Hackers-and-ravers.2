@@ -1,13 +1,11 @@
-import {
-  elementSize,
-  getBounds,
-  isResizable,
-  isShelf,
-  rotationDegrees,
-} from '../../lib/floorplanGeometry.js'
+import { elementSize, isResizable, isShelf, rotationDegrees } from '../../lib/floorplanGeometry.js'
+import { getElementStyle, resolveElementLabel } from '../../lib/floorplanElementStyle.js'
+import { shelfFrontApproachWorld } from '../../lib/shelfFront.js'
+import ShelfVisual from './ShelfVisual.jsx'
 
-const HANDLE_R = 1.8
-const HANDLE_HIT = 2.8
+// Zichtbare hoekgreep vs. grotere onzichtbare klikzone (viewBox 100×104)
+const HANDLE_R = 0.55
+const HANDLE_HIT = 1.25
 
 const GRID_MINOR = 2
 const GRID_MAJOR = 10
@@ -45,104 +43,92 @@ function EditorGrid() {
   return <g aria-hidden="true">{lines}</g>
 }
 
-function ShelfVisual({ w, h, variant, label, selected, uid }) {
-  const isTemp = variant === 'tijdelijk-rek'
-  const gradId = isTemp ? `rekTempGrad-${uid}` : `rekVastGrad-${uid}`
-  const rows = Math.max(2, Math.floor(h / 2.8))
+function truncateLabel(label, max = 18) {
+  if (!label) return ''
+  return label.length > max ? `${label.slice(0, max - 1)}…` : label
+}
+
+function KassaVisual({ el, w, h, selected }) {
+  const style = getElementStyle(el)
+  const label = resolveElementLabel(el)
+  const screenH = h * 0.42
+  const baseH = h * 0.18
+  const labelBandH = Math.max(1.2, h - screenH - baseH - 1.6)
+  const labelY = -h / 2 + screenH + 0.8 + labelBandH / 2
+  const fontSize = Math.min(style.textSize, w / 5, labelBandH * 0.85)
 
   return (
     <>
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          {isTemp ? (
-            <>
-              <stop offset="0%" stopColor="#e9d5ff" />
-              <stop offset="100%" stopColor="#c4b5fd" />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor="#7c3aed" />
-              <stop offset="100%" stopColor="#5b21b6" />
-            </>
-          )}
-        </linearGradient>
-      </defs>
       <rect
         x={-w / 2}
         y={-h / 2}
         width={w}
         height={h}
-        rx="2.2"
-        fill={`url(#${gradId})`}
-        stroke={selected ? '#f5f3ff' : isTemp ? '#a78bfa' : '#4c1d95'}
-        strokeWidth={selected ? 0.7 : 0.45}
-        strokeDasharray={isTemp ? '1.5 0.8' : undefined}
+        fill={style.fillColor}
+        stroke={selected ? '#f8fafc' : style.strokeColor}
+        strokeWidth={selected ? 0.75 : 0.55}
       />
-      {Array.from({ length: rows }).map((_, i) => {
-        const y = -h / 2 + (h / (rows + 1)) * (i + 1)
-        return (
-          <line
-            key={i}
-            x1={-w / 2 + 1}
-            y1={y}
-            x2={w / 2 - 1}
-            y2={y}
-            stroke={isTemp ? '#8b5cf6' : '#ddd6fe'}
-            strokeWidth="0.25"
-            opacity="0.7"
-          />
-        )
-      })}
-      {label && (
-        <text
-          y={0}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={Math.min(2.4, w / 6, h / 2.8)}
-          fontWeight="600"
-          fill="#0f172a"
-          pointerEvents="none"
-        >
-          {label.length > 16 ? `${label.slice(0, 15)}…` : label}
-        </text>
-      )}
+      <rect
+        x={-w / 2 + 0.8}
+        y={-h / 2 + 0.8}
+        width={w - 1.6}
+        height={screenH}
+        fill={style.screenColor}
+        stroke={style.strokeColor}
+        strokeWidth="0.3"
+      />
+      <rect
+        x={-w / 2 + 0.8}
+        y={h / 2 - baseH - 0.8}
+        width={w - 1.6}
+        height={baseH}
+        fill={style.accentColor}
+        stroke="none"
+      />
+      <rect x={w / 2 - 2.4} y={-h / 2 + 0.8} width="1.2" height="1.2" fill="#22c55e" />
+      <text
+        y={labelY}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={fontSize}
+        fontWeight="800"
+        letterSpacing="0.08"
+        fill={style.textColor}
+        pointerEvents="none"
+      >
+        {truncateLabel(label, 14)}
+      </text>
     </>
   )
 }
 
-function KassaVisual({ w, h, selected, uid }) {
+function DoorVisual({ el, w, h, selected }) {
+  const style = getElementStyle(el)
+  const label = resolveElementLabel(el)
+  const fontSize = Math.min(style.textSize, w / 4.5, h / 2.2)
+
   return (
     <>
-      <defs>
-        <linearGradient id={`kassaGrad-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#6d28d9" />
-        </linearGradient>
-      </defs>
       <rect
         x={-w / 2}
         y={-h / 2}
         width={w}
         height={h}
-        rx="2.5"
-        fill={`url(#kassaGrad-${uid})`}
-        stroke={selected ? '#ede9fe' : '#4c1d95'}
-        strokeWidth={selected ? 0.7 : 0.5}
+        fill={style.fillColor}
+        stroke={selected ? '#f8fafc' : style.strokeColor}
+        strokeWidth={selected ? 0.75 : 0.55}
       />
-      <rect
-        x={-w / 2 + 1.2}
-        y={-h / 2 + 1.2}
-        width={w - 2.4}
-        height={h * 0.45}
-        rx="1"
-        fill="#f5f3ff"
-        opacity="0.95"
-      />
-      <rect x={-w / 2 + 2} y={h / 2 - 2.8} width={w - 4} height="1.6" rx="0.4" fill="#c4b5fd" />
-      <text y={-h / 2 + h * 0.28} textAnchor="middle" fontSize="2.2" fontWeight="700" fill="#5b21b6">
-        KASSA
+      <text
+        y={0.1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={fontSize}
+        fontWeight="700"
+        fill={style.textColor}
+        pointerEvents="none"
+      >
+        {truncateLabel(label, 20)}
       </text>
-      <circle cx={w / 2 - 2} cy={-h / 2 + 2} r="0.7" fill="#22c55e" />
     </>
   )
 }
@@ -175,10 +161,9 @@ function ResizeHandles({ w, h, onResizePointerDown, elId }) {
         y={hy - HANDLE_R}
         width={HANDLE_R * 2}
         height={HANDLE_R * 2}
-        rx="0.5"
         fill="#fff"
         stroke="#7c3aed"
-        strokeWidth="0.5"
+        strokeWidth="0.35"
         pointerEvents="none"
       />
     </g>
@@ -189,6 +174,7 @@ function FloorplanElement({
   el,
   selected,
   editorMode,
+  rackState,
   onSelect,
   onPointerDown,
   onDoubleClick,
@@ -196,6 +182,9 @@ function FloorplanElement({
 }) {
   const { w, h } = elementSize(el)
   const rot = rotationDegrees(el)
+
+  const isRack = isShelf(el.type)
+  const customerMode = !editorMode
 
   const handlers = onPointerDown
     ? {
@@ -219,9 +208,11 @@ function FloorplanElement({
           },
           style: { cursor: 'pointer' },
         }
-      : {}
+      : customerMode
+        ? { style: { pointerEvents: isRack ? 'all' : 'none' } }
+        : {}
 
-  const transform = rot ? `rotate(${rot} ${el.x} ${el.y})` : undefined
+  const rotTransform = rot ? `rotate(${rot})` : undefined
   const showHandles = editorMode && selected && isResizable(el.type)
 
   const inner = () => {
@@ -232,66 +223,26 @@ function FloorplanElement({
           y={-h / 2}
           width={w}
           height={h}
-          rx={0.5}
           fill="#1e293b"
           stroke={selected ? '#a78bfa' : '#0f172a'}
           strokeWidth={selected ? 0.7 : 0}
         />
       )
     }
-    if (el.type === 'vast-rek' || el.type === 'tijdelijk-rek') {
-      return (
-        <ShelfVisual
-          w={w}
-          h={h}
-          variant={el.type}
-          label={el.label}
-          selected={selected}
-          uid={el.id}
-        />
-      )
+    if (isRack) {
+      return <ShelfVisual el={el} w={w} h={h} selected={selected} rackState={rackState} />
     }
     if (el.type === 'kassa') {
-      return <KassaVisual w={w} h={h} selected={selected} uid={el.id} />
+      return <KassaVisual el={el} w={w} h={h} selected={selected} />
     }
-    if (el.type === 'ingang') {
-      return (
-        <>
-          <circle r="2.2" fill="#dcfce7" stroke="#16a34a" strokeWidth="0.5" />
-          <text y="0.6" textAnchor="middle" fontSize="3.6" fontWeight="700" fill="#16a34a">
-            Ingang
-          </text>
-        </>
-      )
-    }
-    if (el.type === 'uitgang') {
-      return (
-        <>
-          <circle r="2.2" fill="#fee2e2" stroke="#dc2626" strokeWidth="0.5" />
-          <text y="0.6" textAnchor="middle" fontSize="3.6" fontWeight="700" fill="#dc2626">
-            Uitgang
-          </text>
-        </>
-      )
+    if (el.type === 'ingang' || el.type === 'uitgang') {
+      return <DoorVisual el={el} w={w} h={h} selected={selected} />
     }
     return null
   }
 
-  if (el.type === 'ingang' || el.type === 'uitgang') {
-    return (
-      <g transform={`translate(${el.x} ${el.y})`} {...handlers}>
-        {inner()}
-        {selected && (
-          <rect x={-9} y={-5} width="18" height="10" fill="none" stroke="#7c3aed" strokeWidth="0.5" rx="1" />
-        )}
-      </g>
-    )
-  }
-
-  const rotTransform = rot ? `rotate(${rot})` : undefined
-
   return (
-    <g transform={`translate(${el.x} ${el.y})`}>
+    <g transform={`translate(${el.x} ${el.y})`} data-rack={isRack && customerMode ? 'true' : undefined}>
       <g transform={rotTransform} {...handlers}>
         {inner()}
         {selected && !showHandles && (
@@ -303,7 +254,6 @@ function FloorplanElement({
             fill="none"
             stroke="#7c3aed"
             strokeWidth="0.5"
-            rx="2.5"
             pointerEvents="none"
           />
         )}
@@ -328,12 +278,21 @@ export default function FloorplanRenderer({
   onElementPointerDown,
   onElementDoubleClick,
   onResizePointerDown,
-  className = 'w-full rounded-2xl bg-white shadow-sm',
-  showShelves = true,
+  className = 'w-full bg-white shadow-sm',
+  showShelves = false,
+  rackStates,
+  viewBox,
   svgRef,
   onSvgPointerDown,
+  onSvgPointerMove,
+  onSvgPointerUp,
   onDragOver,
   onDrop,
+  routePath,
+  startPos,
+  orderedStops = [],
+  currentIndex = 0,
+  visitedIds,
 }) {
   const rekkenLocaties = []
   if (showShelves) {
@@ -346,15 +305,19 @@ export default function FloorplanRenderer({
 
   const ingangEl = elements.find((el) => el.type === 'ingang')
   const ingang = entrance || (ingangEl ? { x: ingangEl.x, y: ingangEl.y } : { x: 50, y: 96 })
+  const vb = viewBox ? `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}` : '0 0 100 104'
 
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 100 104"
+      viewBox={vb}
       className={className}
       role="img"
       aria-label="Plattegrond"
       onPointerDown={onSvgPointerDown}
+      onPointerMove={onSvgPointerMove}
+      onPointerUp={onSvgPointerUp}
+      onPointerLeave={onSvgPointerUp}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -366,15 +329,15 @@ export default function FloorplanRenderer({
       </defs>
 
       <rect
+        data-floor="true"
         x="2"
         y="2"
         width="96"
         height="100"
-        rx="4"
         fill="url(#vloerGrad)"
         stroke="#0f172a"
         strokeWidth="1.2"
-        onPointerDown={onSvgPointerDown}
+        pointerEvents={editorMode ? undefined : 'all'}
       />
 
       {editorMode && <EditorGrid />}
@@ -385,6 +348,7 @@ export default function FloorplanRenderer({
           el={el}
           selected={selectedId === el.id}
           editorMode={editorMode}
+          rackState={rackStates?.get(el.id)}
           onSelect={onSelectElement}
           onPointerDown={onElementPointerDown}
           onDoubleClick={onElementDoubleClick}
@@ -392,7 +356,48 @@ export default function FloorplanRenderer({
         />
       ))}
 
-      {highlight && (
+      {routePath && (
+        <>
+          <path
+            d={routePath}
+            fill="none"
+            stroke="#7c3aed"
+            strokeWidth="1.4"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+            pointerEvents="none"
+          />
+          <circle r="1.4" fill="#7c3aed" pointerEvents="none">
+            <animateMotion path={routePath} dur={`${Math.max(5, orderedStops.length * 2.5)}s`} repeatCount="indefinite" />
+          </circle>
+        </>
+      )}
+
+      {orderedStops.map((stop, k) => {
+        const done = visitedIds?.has(stop.rackId)
+        const current = k === currentIndex && !done
+        if (done) return null
+        const front = shelfFrontApproachWorld(stop.element)
+        return (
+          <g key={`stop-${stop.rackId}`} pointerEvents="none">
+            <circle cx={front.x} cy={front.y} r={current ? 2.8 : 2.2} fill={current ? '#7c3aed' : '#a78bfa'} stroke="#fff" strokeWidth="0.4" />
+            <text x={front.x} y={front.y + 0.85} textAnchor="middle" fontSize="2.6" fontWeight="700" fill="#fff">
+              {k + 1}
+            </text>
+          </g>
+        )
+      })}
+
+      {startPos && (
+        <g pointerEvents="none">
+          <circle cx={startPos.x} cy={startPos.y} r="2.8" fill="#2563eb" stroke="#fff" strokeWidth="0.8" />
+          <circle cx={startPos.x} cy={startPos.y} r="4.2" fill="none" stroke="#2563eb" strokeWidth="0.35" opacity="0.5">
+            <animate attributeName="r" values="4.2;5.5;4.2" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      )}
+
+      {highlight && !routePath && (
         <line
           x1={ingang.x}
           y1={ingang.y}
@@ -414,7 +419,6 @@ export default function FloorplanRenderer({
                 y={s.y - 3}
                 width="10"
                 height="6"
-                rx="1"
                 fill={actief ? '#ede9fe' : '#fef3c7'}
                 stroke={actief ? '#7c3aed' : '#f59e0b'}
                 strokeWidth="0.4"
