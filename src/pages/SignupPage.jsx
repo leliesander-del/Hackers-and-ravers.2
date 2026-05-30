@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Check, ChevronLeft, ChevronRight, Compass } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Compass } from '../components/icons.jsx'
 import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
 
 const DIEET_OPTIES = ['Glutenvrij', 'Lactosevrij', 'Vegetarisch', 'Veganistisch', 'Suikervrij']

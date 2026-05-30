@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Compass } from 'lucide-react'
+import { Compass } from '../components/icons.jsx'
 import { useStore, getAccounts } from '../context/StoreContext.jsx'
 
 const DEMO_ACCOUNTS = [
