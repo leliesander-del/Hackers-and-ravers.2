@@ -1,156 +1,115 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  buildLayout,
+  clampView,
+  clientToSvgCoords,
+  EXIT,
+  FULL,
+  kort,
+  MIN_W,
+} from '../lib/floorplanLayout.js'
+import {
+  buildStoreNetwork,
+  collectRackStops,
+  computeShoppingRoute,
+  corridorBands,
+  rackSlotsForStop,
+} from '../lib/floorplanRoute.js'
+import RouteOverviewPanel from './RouteOverviewPanel.jsx'
+import ShelfVisual from './floorplan/ShelfVisual.jsx'
+import { demoRackElement, demoRackSize } from '../lib/demoRackElement.js'
+import { demoRackFrontApproach, demoRackRotation } from '../lib/shelfFront.js'
 
-// Interactieve 2D-plattegrond.
-// - Elke "gang" heeft een looppad in het midden met aaneengesloten vierkante rekken
-//   links en rechts ervan; ├®├®n vierkant per product in die gang.
-// - Boven elke gang staat een lijstje met welke producten er precies in zitten.
-// - Bij inzoomen verschijnen de productnamen naast de rekken (meer detail).
-// - Een blauw bolletje ("me") toont waar jij staat. Een gestippelde route loopt
-//   langs de gangen naar het rek; met `routeIds` loopt hij in de snelste volgorde
-//   langs meerdere producten (genummerde stops).
-// - In-/uitzoomen met de knoppen of slepen om te pannen.
-
-const FULL = { x: 0, y: 0, w: 100, h: 104 }
-const MIN_W = 26
-const PERSON = { x: 50, y: 93 }
-const LOOP_AISLE_Y = 85 // horizontale hoofdgang onderaan
-
-const AISLE_HALF = 2 // halve breedte van het looppad (ruimte voor de route)
-const RACK_W = 7 // breedte van een rek
-const RACK_H = 5.5 // lengte van een rek (langs de gang)
-const SIDE_OFF = AISLE_HALF + RACK_W / 2 // afstand looppad-midden -> rek-midden
-
-function clampView(v) {
-  let { x, y, w, h } = v
-  w = Math.min(w, FULL.w)
-  h = Math.min(h, FULL.h)
-  x = Math.min(Math.max(x, 0), FULL.w - w)
-  y = Math.min(Math.max(y, 0), FULL.h - h)
-  return { x, y, w, h }
-}
-
-function kort(naam, max) {
-  return naam.length > max ? naam.slice(0, max - 1) + '...' : naam
-}
-
-function buildLayout(products) {
-  const gangen = new Map()
-  for (const p of products) {
-    if (!p.rekkenlocatie) continue
-    const key = p.rekkenlocatie.label
-    if (!gangen.has(key)) {
-      gangen.set(key, { label: key, cx: p.rekkenlocatie.x, cy: p.rekkenlocatie.y, items: [] })
-    }
-    gangen.get(key).items.push(p)
-  }
-
-  const racks = []
-  const headers = []
-  for (const g of gangen.values()) {
-    const links = g.items.filter((_, i) => i % 2 === 0)
-    const rechts = g.items.filter((_, i) => i % 2 === 1)
-
-    const plaats = (lijst, side) => {
-      const top = g.cy - (lijst.length * RACK_H) / 2
-      lijst.forEach((p, j) => {
-        racks.push({
-          productId: p.id,
-          naam: p.naam,
-          label: g.label,
-          side,
-          gangX: g.cx,
-          cx: g.cx + side * SIDE_OFF,
-          cy: top + RACK_H / 2 + j * RACK_H,
-        })
-      })
-    }
-    plaats(links, -1)
-    plaats(rechts, 1)
-
-    const maxRijen = Math.max(links.length, rechts.length)
-    headers.push({
-      label: g.label,
-      cx: g.cx,
-      gangTop: g.cy - (maxRijen * RACK_H) / 2,
-    })
-  }
-  return { racks, headers }
-}
-
-function edgeX(rack) {
-  return rack.cx - rack.side * (RACK_W / 2)
-}
-
-// E├®n product: rechte route naar het rek toe.
-function buildRoute(rack) {
-  const pts = [
-    [PERSON.x, PERSON.y],
-    [PERSON.x, LOOP_AISLE_Y],
-    [rack.gangX, LOOP_AISLE_Y],
-    [rack.gangX, rack.cy],
-    [edgeX(rack), rack.cy],
-  ]
-  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
-}
-
-// Snelste volgorde: gangen van links naar rechts, binnen een gang alle rekken in
-// ├®├®n keer meepakken (van onder naar boven).
-function orderRacks(racks) {
-  return [...racks].sort((a, b) => a.gangX - b.gangX || b.cy - a.cy)
-}
-
-// Meerdere producten: via de hoofdgang elke gang in en weer uit.
-function buildMultiRoute(ordered) {
-  const pts = [
-    [PERSON.x, PERSON.y],
-    [PERSON.x, LOOP_AISLE_Y],
-  ]
-  let i = 0
-  while (i < ordered.length) {
-    const gx = ordered[i].gangX
-    pts.push([gx, LOOP_AISLE_Y])
-    while (i < ordered.length && ordered[i].gangX === gx) {
-      const r = ordered[i]
-      pts.push([gx, r.cy])
-      pts.push([edgeX(r), r.cy])
-      pts.push([gx, r.cy])
-      i++
-    }
-    pts.push([gx, LOOP_AISLE_Y])
-  }
-  return pts.map((p, k) => `${k === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
-}
-
+const TAP_THRESHOLD_PX = 6
 export default function InteractiveFloorplan({ products, highlightId, routeIds }) {
   const { racks, headers } = useMemo(() => buildLayout(products), [products])
+  const network = useMemo(() => buildStoreNetwork(products, racks), [products, racks])
+  const corridors = useMemo(() => corridorBands(network), [network])
 
-  // Doelen: meerdere (routeIds) of ├®├®n (highlightId).
-  const targets = useMemo(() => {
-    if (routeIds?.length) {
-      const gevonden = routeIds.map((id) => racks.find((r) => r.productId === id)).filter(Boolean)
-      return orderRacks(gevonden)
-    }
-    if (highlightId) {
-      const r = racks.find((x) => x.productId === highlightId)
-      return r ? [r] : []
-    }
-    return []
-  }, [racks, routeIds, highlightId])
+  const hasRouteList = routeIds?.length > 0
+  const singleHighlight = !hasRouteList && highlightId
 
-  const multi = targets.length > 1
-  const actieveIds = useMemo(() => new Set(targets.map((t) => t.productId)), [targets])
-  const routeD = useMemo(() => {
-    if (!targets.length) return null
-    return multi ? buildMultiRoute(targets) : buildRoute(targets[0])
-  }, [targets, multi])
+  const [startPos, setStartPos] = useState(null)
+  const [routeActive, setRouteActive] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [visitedIds, setVisitedIds] = useState(() => new Set())
+
+  const route = useMemo(() => {
+    if (!routeActive || !hasRouteList || !startPos) return null
+    return computeShoppingRoute(products, routeIds, startPos, racks)
+  }, [routeActive, routeIds, products, startPos, racks, hasRouteList])
+
+  const orderedStops = route?.ordered ?? []
+  const routeD = route?.pathD ?? null
+  const endLabel = route?.end?.label ?? EXIT.label
+
+  const highlightRack = useMemo(() => {
+    if (!singleHighlight) return null
+    return racks.find((r) => r.productId === highlightId) ?? null
+  }, [singleHighlight, highlightId, racks])
+
+  const currentStop = orderedStops[currentIndex] ?? null
+  const currentRackIds = useMemo(() => {
+    if (!currentStop) return new Set()
+    return new Set(rackSlotsForStop(currentStop, racks).map((r) => r.productId))
+  }, [currentStop, racks])
+
+  const routeRackIds = useMemo(() => {
+    if (!routeActive && !singleHighlight) return new Set()
+    const ids = new Set()
+    if (singleHighlight && highlightRack) {
+      ids.add(highlightRack.productId)
+    }
+    for (const stop of orderedStops) {
+      for (const p of stop.products) ids.add(p.id)
+    }
+    return ids
+  }, [routeActive, orderedStops, singleHighlight, highlightRack])
+
+  const visitedRackProductIds = useMemo(() => {
+    const ids = new Set()
+    for (const stop of orderedStops) {
+      if (visitedIds.has(stop.rackId)) {
+        for (const p of stop.products) ids.add(p.id)
+      }
+    }
+    return ids
+  }, [orderedStops, visitedIds])
+
+  useEffect(() => {
+    setStartPos(null)
+    setRouteActive(false)
+    setCurrentIndex(0)
+    setVisitedIds(new Set())
+  }, [routeIds?.join(',')])
 
   const [vb, setVb] = useState(FULL)
   const svgRef = useRef(null)
-  const sleep = useRef(null)
+  const panRef = useRef(null)
 
   useEffect(() => {
-    setVb(FULL)
+    if (routeD) setVb(FULL)
   }, [routeD])
+
+  function placeStartAndRoute(svgX, svgY) {
+    if (!hasRouteList) return
+    setStartPos({ x: svgX, y: svgY })
+    setRouteActive(true)
+    setCurrentIndex(0)
+    setVisitedIds(new Set())
+  }
+
+  function markVisited() {
+    const stop = orderedStops[currentIndex]
+    if (!stop) return
+    setVisitedIds((prev) => new Set([...prev, stop.rackId]))
+    setCurrentIndex((i) => Math.min(i + 1, orderedStops.length))
+  }
+
+  function resetProgress() {
+    setCurrentIndex(0)
+    setVisitedIds(new Set())
+  }
 
   function zoomBy(factor) {
     setVb((v) => {
@@ -162,174 +121,272 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
     })
   }
 
-  function zoomNaarDoel() {
-    if (!targets.length) return
-    const xs = targets.map((t) => t.cx)
-    const ys = targets.map((t) => t.cy)
+  function zoomNaarRoute() {
+    const points = startPos
+      ? [startPos, ...orderedStops.map((s) => ({ x: s.gangX, y: s.cy })), EXIT]
+      : highlightRack
+        ? [highlightRack]
+        : []
+    if (!points.length) return
+    const xs = points.map((p) => p.x)
+    const ys = points.map((p) => p.y)
     const minX = Math.min(...xs)
     const maxX = Math.max(...xs)
     const minY = Math.min(...ys)
     const maxY = Math.max(...ys)
     const ratio = FULL.h / FULL.w
-    const w = Math.max(maxX - minX + 18, (maxY - minY + 18) / ratio, 30)
+    const w = Math.max(maxX - minX + 20, (maxY - minY + 20) / ratio, 32)
     const h = w * ratio
     setVb(clampView({ x: (minX + maxX) / 2 - w / 2, y: (minY + maxY) / 2 - h / 2, w, h }))
   }
 
-  function onPointerDown(e) {
-    sleep.current = { px: e.clientX, py: e.clientY, vb }
+  function onSvgPointerDown(e) {
+    const onRack = e.target.closest?.('[data-rack]')
+    panRef.current = {
+      px: e.clientX,
+      py: e.clientY,
+      vb,
+      moved: false,
+      onRack: !!onRack,
+    }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
-  function onPointerMove(e) {
-    if (!sleep.current || !svgRef.current) return
+
+  function onSvgPointerMove(e) {
+    if (!panRef.current || !svgRef.current) return
+    const dx = e.clientX - panRef.current.px
+    const dy = e.clientY - panRef.current.py
+    if (Math.hypot(dx, dy) > TAP_THRESHOLD_PX) panRef.current.moved = true
+    if (!panRef.current.moved) return
+
     const rect = svgRef.current.getBoundingClientRect()
-    const sx = sleep.current.vb.w / rect.width
-    const sy = sleep.current.vb.h / rect.height
-    const nx = sleep.current.vb.x - (e.clientX - sleep.current.px) * sx
-    const ny = sleep.current.vb.y - (e.clientY - sleep.current.py) * sy
-    setVb(clampView({ ...sleep.current.vb, x: nx, y: ny }))
+    const sx = panRef.current.vb.w / rect.width
+    const sy = panRef.current.vb.h / rect.height
+    const nx = panRef.current.vb.x - dx * sx
+    const ny = panRef.current.vb.y - dy * sy
+    setVb(clampView({ ...panRef.current.vb, x: nx, y: ny }))
   }
-  function onPointerUp() {
-    sleep.current = null
+
+  function onSvgPointerUp(e) {
+    const ref = panRef.current
+    panRef.current = null
+    if (!ref || !svgRef.current) return
+
+    if (!ref.moved && !ref.onRack && hasRouteList) {
+      const { x, y } = clientToSvgCoords(svgRef.current, e.clientX, e.clientY)
+      placeStartAndRoute(x, y)
+    }
   }
 
   const ingezoomd = vb.w < FULL.w - 0.5
+  const wachtOpKlik = hasRouteList && !startPos
+  const previewStops = hasRouteList ? collectRackStops(products, routeIds) : []
 
   return (
-    <div className="relative">
-      <svg
-        ref={svgRef}
-        viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
-        className="w-full cursor-grab touch-none rounded-2xl bg-white shadow-sm active:cursor-grabbing"
-        role="img"
-        aria-label="Plattegrond van de winkel"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-      >
-        <rect x="2" y="2" width="96" height="100" rx="4" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.6" />
+    <div className="flex flex-col gap-3">
+      {wachtOpKlik && (
+        <p className="rounded-xl bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-700">
+          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna loopt de route langs je producten naar de uitgang.
+        </p>
+      )}
 
-        {/* Per gang enkel de aanduiding van de gang zelf */}
-        {headers.map((h) => (
-          <text key={h.label} x={h.cx} y={h.gangTop - 1.6} textAnchor="middle" fontSize="2.4" fontWeight="700" fill="#64748b">
-            {h.label}
-          </text>
-        ))}
+      {/* Kaart altijd full-width — app-shell is max-w-md, dus geen side-by-side met breed paneel */}
+      <div className="relative w-full">
+        <svg
+          ref={svgRef}
+          viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+          className={`aspect-[100/104] w-full touch-none rounded-2xl bg-white shadow-sm ${
+            hasRouteList ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
+          }`}
+          role="img"
+          aria-label="Plattegrond van de winkel"
+          onPointerDown={onSvgPointerDown}
+          onPointerMove={onSvgPointerMove}
+          onPointerUp={onSvgPointerUp}
+          onPointerLeave={onSvgPointerUp}
+        >
+          <defs>
+            <linearGradient id="demoVloerGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#faf5ff" />
+              <stop offset="100%" stopColor="#f8fafc" />
+            </linearGradient>
+          </defs>
 
-        {/* Rekken */}
-        {racks.map((r) => {
-          const actief = actieveIds.has(r.productId)
-          return (
-            <rect
-              key={r.productId}
-              x={r.cx - RACK_W / 2}
-              y={r.cy - RACK_H / 2}
-              width={RACK_W}
-              height={RACK_H}
-              fill={actief ? '#ddd6fe' : '#e2e8f0'}
-              stroke={actief ? '#7c3aed' : '#cbd5e1'}
-              strokeWidth={actief ? 0.6 : 0.3}
-            />
-          )
-        })}
+          <rect
+            data-floor="true"
+            x="2"
+            y="2"
+            width="96"
+            height="100"
+            fill="url(#demoVloerGrad)"
+            stroke="#0f172a"
+            strokeWidth="1.2"
+          />
 
-        {/* Productnamen naast de rekken bij inzoomen */}
-        {ingezoomd &&
-          racks.map((r) => (
+          <g aria-hidden="true" pointerEvents="none">
+            {corridors.horizontal.map((b, i) => (
+              <rect key={`h-${i}`} x={b.x} y={b.y} width={b.w} height={b.h} fill="#ede9fe" />
+            ))}
+            {corridors.vertical.map((b, i) => (
+              <rect key={`v-${i}`} x={b.x} y={b.y} width={b.w} height={b.h} fill="#e9d5ff" />
+            ))}
+          </g>
+
+          {headers.map((h) => (
             <text
-              key={`lbl-${r.productId}`}
-              x={r.cx + r.side * (RACK_W / 2 + 0.6)}
-              y={r.cy + 0.5}
-              textAnchor={r.side === -1 ? 'end' : 'start'}
-              fontSize="1.5"
-              fill={actieveIds.has(r.productId) ? '#6d28d9' : '#64748b'}
-              fontWeight={actieveIds.has(r.productId) ? '700' : '400'}
+              key={h.label}
+              x={h.cx}
+              y={h.gangTop - 1.6}
+              textAnchor="middle"
+              fontSize="2.4"
+              fontWeight="700"
+              fill="#64748b"
+              pointerEvents="none"
             >
-              {kort(r.naam, 18)}
+              {h.label}
             </text>
           ))}
 
-        {/* Route + bewegend stipje */}
-        {routeD && (
-          <>
-            <path d={routeD} fill="none" stroke="#7c3aed" strokeWidth="1" strokeDasharray="2 2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle r="1.3" fill="#7c3aed">
-              <animateMotion path={routeD} dur={`${Math.max(3, targets.length * 1.5)}s`} repeatCount="indefinite" />
-            </circle>
-          </>
-        )}
+          {racks.map((r) => {
+            const inRoute = routeRackIds.has(r.productId)
+            const visited = visitedRackProductIds.has(r.productId)
+            const current = currentRackIds.has(r.productId)
+            const highlighted = singleHighlight && r.productId === highlightId
 
-        {/* Markering(en) op de doelrekken */}
-        {multi
-          ? targets.map((t, k) => (
-              <g key={`stop-${t.productId}`}>
-                <circle cx={t.cx} cy={t.cy} r="2.2" fill="#7c3aed" />
-                <text x={t.cx} y={t.cy + 0.8} textAnchor="middle" fontSize="2.6" fontWeight="700" fill="#fff">
-                  {k + 1}
-                </text>
+            let rackState = null
+            if (visited) rackState = 'visited'
+            else if (current || highlighted) rackState = 'current'
+            else if (inRoute) rackState = 'route'
+
+            const { w, h } = demoRackSize()
+            const el = demoRackElement(r.label)
+
+            return (
+              <g
+                key={r.productId}
+                transform={`translate(${r.cx} ${r.cy}) rotate(${demoRackRotation(r.side)})`}
+                data-rack="true"
+              >
+                <ShelfVisual el={el} w={w} h={h} rackState={rackState} />
               </g>
-            ))
-          : targets.map((t) => (
-              <circle key={`mark-${t.productId}`} cx={t.cx} cy={t.cy} r="2.2" fill="none" stroke="#7c3aed" strokeWidth="0.6">
+            )
+          })}
+
+          {ingezoomd &&
+            racks
+              .filter((r) => routeRackIds.has(r.productId))
+              .map((r) => (
+                <text
+                  key={`lbl-${r.productId}`}
+                  x={r.cx + r.side * (demoRackSize().w / 2 + 0.6)}
+                  y={r.cy + 0.5}
+                  textAnchor={r.side === -1 ? 'end' : 'start'}
+                  fontSize="1.5"
+                  fill={currentRackIds.has(r.productId) ? '#6d28d9' : '#64748b'}
+                  fontWeight={currentRackIds.has(r.productId) ? '700' : '400'}
+                  pointerEvents="none"
+                >
+                  {kort(r.naam, 18)}
+                </text>
+              ))}
+
+          {routeD && (
+            <>
+              <path
+                d={routeD}
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="1.4"
+                strokeLinecap="square"
+                strokeLinejoin="miter"
+                pointerEvents="none"
+              />
+              <circle r="1.4" fill="#7c3aed" pointerEvents="none">
+                <animateMotion path={routeD} dur={`${Math.max(5, orderedStops.length * 2.5)}s`} repeatCount="indefinite" />
+              </circle>
+            </>
+          )}
+
+          {routeActive &&
+            orderedStops.map((stop, k) => {
+              const done = visitedIds.has(stop.rackId)
+              const current = k === currentIndex && !done
+              if (done) return null
+              const slots = rackSlotsForStop(stop, racks)
+              const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.gangX, y: stop.cy }
+              return (
+                <g key={`stop-${stop.rackId}`} pointerEvents="none">
+                  <circle cx={anchor.x} cy={anchor.y} r={current ? 2.8 : 2.2} fill={current ? '#7c3aed' : '#a78bfa'} stroke="#fff" strokeWidth="0.4" />
+                  <text x={anchor.x} y={anchor.y + 0.85} textAnchor="middle" fontSize="2.6" fontWeight="700" fill="#fff">
+                    {k + 1}
+                  </text>
+                </g>
+              )
+            })}
+
+          {singleHighlight && highlightRack && (
+            <g pointerEvents="none">
+              <circle cx={highlightRack.cx} cy={highlightRack.cy} r="2.2" fill="none" stroke="#7c3aed" strokeWidth="0.6">
                 <animate attributeName="r" values="2.2;3.2;2.2" dur="1.2s" repeatCount="indefinite" />
               </circle>
-            ))}
+            </g>
+          )}
 
-        {/* Jij - blauw bolletje */}
-        <circle cx={PERSON.x} cy={PERSON.y} r="2.4" fill="#2563eb" stroke="#fff" strokeWidth="0.6" />
-        <text x={PERSON.x} y={PERSON.y + 6} textAnchor="middle" fontSize="3.4" fill="#2563eb" fontWeight="600">
-          me
-        </text>
-      </svg>
+          <g pointerEvents="none">
+            <rect x={EXIT.x - 6} y={EXIT.y - 2.8} width="12" height="5.6" fill="#fee2e2" stroke="#dc2626" strokeWidth="0.45" />
+            <text x={EXIT.x} y={EXIT.y + 0.7} textAnchor="middle" fontSize="2.2" fontWeight="700" fill="#b91c1c">
+              {EXIT.label}
+            </text>
+          </g>
 
-      {/* Zoom-bediening */}
-      <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-        <button
-          onClick={() => zoomBy(0.7)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
-          aria-label="Inzoomen"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-            <path d="M12 6v12M6 12h12" />
-          </svg>
-        </button>
-        <button
-          onClick={() => zoomBy(1 / 0.7)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
-          aria-label="Uitzoomen"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-            <path d="M6 12h12" />
-          </svg>
-        </button>
-        {targets.length > 0 && (
-          <button
-            onClick={zoomNaarDoel}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-md"
-            aria-label="Zoom naar de producten"
-            title="Zoom naar de producten"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="7" />
-              <circle cx="12" cy="12" r="2.5" />
-              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-            </svg>
+          {startPos && (
+            <g pointerEvents="none">
+              <circle cx={startPos.x} cy={startPos.y} r="2.8" fill="#2563eb" stroke="#fff" strokeWidth="0.8" />
+              <circle cx={startPos.x} cy={startPos.y} r="4.2" fill="none" stroke="#2563eb" strokeWidth="0.35" opacity="0.5">
+                <animate attributeName="r" values="4.2;5.5;4.2" dur="2s" repeatCount="indefinite" />
+              </circle>
+            </g>
+          )}
+        </svg>
+
+        <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+          <button type="button" onClick={() => zoomBy(0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Inzoomen">
+            +
           </button>
-        )}
-        {ingezoomd && (
-          <button
-            onClick={() => setVb(FULL)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
-            aria-label="Volledig overzicht"
-            title="Volledig overzicht"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-            </svg>
+          <button type="button" onClick={() => zoomBy(1 / 0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Uitzoomen">
+            −
           </button>
-        )}
+          {(routeActive || highlightRack) && (
+            <button type="button" onClick={zoomNaarRoute} className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md" aria-label="Zoom naar route">
+              🎯
+            </button>
+          )}
+          {ingezoomd && (
+            <button type="button" onClick={() => setVb(FULL)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md" aria-label="Volledig overzicht">
+              ⤢
+            </button>
+          )}
+        </div>
       </div>
+
+      {hasRouteList && (
+        <RouteOverviewPanel
+          compact
+          orderedStops={routeActive ? orderedStops : previewStops}
+          currentIndex={currentIndex}
+          visitedIds={visitedIds}
+          endLabel={endLabel}
+          onSelectStop={setCurrentIndex}
+          onMarkVisited={markVisited}
+          onResetProgress={resetProgress}
+        />
+      )}
+
+      {hasRouteList && !routeActive && previewStops.length > 0 && (
+        <p className="text-center text-[11px] text-slate-400">
+          {previewStops.length} rekken · tik op de kaart om te starten
+        </p>
+      )}
     </div>
   )
 }

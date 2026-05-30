@@ -1,4 +1,5 @@
 import { getFloorplanType } from '../data/floorplanTypes.js'
+import { isStyleable, normalizeStyleFields, resolveElementLabel } from './floorplanElementStyle.js'
 
 export function round2(n) {
   return Math.round(Number(n) * 100) / 100
@@ -16,7 +17,6 @@ export function rotationDegrees(el) {
 export function elementSize(el) {
   const def = getFloorplanType(el.type)
   if (!def) return { w: 10, h: 10 }
-  if (el.type === 'ingang' || el.type === 'uitgang') return { w: 0, h: 0 }
   return {
     w: el.w ?? def.defaultW,
     h: el.h ?? def.defaultH,
@@ -43,7 +43,7 @@ export function getBounds(el) {
 }
 
 export function isSnappable(type) {
-  return ['muur', 'vast-rek', 'tijdelijk-rek', 'kassa'].includes(type)
+  return ['muur', 'vast-rek', 'tijdelijk-rek', 'kassa', 'ingang', 'uitgang'].includes(type)
 }
 
 export function isShelf(type) {
@@ -129,18 +129,19 @@ export function resizeElementFromCorner(el, corner, mx, my) {
 export function normalizeElement(el) {
   const def = getFloorplanType(el.type)
   if (!def) return el
-  const base = {
+  let base = {
     ...el,
     rotation: rotationDegrees(el),
   }
+  if (def.labelable) {
+    base.label = isStyleable(el.type) ? resolveElementLabel(el) : typeof el.label === 'string' ? el.label : ''
+  }
+  if (isStyleable(el.type)) {
+    base = normalizeStyleFields(base)
+  }
   if (!def.resizable) {
-    return { ...base, label: isShelf(el.type) ? el.label || '' : undefined }
+    return base
   }
   const size = clampSize(el.type, el.w ?? def.defaultW, el.h ?? def.defaultH)
-  return {
-    ...base,
-    w: size.w,
-    h: size.h,
-    label: isShelf(el.type) ? el.label || '' : undefined,
-  }
+  return { ...base, w: size.w, h: size.h }
 }

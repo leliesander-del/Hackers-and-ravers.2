@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { getProfile } from '../data/profiles.js'
 import { getProduct, products } from '../data/products.js'
 import { stores } from '../data/stores.js'
@@ -6,6 +6,8 @@ import { getManager } from '../data/managers.js'
 import { buildInitialInventory, enrichProduct } from '../lib/inventory.js'
 import { isGekwalificeerdeBediende } from '../lib/staffAccess.js'
 import { kiesBesteProduct, labelVoorTerm } from '../lib/assistent.js'
+import { loadConnections } from '../lib/connectionsStorage.js'
+import { haalVoorraadOp, bouwVoorraadPatch } from '../lib/inventorySync.js'
 
 // Een mandje-item is winkel-onafhankelijk: ofwel een ingrediënt-term
 // (kind: 'ingredient'), ofwel een concreet product dat je in een winkel
@@ -106,6 +108,13 @@ export function StoreProvider({ children }) {
   })
   const [inventory, setInventory] = useState(loadInventory)
   const [staffLog, setStaffLog] = useState(loadStaffLog)
+
+  // Altijd de laatste inventaris bij de hand, zonder de sync-callback bij elke
+  // voorraadwijziging opnieuw te maken.
+  const inventoryRef = useRef(inventory)
+  useEffect(() => {
+    inventoryRef.current = inventory
+  }, [inventory])
 
   useEffect(() => {
     if (profielId) localStorage.setItem(PROFIEL_KEY, profielId)
@@ -208,6 +217,34 @@ export function StoreProvider({ children }) {
       [{ id: Date.now(), tekst, tijd: new Date().toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) }, ...log].slice(0, 50),
     )
   }, [])
+
+  // Trekt de actuele voorraad uit de databank van een winkel via een
+  // geconfigureerde API-connectie en past die toe op het live inventaris.
+  // Zonder connectionId wordt de eerste actieve connectie van de winkel gebruikt.
+  const syncVoorraadVanConnectie = useCallback(
+    async (storeId, connectionId = null) => {
+      const actieve = loadConnections(storeId).filter((c) => c.actief)
+      const connectie = connectionId ? actieve.find((c) => c.id === connectionId) : actieve[0]
+      if (!connectie) return { ok: false, fout: 'Geen actieve connectie gevonden.' }
+
+      try {
+        const rijen = await haalVoorraadOp(connectie, storeId)
+        const winkelProducten = products.filter((p) => p.storeId === storeId)
+        const { patch, herkend, gewijzigd } = bouwVoorraadPatch(rijen, winkelProducten, inventoryRef.current)
+        if (herkend === 0) {
+          return { ok: false, fout: 'Geen herkenbare producten in de API-respons.' }
+        }
+        setInventory((inv) => ({ ...inv, ...patch }))
+        logStaffActie(
+          `Voorraad gesynchroniseerd via "${connectie.naam}" — ${herkend} producten (${gewijzigd} aangepast)`,
+        )
+        return { ok: true, herkend, gewijzigd, totaal: winkelProducten.length }
+      } catch (e) {
+        return { ok: false, fout: e.message || 'Synchronisatie mislukt.' }
+      }
+    },
+    [logStaffActie],
+  )
 
   const verplaatsNaarRekken = useCallback(
     (productId, aantal = 1) => {
@@ -370,6 +407,7 @@ export function StoreProvider({ children }) {
       allProductsLive,
       verplaatsNaarRekken,
       verkoopVanRekken,
+      syncVoorraadVanConnectie,
       staffLog,
     }),
     [
@@ -391,6 +429,7 @@ export function StoreProvider({ children }) {
       verplaatsNaarRekken,
       verkoopVanRekken,
       betaalMandje,
+      syncVoorraadVanConnectie,
       staffLog,
     ],
   )

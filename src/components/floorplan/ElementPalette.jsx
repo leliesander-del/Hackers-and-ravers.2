@@ -2,7 +2,7 @@ import { floorplanTypes } from '../../data/floorplanTypes.js'
 
 function PalettePreview({ preview }) {
   if (preview === 'line') {
-    return <div className="h-1.5 w-14 rounded-sm bg-slate-800" />
+    return <div className="h-1.5 w-14 bg-slate-800" />
   }
   if (preview === 'shelf-dark') {
     return (
@@ -29,10 +29,18 @@ function PalettePreview({ preview }) {
     )
   }
   if (preview === 'ingang') {
-    return <span className="text-sm font-semibold text-emerald-600">Ingang</span>
+    return (
+      <span className="border border-emerald-600 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+        Ingang
+      </span>
+    )
   }
   if (preview === 'uitgang') {
-    return <span className="text-sm font-semibold text-red-600">Uitgang</span>
+    return (
+      <span className="border border-red-600 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+        Uitgang
+      </span>
+    )
   }
   return null
 }
@@ -48,7 +56,7 @@ export default function ElementPalette({ onDragStart }) {
     <aside className="flex w-56 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-4 py-4">
         <h2 className="text-sm font-bold text-slate-800">Elementen</h2>
-        <p className="mt-0.5 text-xs text-slate-500">Sleep naar je winkel</p>
+        <p className="mt-0.5 text-xs text-slate-500">Sleep muur, rekken, kassa, ingang of uitgang naar je winkel</p>
       </div>
       <ul className="flex-1 space-y-1 overflow-y-auto p-3">
         {floorplanTypes.map((item) => (

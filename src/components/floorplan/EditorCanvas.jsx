@@ -54,7 +54,16 @@ export default function EditorCanvas({
       rotation: 0,
       w: def.defaultW,
       h: def.defaultH,
-      label: type === 'vast-rek' || type === 'tijdelijk-rek' ? '' : undefined,
+      label:
+        type === 'kassa'
+          ? 'KASSA'
+          : type === 'ingang'
+            ? 'Ingang'
+            : type === 'uitgang'
+              ? 'Uitgang'
+              : getFloorplanType(type)?.labelable
+                ? ''
+                : undefined,
     })
     const snapped = snapElement(draft, x, y, elements, snapEnabled)
     const el = { ...draft, ...snapped }

@@ -111,7 +111,7 @@ export default function MandjePage() {
                       onClick={() => navigate(`/store/${beste.store.id}`)}
                       className="flex-1 rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98]"
                     >
-                      Start route →
+                      Open winkel →
                     </button>
                     {beste.store.heeftPlattegrond && (
                       <button

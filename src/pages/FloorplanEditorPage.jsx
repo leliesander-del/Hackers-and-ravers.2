@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
@@ -11,7 +11,7 @@ import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
 import BeheerNav from '../components/BeheerNav.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
-import { productsByStore } from '../data/products.js'
+import { productsByStore, categoriesForStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
   const { activeManager, isManagerIngelogd, managerLogout } = useStore()
@@ -65,6 +65,10 @@ export default function FloorplanEditorPage() {
   if (!store) return <Navigate to="/beheer/login" replace />
 
   const selected = elements.find((el) => el.id === selectedId)
+  const storeCategories = useMemo(
+    () => (store ? categoriesForStore(store.id) : []),
+    [store],
+  )
 
   function roteerElement(elId) {
     setElements((els) =>
@@ -91,6 +95,12 @@ export default function FloorplanEditorPage() {
   function handleSizeChange(elId, { w, h }) {
     setElements((els) =>
       els.map((el) => (el.id === elId ? normalizeElement({ ...el, w, h }) : el)),
+    )
+  }
+
+  function handleStyleChange(elId, patch) {
+    setElements((els) =>
+      els.map((el) => (el.id === elId ? normalizeElement({ ...el, ...patch }) : el)),
     )
   }
 
@@ -165,10 +175,12 @@ export default function FloorplanEditorPage() {
         />
         <EditorPropertiesPanel
           selected={selected}
+          categories={storeCategories}
           snapEnabled={snapEnabled}
           onSnapToggle={setSnapEnabled}
           onLabelChange={handleLabelChange}
           onSizeChange={handleSizeChange}
+          onStyleChange={handleStyleChange}
         />
       </div>
 
@@ -184,7 +196,14 @@ export default function FloorplanEditorPage() {
             <p className="mb-3 text-center text-sm font-semibold text-slate-600">
               Zo zien klanten je plattegrond (mobiel)
             </p>
-            <FloorplanRenderer elements={elements} products={productsByStore(store.id)} showShelves />
+            <p className="mb-3 text-center text-[11px] text-slate-400">
+              Geef elk rek een categorie uit je assortiment (bv. pasta, brood) zodat routes kloppen.
+            </p>
+            <FloorplanRenderer
+              elements={elements}
+              products={productsByStore(store.id)}
+              className="aspect-[100/104] w-full rounded-2xl bg-white shadow-sm"
+            />
             <button
               type="button"
               onClick={() => setToonVoorbeeld(false)}
