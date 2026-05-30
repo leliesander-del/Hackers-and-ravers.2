@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { stores as alleStores, userLocation } from '../data/stores.js'
 import { rankStores } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
-import MapView from '../components/MapView.jsx'
 
 export default function MapPage() {
   const { activeProfile } = useStore()
-  const navigate = useNavigate()
   const [zoek, setZoek] = useState('')
 
   const gesorteerd = useMemo(
@@ -23,24 +21,46 @@ export default function MapPage() {
 
   return (
     <div>
-      <PageHeader title="Kaart" subtitle={`Winkels dichtbij · ${userLocation.label}`} />
+      <PageHeader title="Winkels" subtitle={`Alle winkels · ${userLocation.label}`} />
 
-      <div className="px-4 py-3">
+      <div className="space-y-4 px-4 py-4">
         <SearchBar value={zoek} onChange={setZoek} placeholder="Zoek een winkel" />
-      </div>
 
-      <div className="overflow-hidden">
-        <MapView
-          stores={getoond}
-          userLocation={userLocation}
-          onSelectStore={(id) => navigate(`/store/${id}`)}
-          height={520}
-        />
+        <div className="space-y-2">
+          {getoond.length ? (
+            getoond.map((s) => (
+              <Link
+                key={s.id}
+                to={`/store/${s.id}`}
+                className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
+              >
+                <span
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl text-white shadow-sm"
+                  style={{ backgroundColor: s.kleur }}
+                >
+                  {s.emoji}
+                </span>
+                <span className="flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-800">{s.naam}</span>
+                    {s._reden && s._reden !== 'Dichtbij' && (
+                      <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-600">
+                        {s._reden}
+                      </span>
+                    )}
+                  </span>
+                  <span className="block text-xs text-slate-500">
+                    {s.type} · {s._km} km · {s.cashback}% cashback
+                  </span>
+                </span>
+                <span className="text-slate-300">›</span>
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-slate-400">Geen winkels gevonden voor "{zoek}".</p>
+          )}
+        </div>
       </div>
-
-      <p className="px-4 py-3 text-center text-xs text-slate-400">
-        Tik op een pin om de winkel te openen.
-      </p>
     </div>
   )
 }
