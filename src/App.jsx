@@ -13,6 +13,7 @@ import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
 import BeheerHomePage from './pages/BeheerHomePage.jsx'
 import ConnectionsPage from './pages/ConnectionsPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
+import CatalogPage from './pages/CatalogPage.jsx'
 import StaffPage from './pages/StaffPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 
@@ -45,11 +46,12 @@ export default function App() {
         <Route path="/personeel/dashboard" element={<DashboardPage />} />
       </Route>
 
-      {/* Winkelbeheer (plattegrond) */}
+      {/* Winkelbeheer (plattegrond + catalogus) */}
       <Route path="/beheer/login" element={<ManagerLoginPage />} />
       <Route path="/beheer" element={<BeheerHomePage />} />
       <Route path="/beheer/connecties" element={<ConnectionsPage />} />
       <Route path="/beheer/plattegrond" element={<FloorplanEditorPage />} />
+      <Route path="/beheer/catalogus" element={<CatalogPage />} />
 
       {/* Klant-app: de boodschappenlijst is de startpagina */}
       <Route element={<AppShell />}>

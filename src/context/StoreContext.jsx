@@ -1,9 +1,22 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getProfile } from '../data/profiles.js'
 import { getProduct, products } from '../data/products.js'
+import { stores } from '../data/stores.js'
 import { getManager } from '../data/managers.js'
 import { buildInitialInventory, enrichProduct } from '../lib/inventory.js'
 import { isGekwalificeerdeBediende } from '../lib/staffAccess.js'
+import { kiesBesteProduct, labelVoorTerm } from '../lib/assistent.js'
+
+// Een mandje-item is winkel-onafhankelijk: ofwel een ingrediënt-term
+// (kind: 'ingredient'), ofwel een concreet product dat je in een winkel
+// aanklikte (kind: 'product'). Pas bij winkelkeuze wordt het opgelost.
+function normaliseerCartItem(entry) {
+  if (typeof entry === 'string') return { key: entry, kind: 'product' } // oude opslag
+  if (entry && entry.key && (entry.kind === 'ingredient' || entry.kind === 'product')) {
+    return { key: entry.key, kind: entry.kind }
+  }
+  return null
+}
 
 const StoreContext = createContext(null)
 
@@ -63,9 +76,9 @@ export function StoreProvider({ children }) {
     try { return JSON.parse(localStorage.getItem(DYNAMISCH_PROFIEL_KEY)) || null }
     catch { return null }
   })
-  const [cartIds, setCartIds] = useState(() => {
+  const [cartItems, setCartItems] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(CART_KEY)) || []
+      return (JSON.parse(localStorage.getItem(CART_KEY)) || []).map(normaliseerCartItem).filter(Boolean)
     } catch {
       return []
     }
@@ -99,8 +112,8 @@ export function StoreProvider({ children }) {
   }, [dynamischProfiel])
 
   useEffect(() => {
-    localStorage.setItem(CART_KEY, JSON.stringify(cartIds))
-  }, [cartIds])
+    localStorage.setItem(CART_KEY, JSON.stringify(cartItems))
+  }, [cartItems])
 
   useEffect(() => {
     localStorage.setItem(AFGEVINKT_KEY, JSON.stringify(afgevinkt))
@@ -141,7 +154,48 @@ export function StoreProvider({ children }) {
 
   const allProductsLive = useMemo(() => products.map((p) => enrichProduct(p, getStock(p.id))), [getStock])
 
-  const cart = useMemo(() => cartIds.map(getProductLive).filter(Boolean), [cartIds, getProductLive])
+  // De zichtbare (winkel-onafhankelijke) lijst: elk item met een leesbaar label.
+  const cart = useMemo(
+    () =>
+      cartItems.map((it) => ({
+        key: it.key,
+        kind: it.kind,
+        label: it.kind === 'ingredient' ? labelVoorTerm(it.key) : getProduct(it.key)?.naam || it.key,
+      })),
+    [cartItems],
+  )
+
+  // Los de lijst op tegen één winkel: per item het best passende live product
+  // uit díe winkel (of null als de winkel het niet voert). Dit is het moment
+  // waarop winkels aan de lijst gekoppeld worden.
+  const resolveCartVoorWinkel = useCallback(
+    (storeId) => {
+      const pool = productsByStoreLive(storeId)
+      const byId = new Map(pool.map((p) => [p.id, p]))
+      return cartItems.map((item) => {
+        const product =
+          item.kind === 'product' ? byId.get(item.key) || null : kiesBesteProduct(pool, item.key, activeProfile)
+        return { item, product }
+      })
+    },
+    [productsByStoreLive, activeProfile, cartItems],
+  )
+
+  // Welke winkels kunnen (een deel van) de lijst leveren, met dekking en prijs.
+  const winkelsVoorLijst = useMemo(() => {
+    if (!cartItems.length) return []
+    return stores
+      .map((store) => {
+        const resolved = resolveCartVoorWinkel(store.id)
+        const gevonden = resolved.filter((r) => r.product)
+        // Dedup op product-id: één product telt één keer mee voor de prijs.
+        const perId = new Map(gevonden.map((r) => [r.product.id, r.product.prijs]))
+        const totaalPrijs = [...perId.values()].reduce((som, p) => som + p, 0)
+        return { store, aantal: perId.size, totaal: cartItems.length, totaalPrijs }
+      })
+      .filter((w) => w.aantal > 0)
+      .sort((a, b) => b.aantal - a.aantal || a.totaalPrijs - b.totaalPrijs)
+  }, [cartItems, resolveCartVoorWinkel])
 
   const logStaffActie = useCallback((tekst) => {
     setStaffLog((log) =>
@@ -187,21 +241,29 @@ export function StoreProvider({ children }) {
     [getStock, logStaffActie],
   )
 
-  const betaalMandje = useCallback(() => {
-    const fouten = []
-    for (const id of cartIds) {
-      const result = verkoopVanSchap(id, 1)
-      if (!result.ok) {
-        const p = getProduct(id)
-        fouten.push(p ? `${p.naam}: ${result.fout}` : result.fout)
+  // Afrekenen gebeurt in één gekozen winkel: los de lijst op tegen die winkel
+  // en boek de gevonden producten af van het schap.
+  const betaalMandje = useCallback(
+    (storeId) => {
+      const resolved = resolveCartVoorWinkel(storeId)
+      const teVerkopen = [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
+      const fouten = []
+      for (const id of teVerkopen) {
+        const result = verkoopVanSchap(id, 1)
+        if (!result.ok) {
+          const p = getProduct(id)
+          fouten.push(p ? `${p.naam}: ${result.fout}` : result.fout)
+        }
       }
-    }
-    if (fouten.length === 0) {
-      setCartIds([])
-      return { ok: true }
-    }
-    return { ok: false, fout: fouten.join(' · ') }
-  }, [cartIds, verkoopVanSchap])
+      if (fouten.length === 0) {
+        setCartItems([])
+        setAfgevinkt([])
+        return { ok: true }
+      }
+      return { ok: false, fout: fouten.join(' · ') }
+    },
+    [resolveCartVoorWinkel, verkoopVanSchap],
+  )
 
   const value = useMemo(
     () => ({
@@ -222,27 +284,34 @@ export function StoreProvider({ children }) {
         setProfielId(null)
       },
       cart,
-      cartCount: cart.length,
-      cartTotaal: cart.reduce((som, p) => som + p.prijs, 0),
-      inCart: (id) => cartIds.includes(id),
-      addToCart: (id) => setCartIds((ids) => (ids.includes(id) ? ids : [...ids, id])),
-      addManyToCart: (ids) =>
-        setCartIds((cur) => {
-          const aanwezig = new Set(cur)
-          const nieuw = (ids || []).filter((id) => !aanwezig.has(id) && getProduct(id))
+      cartItems,
+      cartCount: cartItems.length,
+      resolveCartVoorWinkel,
+      winkelsVoorLijst,
+      // Concreet product (in een winkel aangeklikt) toevoegen/checken/verwijderen.
+      inCart: (id) => cartItems.some((it) => it.kind === 'product' && it.key === id),
+      addToCart: (id) =>
+        setCartItems((cur) =>
+          cur.some((it) => it.kind === 'product' && it.key === id) ? cur : [...cur, { key: id, kind: 'product' }],
+        ),
+      // Ingrediënt-termen vanuit de assistent/vragenlijst toevoegen.
+      addIngredients: (termen) =>
+        setCartItems((cur) => {
+          const aanwezig = new Set(cur.filter((it) => it.kind === 'ingredient').map((it) => it.key))
+          const nieuw = (termen || []).filter((t) => t && !aanwezig.has(t)).map((t) => ({ key: t, kind: 'ingredient' }))
           return nieuw.length ? [...cur, ...nieuw] : cur
         }),
-      removeFromCart: (id) => {
-        setCartIds((ids) => ids.filter((x) => x !== id))
-        setAfgevinkt((a) => a.filter((x) => x !== id))
+      removeFromCart: (key) => {
+        setCartItems((items) => items.filter((it) => it.key !== key))
+        setAfgevinkt((a) => a.filter((x) => x !== key))
       },
       clearCart: () => {
-        setCartIds([])
+        setCartItems([])
         setAfgevinkt([])
       },
-      isAfgevinkt: (id) => afgevinkt.includes(id),
-      toggleAfgevinkt: (id) =>
-        setAfgevinkt((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id])),
+      isAfgevinkt: (key) => afgevinkt.includes(key),
+      toggleAfgevinkt: (key) =>
+        setAfgevinkt((a) => (a.includes(key) ? a.filter((x) => x !== key) : [...a, key])),
       activeManager,
       isManagerIngelogd: !!activeManager,
       managerLogin: (id) => setManagerId(id),
@@ -276,7 +345,9 @@ export function StoreProvider({ children }) {
       activeManager,
       gekwalificeerdPersoneel,
       cart,
-      cartIds,
+      cartItems,
+      resolveCartVoorWinkel,
+      winkelsVoorLijst,
       afgevinkt,
       profielId,
       inventory,
