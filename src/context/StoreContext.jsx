@@ -15,6 +15,7 @@ import {
   isManagerSession,
   isStaffSession,
 } from '../lib/security.js'
+import { seedDemoAccounts } from '../lib/seedDemoAccounts.js'
 
 // A cart item is store-independent: either an ingredient term
 // (kind: 'ingredient'), or a concrete product you tapped in a store
@@ -170,6 +171,10 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     inventoryRef.current = inventory
   }, [inventory])
+
+  useEffect(() => {
+    void seedDemoAccounts()
+  }, [])
 
   useEffect(() => {
     if (dynamicProfile) sessionStorage.setItem(DYNAMIC_PROFILE_KEY, JSON.stringify(dynamicProfile))
