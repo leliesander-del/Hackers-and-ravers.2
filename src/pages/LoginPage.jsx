@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { profiles } from '../data/profiles.js'
 
@@ -41,7 +41,13 @@ export default function LoginPage() {
         ))}
       </div>
 
-      <p className="mt-auto pt-10 text-center text-xs text-violet-100">
+      <p className="mt-auto pt-10 text-center text-sm text-violet-100">
+        <Link to="/beheer/login" className="underline hover:text-white">
+          Winkelbeheerder? Log hier in
+        </Link>
+      </p>
+
+      <p className="pt-2 text-center text-xs text-violet-200">
         Demo · fictieve profielen · geen echte gegevens
       </p>
     </div>

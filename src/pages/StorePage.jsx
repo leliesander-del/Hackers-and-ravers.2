@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import Floorplan from '../components/Floorplan.jsx'
 import ProductRow from '../components/ProductRow.jsx'
+import { useFloorplan } from '../lib/useFloorplan.js'
 
 export default function StorePage() {
   const { id } = useParams()
@@ -15,6 +16,7 @@ export default function StorePage() {
   const [zoek, setZoek] = useState('')
 
   const store = getStore(id)
+  const { hasPlan } = useFloorplan(id)
   const winkelProducten = useMemo(() => productsByStore(id), [id])
 
   const resultaten = useMemo(() => {
@@ -29,6 +31,8 @@ export default function StorePage() {
   }, [winkelProducten, zoek, activeProfile])
 
   if (!store) return <Navigate to="/" replace />
+
+  const toonPlattegrond = store.heeftPlattegrond || hasPlan
 
   return (
     <div>
@@ -51,8 +55,8 @@ export default function StorePage() {
       <div className="space-y-4 px-4 py-4">
         <SearchBar value={zoek} onChange={setZoek} placeholder={`Zoek in ${store.naam}`} />
 
-        {store.heeftPlattegrond ? (
-          <Floorplan products={winkelProducten} />
+        {toonPlattegrond ? (
+          <Floorplan storeId={store.id} products={winkelProducten} />
         ) : (
           <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-400 shadow-sm">
             🗺️ Plattegrond komt eraan voor deze winkel

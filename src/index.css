@@ -17,6 +17,13 @@ body {
   background: #f4f2fb;
 }
 
+/* Volledig scherm voor winkelbeheer-editor (desktop) */
+.beheer-layout {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 /* Verberg de standaard Leaflet-attributie-rand netjes */
 .leaflet-container {
   font-family: inherit;
