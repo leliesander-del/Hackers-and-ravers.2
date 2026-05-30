@@ -94,13 +94,13 @@ export default function RouteOverviewPanel({
       </ol>
 
       <div className="space-y-1 border-t border-slate-100 p-1.5">
-        {currentIndex < total && !visitedIds.has(orderedStops[currentIndex]?.rackId) && (
+        {currentIndex < total && orderedStops[currentIndex] && !visitedIds.has(orderedStops[currentIndex].rackId) && (
           <button
             type="button"
             onClick={onMarkVisited}
             className="w-full rounded-full bg-violet-600 py-1.5 text-[11px] font-semibold text-white hover:bg-violet-700"
           >
-            Rek {currentIndex + 1} afgevinkt
+            {orderedStops[currentIndex].label} afgevinkt
           </button>
         )}
         {done > 0 && (

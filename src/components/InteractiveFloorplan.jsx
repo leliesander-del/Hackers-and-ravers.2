@@ -12,6 +12,7 @@ import {
 import {
   buildStoreNetwork,
   collectRackStops,
+  computeRemainingShoppingPath,
   computeShoppingRoute,
   corridorBands,
   rackSlotsForStop,
@@ -31,6 +32,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
   const singleHighlight = !hasRouteList && highlightId
 
   const [startPos, setStartPos] = useState(null)
+  const [userPos, setUserPos] = useState(null)
   const [routeActive, setRouteActive] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visitedIds, setVisitedIds] = useState(() => new Set())
@@ -41,7 +43,20 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
   }, [routeActive, routeIds, products, startPos, racks, hasRouteList])
 
   const orderedStops = route?.ordered ?? []
-  const routeD = route?.pathD ?? null
+  const activePos = userPos ?? startPos
+
+  const remainingStops = useMemo(
+    () => orderedStops.filter((s) => !visitedIds.has(s.rackId)),
+    [orderedStops, visitedIds],
+  )
+
+  const routeD = useMemo(() => {
+    if (!routeActive || !activePos || !orderedStops.length) return null
+    const allRacksDone = remainingStops.length === 0
+    const includeCheckout = allRacksDone || visitedIds.size === 0
+    return computeRemainingShoppingPath(activePos, remainingStops, network, racks, { includeCheckout })
+  }, [routeActive, activePos, remainingStops, orderedStops.length, visitedIds.size, network, racks])
+
   const endLabel = route?.end?.label ?? EXIT.label
   const kassaLabel = route?.kassa?.label ?? KASSA.label
 
@@ -80,6 +95,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
 
   useEffect(() => {
     setStartPos(null)
+    setUserPos(null)
     setRouteActive(false)
     setCurrentIndex(0)
     setVisitedIds(new Set())
@@ -96,6 +112,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
   function placeStartAndRoute(svgX, svgY) {
     if (!hasRouteList) return
     setStartPos({ x: svgX, y: svgY })
+    setUserPos(null)
     setRouteActive(true)
     setCurrentIndex(0)
     setVisitedIds(new Set())
@@ -103,12 +120,22 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
 
   function markVisited() {
     const stop = orderedStops[currentIndex]
-    if (!stop) return
-    setVisitedIds((prev) => new Set([...prev, stop.rackId]))
-    setCurrentIndex((i) => Math.min(i + 1, orderedStops.length))
+    if (!stop || visitedIds.has(stop.rackId)) return
+
+    const slots = rackSlotsForStop(stop, racks)
+    const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.gangX, y: stop.cy }
+    setUserPos({ x: anchor.x, y: anchor.y })
+
+    const newVisited = new Set([...visitedIds, stop.rackId])
+    setVisitedIds(newVisited)
+
+    let next = currentIndex + 1
+    while (next < orderedStops.length && newVisited.has(orderedStops[next].rackId)) next++
+    setCurrentIndex(next)
   }
 
   function resetProgress() {
+    setUserPos(null)
     setCurrentIndex(0)
     setVisitedIds(new Set())
   }
@@ -124,8 +151,8 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
   }
 
   function zoomNaarRoute() {
-    const points = startPos
-      ? [startPos, ...orderedStops.map((s) => ({ x: s.gangX, y: s.cy })), EXIT]
+    const points = activePos
+      ? [activePos, ...remainingStops.map((s) => ({ x: s.gangX, y: s.cy })), EXIT]
       : highlightRack
         ? [highlightRack]
         : []
@@ -341,10 +368,10 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
             </text>
           </g>
 
-          {startPos && (
+          {routeActive && activePos && (
             <g pointerEvents="none">
-              <circle cx={startPos.x} cy={startPos.y} r="2.8" fill="#2563eb" stroke="#fff" strokeWidth="0.8" />
-              <circle cx={startPos.x} cy={startPos.y} r="4.2" fill="none" stroke="#2563eb" strokeWidth="0.35" opacity="0.5">
+              <circle cx={activePos.x} cy={activePos.y} r="2.8" fill="#2563eb" stroke="#fff" strokeWidth="0.8" />
+              <circle cx={activePos.x} cy={activePos.y} r="4.2" fill="none" stroke="#2563eb" strokeWidth="0.35" opacity="0.5">
                 <animate attributeName="r" values="4.2;5.5;4.2" dur="2s" repeatCount="indefinite" />
               </circle>
             </g>

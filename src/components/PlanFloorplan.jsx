@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { clampView, clientToSvgCoords, FULL, MIN_W } from '../lib/floorplanLayout.js'
 import {
   collectCustomStops,
+  computeCustomRoutePath,
   computeCustomShoppingRoute,
   getExitFromElements,
   getKassaFromElements,
   rackLabel,
 } from '../lib/floorplanCustomRoute.js'
+import { shelfFrontApproachWorld } from '../lib/shelfFront.js'
 import { isShelf } from '../lib/floorplanGeometry.js'
 import FloorplanRenderer from './floorplan/FloorplanRenderer.jsx'
 import RouteOverviewPanel from './RouteOverviewPanel.jsx'
@@ -23,6 +25,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
   const kassa = useMemo(() => getKassaFromElements(elements), [elements])
 
   const [startPos, setStartPos] = useState(null)
+  const [userPos, setUserPos] = useState(null)
   const [routeActive, setRouteActive] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visitedIds, setVisitedIds] = useState(() => new Set())
@@ -33,7 +36,20 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
   }, [routeActive, hasRouteList, routeIds, products, startPos, elements])
 
   const orderedStops = route?.ordered ?? []
-  const routeD = route?.pathD ?? null
+  const activePos = userPos ?? startPos
+
+  const remainingStops = useMemo(
+    () => orderedStops.filter((s) => !visitedIds.has(s.rackId)),
+    [orderedStops, visitedIds],
+  )
+
+  const routeD = useMemo(() => {
+    if (!routeActive || !activePos || !orderedStops.length) return null
+    const allRacksDone = remainingStops.length === 0
+    const includeCheckout = allRacksDone || visitedIds.size === 0
+    return computeCustomRoutePath(activePos, remainingStops, elements, { includeCheckout }).pathD
+  }, [routeActive, activePos, remainingStops, orderedStops.length, visitedIds.size, elements])
+
   const endLabel = route?.end?.label ?? end.label
   const kassaLabel = route?.kassa?.label ?? kassa?.label ?? null
 
@@ -67,6 +83,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
 
   useEffect(() => {
     setStartPos(null)
+    setUserPos(null)
     setRouteActive(false)
     setCurrentIndex(0)
     setVisitedIds(new Set())
@@ -83,6 +100,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
   function placeStartAndRoute(svgX, svgY) {
     if (!hasRouteList) return
     setStartPos({ x: svgX, y: svgY })
+    setUserPos(null)
     setRouteActive(true)
     setCurrentIndex(0)
     setVisitedIds(new Set())
@@ -90,12 +108,21 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
 
   function markVisited() {
     const stop = orderedStops[currentIndex]
-    if (!stop) return
-    setVisitedIds((prev) => new Set([...prev, stop.rackId]))
-    setCurrentIndex((i) => Math.min(i + 1, orderedStops.length))
+    if (!stop || visitedIds.has(stop.rackId)) return
+
+    const front = shelfFrontApproachWorld(stop.element)
+    setUserPos({ x: front.x, y: front.y })
+
+    const newVisited = new Set([...visitedIds, stop.rackId])
+    setVisitedIds(newVisited)
+
+    let next = currentIndex + 1
+    while (next < orderedStops.length && newVisited.has(orderedStops[next].rackId)) next++
+    setCurrentIndex(next)
   }
 
   function resetProgress() {
+    setUserPos(null)
     setCurrentIndex(0)
     setVisitedIds(new Set())
   }
@@ -111,8 +138,8 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
   }
 
   function zoomNaarRoute() {
-    const points = startPos
-      ? [startPos, ...orderedStops.map((s) => ({ x: s.element.x, y: s.element.y })), ...(kassa ? [kassa] : []), end]
+    const points = activePos
+      ? [activePos, ...remainingStops.map((s) => ({ x: s.element.x, y: s.element.y })), ...(kassa ? [kassa] : []), end]
       : []
     if (!points.length) return
     const xs = points.map((p) => p.x)
@@ -186,7 +213,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
           onSvgPointerMove={onSvgPointerMove}
           onSvgPointerUp={onSvgPointerUp}
           routePath={routeD}
-          startPos={startPos}
+          startPos={activePos}
           orderedStops={routeActive ? orderedStops : []}
           currentIndex={currentIndex}
           visitedIds={visitedIds}

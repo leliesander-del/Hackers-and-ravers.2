@@ -442,7 +442,7 @@ function optimizeStopOrder(start, stops, grid) {
   return ordered
 }
 
-function buildCustomPolyline(start, orderedStops, elements, checkout, exit) {
+function buildCustomPolyline(start, orderedStops, elements, checkout, exit, { includeExit = true } = {}) {
   const pts = []
   const grid = buildWalkGrid(elements)
   const startWalk = nearestWalkable(grid, start.x, start.y)
@@ -460,14 +460,28 @@ function buildCustomPolyline(start, orderedStops, elements, checkout, exit) {
     appendShelfVisit(pts, grid, cur, checkout.element)
   }
 
-  const uitgangEl = elements.find((el) => el.type === 'uitgang')
-  if (uitgangEl) {
-    appendExitVisit(pts, grid, uitgangEl)
-  } else {
-    routeSegment(pts, grid, lastPt(pts), { x: exit.x, y: exit.y })
+  if (includeExit) {
+    const uitgangEl = elements.find((el) => el.type === 'uitgang')
+    if (uitgangEl) {
+      appendExitVisit(pts, grid, uitgangEl)
+    } else if (exit) {
+      routeSegment(pts, grid, lastPt(pts), { x: exit.x, y: exit.y })
+    }
   }
 
   return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
+}
+
+/** Herberekent het routepad vanaf huidige positie, zonder afgevinkte rekken. */
+export function computeCustomRoutePath(fromPos, remainingStops, elements, { includeCheckout = false } = {}) {
+  const kassa = getKassaFromElements(elements)
+  const end = getExitFromElements(elements)
+  const grid = buildWalkGrid(elements)
+  const ordered = remainingStops.length ? optimizeStopOrder(fromPos, remainingStops, grid) : []
+  const pathD = buildCustomPolyline(fromPos, ordered, elements, includeCheckout ? kassa : null, end, {
+    includeExit: includeCheckout,
+  })
+  return { ordered, pathD }
 }
 
 export function getKassaFromElements(elements) {
