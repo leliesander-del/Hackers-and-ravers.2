@@ -2,37 +2,52 @@ import { floorplanTypes } from '../../data/floorplanTypes.js'
 
 function PalettePreview({ preview }) {
   if (preview === 'line') {
-    return <div className="h-1.5 w-14 rounded-sm bg-slate-800" />
+    return <div className="h-1.5 w-14 bg-slate-800" />
   }
   if (preview === 'shelf-dark') {
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg bg-gradient-to-b from-violet-500 to-violet-800 px-1 shadow-sm">
-        <div className="h-px w-full bg-violet-300/60" />
-        <div className="h-px w-full bg-violet-300/60" />
+      <div className="flex h-8 w-14 flex-col border border-[#312e81] bg-[#4c1d95] shadow-sm">
+        <div className="h-2 w-full bg-[#7c3aed]" />
+        <div className="flex flex-1 flex-col justify-center gap-0.5 px-0.5">
+          <div className="h-px w-full bg-violet-200/70" />
+          <div className="h-px w-full bg-violet-200/70" />
+        </div>
       </div>
     )
   }
   if (preview === 'shelf-light') {
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg border border-dashed border-violet-300 bg-gradient-to-b from-violet-100 to-violet-200 px-1">
-        <div className="h-px w-full bg-violet-400/50" />
-        <div className="h-px w-full bg-violet-400/50" />
+      <div className="flex h-8 w-14 flex-col border border-dashed border-violet-500 bg-violet-100">
+        <div className="h-2 w-full bg-violet-300" />
+        <div className="flex flex-1 flex-col justify-center gap-0.5 px-0.5">
+          <div className="h-px w-full bg-violet-500/50" />
+          <div className="h-px w-full bg-violet-500/50" />
+        </div>
       </div>
     )
   }
   if (preview === 'kassa') {
     return (
-      <div className="flex h-9 w-12 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-violet-400 to-violet-700 shadow-sm">
-        <div className="mb-0.5 h-3 w-8 rounded-sm bg-white" />
-        <span className="text-[8px] font-bold text-white">KASSA</span>
+      <div className="flex h-9 w-12 flex-col border border-[#4c1d95] bg-[#5b21b6] shadow-sm">
+        <div className="m-0.5 h-3 flex-1 border border-violet-900/30 bg-slate-50" />
+        <div className="h-1.5 w-full bg-violet-400" />
+        <span className="py-0.5 text-center text-[7px] font-bold tracking-wide text-white">KASSA</span>
       </div>
     )
   }
   if (preview === 'ingang') {
-    return <span className="text-sm font-semibold text-emerald-600">Ingang</span>
+    return (
+      <span className="border border-emerald-600 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+        Ingang
+      </span>
+    )
   }
   if (preview === 'uitgang') {
-    return <span className="text-sm font-semibold text-red-600">Uitgang</span>
+    return (
+      <span className="border border-red-600 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+        Uitgang
+      </span>
+    )
   }
   return null
 }
@@ -56,7 +71,7 @@ export default function ElementPalette({ onDragStart }) {
             <div
               draggable
               onDragStart={(e) => handleDragStart(e, item.type)}
-              className="flex cursor-grab items-center gap-3 rounded-xl border border-slate-100 bg-[#f6f4fc] px-3 py-3 transition hover:border-violet-200 hover:bg-violet-50 active:cursor-grabbing"
+              className="flex cursor-grab items-center gap-3 border border-slate-100 bg-[#f6f4fc] px-3 py-3 transition hover:border-violet-200 hover:bg-violet-50 active:cursor-grabbing"
             >
               <div className="flex h-10 w-16 shrink-0 items-center justify-center">
                 <PalettePreview preview={item.preview} />
