@@ -39,7 +39,7 @@ export const profiles = [
   },
   {
     id: 'staff',
-    name: 'Lisa',
+    name: 'Demo',
     type: 'staff',
     description: 'Shelf stocker · Delhaize',
     color: '#059669',

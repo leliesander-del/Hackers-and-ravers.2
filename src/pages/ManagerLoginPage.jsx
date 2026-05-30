@@ -36,7 +36,7 @@ export default function ManagerLoginPage() {
       const accounts = getAccounts()
       let matchedManager = null
       for (const account of Object.values(accounts)) {
-        if (account.role !== 'manager' || account.storeId !== storeId) continue
+        if (!account.managerId || account.storeId !== storeId) continue
         if (!(await verifyPassword(password.trim(), account.password))) continue
         matchedManager = getManager(account.managerId)
         if (matchedManager) break
