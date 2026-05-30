@@ -303,10 +303,10 @@ export function collectCustomStops(products, routeProductIds, elements) {
     return byElementId.get(el.id)
   }
 
-  // 1) Koppeling via label (product schaplocatie.label = rek-label)
+  // 1) Koppeling via label (product rekkenlocatie.label = rek-label)
   for (const p of products) {
-    if (!idSet.has(p.id) || !p.schaplocatie) continue
-    const key = normLabel(p.schaplocatie.label)
+    if (!idSet.has(p.id) || !p.rekkenlocatie) continue
+    const key = normLabel(p.rekkenlocatie.label)
     const el = shelves.find((s) => normLabel(rackLabel(s)) === key)
     if (!el) continue
     const stop = getOrCreateStop(el)
@@ -317,8 +317,8 @@ export function collectCustomStops(products, routeProductIds, elements) {
 
   // 2) Fallback: dichtstbijzijnd rek op coördinaat
   for (const p of products) {
-    if (!idSet.has(p.id) || matchedProductIds.has(p.id) || !p.schaplocatie) continue
-    const el = nearestShelf(shelves, p.schaplocatie.x, p.schaplocatie.y)
+    if (!idSet.has(p.id) || matchedProductIds.has(p.id) || !p.rekkenlocatie) continue
+    const el = nearestShelf(shelves, p.rekkenlocatie.x, p.rekkenlocatie.y)
     if (!el) continue
     const stop = getOrCreateStop(el)
     stop.categorieën.add(p.categorie)

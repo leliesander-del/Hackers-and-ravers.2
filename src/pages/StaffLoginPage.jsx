@@ -34,7 +34,7 @@ export default function StaffLoginPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-white">Personeel</h1>
-            <p className="mt-0.5 text-sm text-white/50">Voorraadbeheer · magazijn ↔ schap</p>
+            <p className="mt-0.5 text-sm text-white/50">Voorraadbeheer · magazijn ↔ rekken</p>
           </div>
         </div>
 

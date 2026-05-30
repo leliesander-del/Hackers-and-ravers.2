@@ -28,8 +28,8 @@ export function buildStoreNetwork(products, racks = []) {
   const xs = new Set()
 
   for (const p of products) {
-    if (!p.schaplocatie) continue
-    xs.add(p.schaplocatie.x)
+    if (!p.rekkenlocatie) continue
+    xs.add(p.rekkenlocatie.x)
   }
 
   const aisleXs = [...xs].sort((a, b) => a - b)
@@ -109,15 +109,15 @@ export function collectRackStops(products, routeProductIds) {
   const byRack = new Map()
 
   for (const p of products) {
-    if (!idSet.has(p.id) || !p.schaplocatie) continue
-    const rackId = p.schaplocatie.label
+    if (!idSet.has(p.id) || !p.rekkenlocatie) continue
+    const rackId = p.rekkenlocatie.label
     if (!byRack.has(rackId)) {
       byRack.set(rackId, {
         rackId,
         label: rackId,
-        gangX: p.schaplocatie.x,
-        cy: p.schaplocatie.y,
-        rowY: p.schaplocatie.y,
+        gangX: p.rekkenlocatie.x,
+        cy: p.rekkenlocatie.y,
+        rowY: p.rekkenlocatie.y,
         categorieën: new Set(),
         products: [],
       })

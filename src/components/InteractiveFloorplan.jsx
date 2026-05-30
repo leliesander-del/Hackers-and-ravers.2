@@ -21,7 +21,6 @@ import { demoRackElement, demoRackSize } from '../lib/demoRackElement.js'
 import { demoRackFrontApproach, demoRackRotation } from '../lib/shelfFront.js'
 
 const TAP_THRESHOLD_PX = 6
-
 export default function InteractiveFloorplan({ products, highlightId, routeIds }) {
   const { racks, headers } = useMemo(() => buildLayout(products), [products])
   const network = useMemo(() => buildStoreNetwork(products, racks), [products, racks])

@@ -55,7 +55,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
       else if (inRoute) states.set(el.id, 'route')
       else if (highlightId) {
         const prod = products.find((p) => p.id === highlightId)
-        if (prod?.schaplocatie && normLabel(prod.schaplocatie.label) === norm) {
+        if (prod?.rekkenlocatie && normLabel(prod.rekkenlocatie.label) === norm) {
           states.set(el.id, 'current')
         }
       }

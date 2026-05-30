@@ -1,9 +1,11 @@
 import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
+import { getPersoneelWinkelId } from '../lib/staffAccess.js'
+import { getStore } from '../data/stores.js'
 
 const PERSONEEL_TABS = [
-  { to: '/personeel', label: 'Voorraad', end: true },
-  { to: '/personeel/dashboard', label: 'Dashboard', end: true },
+  { to: '/personeel', label: 'Rekkenvuller', end: true },
+  { to: '/personeel/kassa', label: 'Kassamedewerker', end: true },
 ]
 
 // Volledig gescheiden layout voor winkelpersoneel. Geen klant-onderbalk,
@@ -11,6 +13,7 @@ const PERSONEEL_TABS = [
 export default function StaffShell() {
   const { isIngelogd, isGekwalificeerdeBediende, activeProfile, logout } = useStore()
   const navigate = useNavigate()
+  const winkel = getStore(getPersoneelWinkelId(activeProfile))
 
   if (!isIngelogd) return <Navigate to="/personeel/login" replace />
   // Een ingelogde klant hoort niet in het personeelsgedeelte.
@@ -28,7 +31,10 @@ export default function StaffShell() {
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg">🏪</span>
           <div className="leading-tight">
             <p className="text-sm font-semibold">Personeel</p>
-            <p className="text-[11px] text-white/70">{activeProfile?.naam}</p>
+            <p className="text-[11px] text-white/70">
+              {activeProfile?.naam}
+              {winkel ? ` · ${winkel.naam}` : ''}
+            </p>
           </div>
         </div>
         <button

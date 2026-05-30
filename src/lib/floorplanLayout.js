@@ -27,10 +27,10 @@ export function kort(naam, max) {
 export function buildLayout(products) {
   const gangen = new Map()
   for (const p of products) {
-    if (!p.schaplocatie) continue
-    const key = p.schaplocatie.label
+    if (!p.rekkenlocatie) continue
+    const key = p.rekkenlocatie.label
     if (!gangen.has(key)) {
-      gangen.set(key, { label: key, cx: p.schaplocatie.x, cy: p.schaplocatie.y, items: [] })
+      gangen.set(key, { label: key, cx: p.rekkenlocatie.x, cy: p.rekkenlocatie.y, items: [] })
     }
     gangen.get(key).items.push(p)
   }

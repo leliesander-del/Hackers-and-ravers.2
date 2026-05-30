@@ -294,11 +294,11 @@ export default function FloorplanRenderer({
   currentIndex = 0,
   visitedIds,
 }) {
-  const schappen = []
+  const rekkenLocaties = []
   if (showShelves) {
     for (const p of products) {
-      if (p.schaplocatie && !schappen.some((s) => s.label === p.schaplocatie.label)) {
-        schappen.push(p.schaplocatie)
+      if (p.rekkenlocatie && !rekkenLocaties.some((s) => s.label === p.rekkenlocatie.label)) {
+        rekkenLocaties.push(p.rekkenlocatie)
       }
     }
   }
@@ -410,7 +410,7 @@ export default function FloorplanRenderer({
       )}
 
       {showShelves &&
-        schappen.map((s) => {
+        rekkenLocaties.map((s) => {
           const actief = highlight && highlight.label === s.label
           return (
             <g key={s.label}>

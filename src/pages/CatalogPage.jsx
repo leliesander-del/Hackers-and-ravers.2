@@ -9,7 +9,7 @@ import BeheerNav from '../components/BeheerNav.jsx'
 const BIJNA_OP_DREMPEL = 5
 
 function statusVan(p) {
-  const totaal = p.magazijnVoorraad + p.schapVoorraad
+  const totaal = p.magazijnVoorraad + p.rekkenVoorraad
   if (totaal === 0) return { label: 'Uit voorraad', kleur: 'bg-rose-100 text-rose-700' }
   if (totaal <= BIJNA_OP_DREMPEL) return { label: 'Bijna op', kleur: 'bg-amber-100 text-amber-700' }
   if (!p.opSchap) return { label: 'Enkel magazijn', kleur: 'bg-slate-100 text-slate-600' }
@@ -48,7 +48,7 @@ export default function CatalogPage() {
     let bijna = 0
     let uit = 0
     for (const p of producten) {
-      const totaal = p.magazijnVoorraad + p.schapVoorraad
+      const totaal = p.magazijnVoorraad + p.rekkenVoorraad
       if (totaal === 0) uit++
       else if (totaal <= BIJNA_OP_DREMPEL) bijna++
       else op++
@@ -144,11 +144,11 @@ export default function CatalogPage() {
                           <p className="text-xs text-slate-400">{p.merk}</p>
                         </td>
                         <td className="hidden px-4 py-3 capitalize text-slate-600 sm:table-cell">{p.categorie}</td>
-                        <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{p.schaplocatie?.label || '—'}</td>
+                        <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{p.rekkenlocatie?.label || '—'}</td>
                         <td className="px-4 py-3 text-right font-medium text-slate-700">€ {p.prijs.toFixed(2)}</td>
                         <td className="px-4 py-3 text-right tabular-nums text-slate-600">{p.magazijnVoorraad}</td>
-                        <td className={`px-4 py-3 text-right tabular-nums font-medium ${p.schapVoorraad > 0 ? 'text-slate-700' : 'text-rose-500'}`}>
-                          {p.schapVoorraad}
+                        <td className={`px-4 py-3 text-right tabular-nums font-medium ${p.rekkenVoorraad > 0 ? 'text-slate-700' : 'text-rose-500'}`}>
+                          {p.rekkenVoorraad}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${status.kleur}`}>
