@@ -1,48 +1,63 @@
 import { floorplanTypes } from '../../data/floorplanTypes.js'
+import { getDefaultStyleForType } from '../../lib/floorplanElementStyle.js'
 
-function PalettePreview({ preview }) {
-  if (preview === 'line') {
-    return <div className="h-1.5 w-14 bg-slate-800" />
-  }
-  if (preview === 'shelf-dark') {
+/** Mini-preview — zelfde stijl als ShelfVisual / KassaVisual / DoorVisual op de kaart. */
+function PaletteElementPreview({ type }) {
+  if (type === 'muur') {
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg bg-gradient-to-b from-brand-500 to-brand-800 px-1 shadow-sm">
-        <div className="h-px w-full bg-brand-300/60" />
-        <div className="h-px w-full bg-brand-300/60" />
-      </div>
+      <svg viewBox="0 0 56 10" className="h-2.5 w-14" aria-hidden>
+        <rect x="0" y="3" width="56" height="4" fill="#1e293b" />
+      </svg>
     )
   }
-  if (preview === 'shelf-light') {
+
+  const def = getDefaultStyleForType(type)
+  if (!def) return null
+
+  if (type === 'vast-rek' || type === 'tijdelijk-rek') {
+    const isTemp = type === 'tijdelijk-rek'
     return (
-      <div className="flex h-8 w-14 flex-col justify-center gap-0.5 rounded-lg border border-dashed border-brand-300 bg-gradient-to-b from-brand-100 to-brand-200 px-1">
-        <div className="h-px w-full bg-brand-400/50" />
-        <div className="h-px w-full bg-brand-400/50" />
-      </div>
+      <svg viewBox="0 0 56 40" className="h-10 w-14" aria-hidden>
+        <rect
+          x="8"
+          y="4"
+          width="40"
+          height="32"
+          fill={def.fillColor}
+          stroke={def.strokeColor}
+          strokeWidth={isTemp ? 1.2 : 1.8}
+        />
+      </svg>
     )
   }
-  if (preview === 'kassa') {
-    return (
-      <div className="flex h-9 w-12 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-700 shadow-sm">
-        <div className="mb-0.5 h-3 w-8 rounded-sm bg-white" />
-        <span className="text-[8px] font-bold text-white">KASSA</span>
-      </div>
-    )
-  }
-  if (preview === 'ingang') {
-    return (
-      <span className="border border-emerald-600 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-        Ingang
-      </span>
-    )
-  }
-  if (preview === 'uitgang') {
-    return (
-      <span className="border border-red-600 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
-        Uitgang
-      </span>
-    )
-  }
-  return null
+
+  const label = def.label ?? ''
+  return (
+    <svg viewBox="0 0 56 36" className="h-9 w-14" aria-hidden>
+      <rect
+        x="4"
+        y="2"
+        width="48"
+        height="32"
+        fill={def.fillColor}
+        stroke={def.strokeColor}
+        strokeWidth="1.6"
+      />
+      {label && (
+        <text
+          x="28"
+          y="19"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={type === 'kassa' ? 8 : 9}
+          fontWeight="700"
+          fill={def.textColor}
+        >
+          {label}
+        </text>
+      )}
+    </svg>
+  )
 }
 
 export default function ElementPalette({ onDragStart }) {
@@ -67,7 +82,7 @@ export default function ElementPalette({ onDragStart }) {
               className="flex cursor-grab items-center gap-3 rounded-xl border border-slate-100 bg-[#f6f4fc] px-3 py-3 transition hover:border-brand-200 hover:bg-brand-50 active:cursor-grabbing"
             >
               <div className="flex h-10 w-16 shrink-0 items-center justify-center">
-                <PalettePreview preview={item.preview} />
+                <PaletteElementPreview type={item.type} />
               </div>
               <span className="text-sm font-medium text-slate-700">{item.label}</span>
             </div>

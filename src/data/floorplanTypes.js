@@ -8,7 +8,6 @@ export const floorplanTypes = [
   {
     type: 'muur',
     label: 'Muur',
-    preview: 'line',
     defaultW: 24,
     defaultH: 2.5,
     minW: 4,
@@ -22,7 +21,6 @@ export const floorplanTypes = [
   {
     type: 'vast-rek',
     label: 'Vast rek',
-    preview: 'shelf-dark',
     defaultW: UNIFORM_SHELF_W,
     defaultH: UNIFORM_SHELF_H,
     minW: 4,
@@ -36,7 +34,6 @@ export const floorplanTypes = [
   {
     type: 'tijdelijk-rek',
     label: 'Tijdelijk rek',
-    preview: 'shelf-light',
     defaultW: UNIFORM_SHELF_W,
     defaultH: UNIFORM_SHELF_H,
     minW: 4,
@@ -50,7 +47,6 @@ export const floorplanTypes = [
   {
     type: 'kassa',
     label: 'Kassa',
-    preview: 'kassa',
     defaultW: 16,
     defaultH: 11,
     minW: 10,
@@ -64,7 +60,6 @@ export const floorplanTypes = [
   {
     type: 'ingang',
     label: 'Ingang',
-    preview: 'ingang',
     defaultW: 12,
     defaultH: 6.5,
     minW: 6,
@@ -78,7 +73,6 @@ export const floorplanTypes = [
   {
     type: 'uitgang',
     label: 'Uitgang',
-    preview: 'uitgang',
     defaultW: 12,
     defaultH: 6.5,
     minW: 6,
