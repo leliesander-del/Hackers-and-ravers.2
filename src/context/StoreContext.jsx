@@ -48,11 +48,21 @@ export function saveAccount(email, data) {
 // Voegt de door de gebruiker bewerkte velden samen met het basisprofiel.
 function mergeProfile(base, edit) {
   if (!base || !edit) return base
+  return applyProfilePatch(base, edit)
+}
+
+function applyProfilePatch(base, patch) {
+  if (!base || !patch) return base
   return {
     ...base,
-    ...edit,
-    voorkeuren: base.voorkeuren ? { ...base.voorkeuren, ...(edit.voorkeuren || {}) } : base.voorkeuren,
-    persoon: { ...(base.persoon || {}), ...(edit.persoon || {}) },
+    ...patch,
+    voorkeuren:
+      patch.voorkeuren !== undefined
+        ? base.voorkeuren
+          ? { ...base.voorkeuren, ...patch.voorkeuren }
+          : patch.voorkeuren
+        : base.voorkeuren,
+    persoon: patch.persoon ? { ...(base.persoon || {}), ...patch.persoon } : base.persoon,
   }
 }
 
@@ -385,20 +395,27 @@ export function StoreProvider({ children }) {
       isManagerIngelogd: !!activeManager,
       managerLogin: (id) => setManagerId(id),
       managerLogout: () => setManagerId(null),
-      updateProfile: (patch) =>
+      updateProfile: (patch) => {
+        if (dynamischProfiel) {
+          setDynamischProfiel((p) => {
+            const next = applyProfilePatch(p, patch)
+            const email = (next.persoon?.email || next.id || '').toLowerCase()
+            if (email) {
+              const accounts = getAccounts()
+              if (accounts[email]) {
+                saveAccount(email, { ...accounts[email], profiel: next })
+              }
+            }
+            return next
+          })
+          return
+        }
+        if (!profielId) return
         setEdits((e) => {
-          if (!profielId) return e
           const huidig = e[profielId] || {}
-          return {
-            ...e,
-            [profielId]: {
-              ...huidig,
-              ...patch,
-              voorkeuren: patch.voorkeuren ? { ...(huidig.voorkeuren || {}), ...patch.voorkeuren } : huidig.voorkeuren,
-              persoon: patch.persoon ? { ...(huidig.persoon || {}), ...patch.persoon } : huidig.persoon,
-            },
-          }
-        }),
+          return { ...e, [profielId]: applyProfilePatch(huidig, patch) }
+        })
+      },
       betaalMandje,
       inventory,
       getStock,

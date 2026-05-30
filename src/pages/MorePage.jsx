@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import ProfileAvatar from '../components/ProfileAvatar.jsx'
 
 const AFDELINGEN = ['boodschappen', 'elektronica', 'sport', 'speelgoed']
 const DIEETEN = ['glutenvrij', 'lactosevrij', 'vegetarisch', 'veganistisch', 'notenvrij']
@@ -49,15 +50,21 @@ export default function MorePage() {
       <div className="space-y-5 px-4 py-4">
         {/* Profielkop */}
         <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          <span
-            className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
-            style={{ backgroundColor: activeProfile.kleur }}
-          >
-            {activeProfile.naam[0]}
-          </span>
-          <div>
+          {!isGast ? (
+            <Link to="/profiel-foto" className="shrink-0 transition active:scale-95" aria-label="Profielfoto wijzigen">
+              <ProfileAvatar profile={activeProfile} size="md" />
+            </Link>
+          ) : (
+            <ProfileAvatar profile={activeProfile} size="md" />
+          )}
+          <div className="min-w-0 flex-1">
             <p className="font-bold text-slate-800">{activeProfile.naam}</p>
             <p className="text-xs text-slate-500">{activeProfile.omschrijving}</p>
+            {!isGast && (
+              <Link to="/profiel-foto" className="mt-1 inline-block text-xs font-semibold text-brand-600 hover:text-brand-700">
+                Profielfoto wijzigen →
+              </Link>
+            )}
           </div>
         </div>
 

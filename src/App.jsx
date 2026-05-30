@@ -8,6 +8,7 @@ import StaffLoginPage from './pages/StaffLoginPage.jsx'
 import ListPage from './pages/ListPage.jsx'
 import MandjePage from './pages/MandjePage.jsx'
 import MorePage from './pages/MorePage.jsx'
+import ProfilePhotoPage from './pages/ProfilePhotoPage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="lijst" element={<ListPage />} />
         <Route path="mandje" element={<MandjePage />} />
         <Route path="profiel" element={<MorePage />} />
+        <Route path="profiel-foto" element={<ProfilePhotoPage />} />
         <Route path="store/:id" element={<StorePage />} />
         <Route path="store/:id/product/:pid" element={<ProductPage />} />
       </Route>
