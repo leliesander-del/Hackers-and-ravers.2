@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 
-// Minimale klant-navigatie: de boodschappenlijst is het centrale scherm.
+// Minimale klant-navigatie: de home (winkelkeuze + lijst) is het centrale scherm.
 const tabs = [
-  { to: '/', label: 'Lijst', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
+  { to: '/', label: 'Home', icon: 'M3 9.5 12 3l9 6.5M5 9v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9' },
   {
     to: '/mandje',
     label: 'Mandje',
