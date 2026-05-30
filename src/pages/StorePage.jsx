@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { productsByStore } from '../data/products.js'
 import { rankProducts } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
@@ -12,12 +11,12 @@ import { useFloorplan } from '../lib/useFloorplan.js'
 
 export default function StorePage() {
   const { id } = useParams()
-  const { activeProfile, cartCount } = useStore()
+  const { activeProfile, cartCount, productsByStoreLive } = useStore()
   const [zoek, setZoek] = useState('')
 
   const store = getStore(id)
   const { hasPlan } = useFloorplan(id)
-  const winkelProducten = useMemo(() => productsByStore(id), [id])
+  const winkelProducten = useMemo(() => productsByStoreLive(id), [productsByStoreLive, id])
 
   const resultaten = useMemo(() => {
     const gefilterd = zoek

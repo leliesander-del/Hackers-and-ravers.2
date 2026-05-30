@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
-import { getProduct } from '../data/products.js'
 import { getStore } from '../data/stores.js'
 import { hasFloorplan } from '../lib/floorplanStorage.js'
 import PageHeader from '../components/PageHeader.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function ListPage() {
-  const { activeProfile, inCart, addToCart } = useStore()
-  const items = activeProfile.boodschappenlijst.map(getProduct).filter(Boolean)
+  const { activeProfile, inCart, addToCart, getProductLive } = useStore()
+  const items = activeProfile.boodschappenlijst.map(getProductLive).filter(Boolean)
 
   // Groepeer per winkel zodat "toon route" per winkel kan.
   const perWinkel = {}

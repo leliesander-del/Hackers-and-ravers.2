@@ -12,6 +12,8 @@ import ProductPage from './pages/ProductPage.jsx'
 import CartPage from './pages/CartPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
+import StaffRoute from './components/StaffRoute.jsx'
+import StaffPage from './pages/StaffPage.jsx'
 
 // Het "telefoon"-frame met onderbalk. Wie nog geen profiel koos, gaat naar /login.
 function AppShell() {
@@ -41,6 +43,14 @@ export default function App() {
         <Route path="store/:id" element={<StorePage />} />
         <Route path="store/:id/product/:pid" element={<ProductPage />} />
         <Route path="mandje" element={<CartPage />} />
+        <Route
+          path="personeel"
+          element={
+            <StaffRoute>
+              <StaffPage />
+            </StaffRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
