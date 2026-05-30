@@ -10,6 +10,8 @@ import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
+import BeheerHomePage from './pages/BeheerHomePage.jsx'
+import ConnectionsPage from './pages/ConnectionsPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
 import StaffPage from './pages/StaffPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -45,6 +47,8 @@ export default function App() {
 
       {/* Winkelbeheer (plattegrond) */}
       <Route path="/beheer/login" element={<ManagerLoginPage />} />
+      <Route path="/beheer" element={<BeheerHomePage />} />
+      <Route path="/beheer/connecties" element={<ConnectionsPage />} />
       <Route path="/beheer/plattegrond" element={<FloorplanEditorPage />} />
 
       {/* Klant-app: de boodschappenlijst is de startpagina */}

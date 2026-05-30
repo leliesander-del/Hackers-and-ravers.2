@@ -30,7 +30,7 @@ function clampView(v) {
 }
 
 function kort(naam, max) {
-  return naam.length > max ? naam.slice(0, max - 1) + 'ÔÇª' : naam
+  return naam.length > max ? naam.slice(0, max - 1) + '...' : naam
 }
 
 function buildLayout(products) {
@@ -276,7 +276,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
               </circle>
             ))}
 
-        {/* Jij ÔÇö blauw bolletje */}
+        {/* Jij - blauw bolletje */}
         <circle cx={PERSON.x} cy={PERSON.y} r="2.4" fill="#2563eb" stroke="#fff" strokeWidth="0.6" />
         <text x={PERSON.x} y={PERSON.y + 6} textAnchor="middle" fontSize="3.4" fill="#2563eb" fontWeight="600">
           me
@@ -287,36 +287,46 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
       <div className="absolute right-2 top-2 flex flex-col gap-1.5">
         <button
           onClick={() => zoomBy(0.7)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
           aria-label="Inzoomen"
         >
-          +
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+            <path d="M12 6v12M6 12h12" />
+          </svg>
         </button>
         <button
           onClick={() => zoomBy(1 / 0.7)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
           aria-label="Uitzoomen"
         >
-          ÔêÆ
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+            <path d="M6 12h12" />
+          </svg>
         </button>
         {targets.length > 0 && (
           <button
             onClick={zoomNaarDoel}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-white shadow-md"
             aria-label="Zoom naar de producten"
             title="Zoom naar de producten"
           >
-            ­ƒÄ»
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="7" />
+              <circle cx="12" cy="12" r="2.5" />
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            </svg>
           </button>
         )}
         {ingezoomd && (
           <button
             onClick={() => setVb(FULL)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md"
             aria-label="Volledig overzicht"
             title="Volledig overzicht"
           >
-            Ôñó
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
           </button>
         )}
       </div>

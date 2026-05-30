@@ -20,7 +20,7 @@ export default function ManagerLoginPage() {
     }
     setFout('')
     managerLogin(manager.id)
-    navigate('/beheer/plattegrond')
+    navigate('/beheer')
   }
 
   return (

@@ -1,0 +1,304 @@
+import { useEffect, useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useStore } from '../context/StoreContext.jsx'
+import { getStore } from '../data/stores.js'
+import {
+  loadConnections,
+  saveConnection,
+  deleteConnection,
+  toggleConnection,
+} from '../lib/connectionsStorage.js'
+
+const LEEG_FORMULIER = {
+  id: null,
+  naam: '',
+  baseUrl: '',
+  method: 'GET',
+  authHeader: '',
+  apiKey: '',
+  actief: true,
+}
+
+const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+
+export default function ConnectionsPage() {
+  const { activeManager, isManagerIngelogd, managerLogout } = useStore()
+  const navigate = useNavigate()
+  const store = activeManager ? getStore(activeManager.storeId) : null
+
+  const [connecties, setConnecties] = useState([])
+  const [formulier, setFormulier] = useState(LEEG_FORMULIER)
+  const [toonFormulier, setToonFormulier] = useState(false)
+  const [fout, setFout] = useState('')
+
+  useEffect(() => {
+    if (store) setConnecties(loadConnections(store.id))
+  }, [store])
+
+  if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
+
+  const bewerkt = !!formulier.id
+
+  function start(connectie) {
+    setFout('')
+    setFormulier(connectie ? { ...connectie } : LEEG_FORMULIER)
+    setToonFormulier(true)
+  }
+
+  function annuleer() {
+    setToonFormulier(false)
+    setFormulier(LEEG_FORMULIER)
+    setFout('')
+  }
+
+  function opslaan(e) {
+    e.preventDefault()
+    if (!formulier.naam.trim()) {
+      setFout('Geef de connectie een naam.')
+      return
+    }
+    if (!formulier.baseUrl.trim()) {
+      setFout('Vul een API-URL in.')
+      return
+    }
+    try {
+      // eslint-disable-next-line no-new
+      new URL(formulier.baseUrl.trim())
+    } catch {
+      setFout('De API-URL is geen geldige URL (begin met https://).')
+      return
+    }
+    saveConnection(store.id, {
+      ...formulier,
+      naam: formulier.naam.trim(),
+      baseUrl: formulier.baseUrl.trim(),
+    })
+    setConnecties(loadConnections(store.id))
+    annuleer()
+  }
+
+  function verwijder(id) {
+    deleteConnection(store.id, id)
+    setConnecties(loadConnections(store.id))
+  }
+
+  function wissel(id) {
+    toggleConnection(store.id, id)
+    setConnecties(loadConnections(store.id))
+  }
+
+  function set(veld, waarde) {
+    setFormulier((f) => ({ ...f, [veld]: waarde }))
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f6f4fc]">
+      <header className="border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <Link to="/beheer" className="text-slate-400 hover:text-slate-700">
+              ←
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-slate-800">Connecties</h1>
+              <p className="text-sm text-slate-500">{store.naam}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              managerLogout()
+              navigate('/beheer/login')
+            }}
+            className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
+          >
+            Uitloggen
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <p className="text-sm text-slate-600">
+            Koppel andere systemen via custom API's. Klanten en personeel gebruiken deze
+            verbindingen op de achtergrond.
+          </p>
+          {!toonFormulier && (
+            <button
+              type="button"
+              onClick={() => start(null)}
+              className="shrink-0 rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+            >
+              + Nieuwe connectie
+            </button>
+          )}
+        </div>
+
+        {toonFormulier && (
+          <form
+            onSubmit={opslaan}
+            className="mb-8 space-y-4 rounded-2xl border border-violet-100 bg-white p-6 shadow-sm"
+          >
+            <h2 className="text-base font-bold text-slate-800">
+              {bewerkt ? 'Connectie bewerken' : 'Nieuwe connectie'}
+            </h2>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Naam</label>
+              <input
+                value={formulier.naam}
+                onChange={(e) => set('naam', e.target.value)}
+                placeholder="bv. Voorraadsysteem"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </div>
+
+            <div className="grid grid-cols-[7rem_1fr] gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">Methode</label>
+                <select
+                  value={formulier.method}
+                  onChange={(e) => set('method', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                >
+                  {METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">API-URL</label>
+                <input
+                  value={formulier.baseUrl}
+                  onChange={(e) => set('baseUrl', e.target.value)}
+                  placeholder="https://api.voorbeeld.be/v1/voorraad"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">
+                  Auth-header (optioneel)
+                </label>
+                <input
+                  value={formulier.authHeader}
+                  onChange={(e) => set('authHeader', e.target.value)}
+                  placeholder="Authorization"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500">
+                  API-sleutel (optioneel)
+                </label>
+                <input
+                  type="password"
+                  value={formulier.apiKey}
+                  onChange={(e) => set('apiKey', e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={formulier.actief}
+                onChange={(e) => set('actief', e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
+              />
+              Connectie actief
+            </label>
+
+            {fout && <p className="text-sm text-red-600">{fout}</p>}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="submit"
+                className="rounded-full bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+              >
+                {bewerkt ? 'Opslaan' : 'Toevoegen'}
+              </button>
+              <button
+                type="button"
+                onClick={annuleer}
+                className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100"
+              >
+                Annuleren
+              </button>
+            </div>
+          </form>
+        )}
+
+        {connecties.length === 0 && !toonFormulier ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-10 text-center">
+            <p className="text-3xl">🔌</p>
+            <p className="mt-2 font-medium text-slate-700">Nog geen connecties</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Voeg een custom API toe om dit systeem aan andere systemen te koppelen.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {connecties.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
+                    c.actief ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  🔌
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-semibold text-slate-800">{c.naam}</p>
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500">
+                      {c.method}
+                    </span>
+                    {!c.actief && (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                        inactief
+                      </span>
+                    )}
+                  </div>
+                  <p className="truncate text-sm text-slate-500">{c.baseUrl}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => wissel(c.id)}
+                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100"
+                  >
+                    {c.actief ? 'Pauzeer' : 'Activeer'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => start(c)}
+                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50"
+                  >
+                    Bewerk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => verwijder(c.id)}
+                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Verwijder
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </div>
+  )
+}

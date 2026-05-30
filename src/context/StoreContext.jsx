@@ -222,7 +222,7 @@ export function StoreProvider({ children }) {
         setProfielId(null)
       },
       cart,
-      cartCount: cartIds.length,
+      cartCount: cart.length,
       cartTotaal: cart.reduce((som, p) => som + p.prijs, 0),
       inCart: (id) => cartIds.includes(id),
       addToCart: (id) => setCartIds((ids) => (ids.includes(id) ? ids : [...ids, id])),
