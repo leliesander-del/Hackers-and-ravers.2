@@ -9,33 +9,33 @@ import ElementPalette from '../components/floorplan/ElementPalette.jsx'
 import EditorCanvas from '../components/floorplan/EditorCanvas.jsx'
 import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel.jsx'
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
-import BeheerHeader from '../components/BeheerHeader.jsx'
+import ManagerHeader from '../components/ManagerHeader.jsx'
 import { productsByStore, categoriesForStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
-  const { activeManager, isManagerIngelogd, managerLogout } = useStore()
+  const { activeManager, isManagerLoggedIn, managerLogout } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
   const [elements, setElements] = useState([])
   const [selectedId, setSelectedId] = useState(null)
-  const [opgeslagen, setOpgeslagen] = useState(false)
-  const [toonVoorbeeld, setToonVoorbeeld] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const [snapEnabled, setSnapEnabled] = useState(true)
-  const geladenRef = useRef(false)
+  const loadedRef = useRef(false)
 
   useEffect(() => {
-    if (!store || geladenRef.current) return
-    const saved = loadFloorplan(store.id)
-    setElements((saved?.elements || []).map(normalizeElement))
-    geladenRef.current = true
+    if (!store || loadedRef.current) return
+    const stored = loadFloorplan(store.id)
+    setElements((stored?.elements || []).map(normalizeElement))
+    loadedRef.current = true
   }, [store])
 
   useEffect(() => {
-    if (!store || !geladenRef.current) return
-    const saved = saveFloorplan(store.id, elements)
-    if (saved) {
-      setOpgeslagen(true)
-      const t = setTimeout(() => setOpgeslagen(false), 1500)
+    if (!store || !loadedRef.current) return
+    const result = saveFloorplan(store.id, elements)
+    if (result) {
+      setSaved(true)
+      const t = setTimeout(() => setSaved(false), 1500)
       return () => clearTimeout(t)
     }
   }, [store, elements])
@@ -49,8 +49,8 @@ export default function FloorplanEditorPage() {
             if (el.id !== selectedId) return el
             const def = getFloorplanType(el.type)
             if (!def?.rotatable) return el
-            const huidig = Number(el.rotation) || 0
-            return normalizeElement({ ...el, rotation: (huidig + 90) % 360 })
+            const current = Number(el.rotation) || 0
+            return normalizeElement({ ...el, rotation: (current + 90) % 360 })
           }),
         )
       }
@@ -59,8 +59,8 @@ export default function FloorplanEditorPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selectedId])
 
-  if (!isManagerIngelogd) return <Navigate to="/beheer/login" replace />
-  if (!store) return <Navigate to="/beheer/login" replace />
+  if (!isManagerLoggedIn) return <Navigate to="/manage/login" replace />
+  if (!store) return <Navigate to="/manage/login" replace />
 
   const selected = elements.find((el) => el.id === selectedId)
   const storeCategories = useMemo(
@@ -68,19 +68,19 @@ export default function FloorplanEditorPage() {
     [store],
   )
 
-  function roteerElement(elId) {
+  function rotateElement(elId) {
     setElements((els) =>
       els.map((el) => {
         if (el.id !== elId) return el
         const def = getFloorplanType(el.type)
         if (!def?.rotatable) return el
-        const huidig = Number(el.rotation) || 0
-        return normalizeElement({ ...el, rotation: (huidig + 90) % 360 })
+        const current = Number(el.rotation) || 0
+        return normalizeElement({ ...el, rotation: (current + 90) % 360 })
       }),
     )
   }
 
-  function verwijder() {
+  function deleteSelected() {
     if (!selectedId) return
     setElements((els) => els.filter((el) => el.id !== selectedId))
     setSelectedId(null)
@@ -103,17 +103,17 @@ export default function FloorplanEditorPage() {
   }
 
   return (
-    <div className="beheer-layout flex flex-col bg-[#f6f4fc]">
-      <BeheerHeader
+    <div className="manage-layout flex flex-col bg-[#f6f4fc]">
+      <ManagerHeader
         store={store}
-        titel="Plattegrond bewerken"
-        subtitel={
+        title="Edit floor plan"
+        subtitle={
           <>
-            {store.naam}
-            {opgeslagen && <span className="ml-2 text-emerald-600">· opgeslagen</span>}
+            {store.name}
+            {saved && <span className="ml-2 text-emerald-600">· saved</span>}
           </>
         }
-        onUitloggen={() => {
+        onLogout={() => {
           saveFloorplan(store.id, elements)
           managerLogout()
         }}
@@ -121,29 +121,29 @@ export default function FloorplanEditorPage() {
         {selected && getFloorplanType(selected.type)?.rotatable && (
           <button
             type="button"
-            onClick={() => roteerElement(selected.id)}
+            onClick={() => rotateElement(selected.id)}
             className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100"
           >
-            ↻ Draaien (90°)
+            ↻ Rotate (90°)
           </button>
         )}
         {selected && (
           <button
             type="button"
-            onClick={verwijder}
+            onClick={deleteSelected}
             className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
           >
-            Verwijderen
+            Delete
           </button>
         )}
         <button
           type="button"
-          onClick={() => setToonVoorbeeld(true)}
+          onClick={() => setShowPreview(true)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Voorbeeld
+          Preview
         </button>
-      </BeheerHeader>
+      </ManagerHeader>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <ElementPalette />
@@ -152,7 +152,7 @@ export default function FloorplanEditorPage() {
           onChange={setElements}
           selectedId={selectedId}
           onSelect={setSelectedId}
-          onRotate={roteerElement}
+          onRotate={rotateElement}
           snapEnabled={snapEnabled}
         />
         <EditorPropertiesPanel
@@ -166,20 +166,20 @@ export default function FloorplanEditorPage() {
         />
       </div>
 
-      {toonVoorbeeld && (
+      {showPreview && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8"
-          onClick={() => setToonVoorbeeld(false)}
+          onClick={() => setShowPreview(false)}
         >
           <div
             className="w-full max-w-sm rounded-3xl bg-[#f6f4fc] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="mb-3 text-center text-sm font-semibold text-slate-600">
-              Zo zien klanten je plattegrond (mobiel)
+              This is how customers see your floor plan (mobile)
             </p>
             <p className="mb-3 text-center text-[11px] text-slate-400">
-              Geef elk rek een categorie uit je assortiment (bv. pasta, brood) zodat routes kloppen.
+              Give each shelf a category from your assortment (e.g. pasta, bread) so routes are correct.
             </p>
             <FloorplanRenderer
               elements={elements}
@@ -188,10 +188,10 @@ export default function FloorplanEditorPage() {
             />
             <button
               type="button"
-              onClick={() => setToonVoorbeeld(false)}
+              onClick={() => setShowPreview(false)}
               className="mt-4 w-full rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white"
             >
-              Sluiten
+              Close
             </button>
           </div>
         </div>

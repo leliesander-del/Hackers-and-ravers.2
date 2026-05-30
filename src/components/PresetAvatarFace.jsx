@@ -1,8 +1,8 @@
-/** Voorgesteld avatar-pictogram: emoji of afbeelding op contrasterende achtergrond. */
+/** Preset avatar icon: emoji or image on a contrasting background. */
 export default function PresetAvatarFace({
   emoji,
   image,
-  kleur,
+  color,
   emojiClass = 'text-2xl',
   className = 'h-full w-full',
   alt = '',
@@ -10,7 +10,7 @@ export default function PresetAvatarFace({
   return (
     <span
       className={`flex items-center justify-center overflow-hidden rounded-full ${className}`}
-      style={{ backgroundColor: kleur }}
+      style={{ backgroundColor: color }}
       aria-hidden={!alt}
     >
       {image ? (

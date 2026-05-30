@@ -2,59 +2,60 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, ChevronRight, Compass } from '../components/icons.jsx'
 import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
+import { hashPassword, MAX_PASSWORD_LENGTH } from '../lib/security.js'
 import { Button, Input } from '../components/ui/index.js'
 import {
-  RECEPTEN,
-  THEMAS,
-  MAALTIJDEN,
-  BASIS_INGREDIENTEN,
-  KOOKTIJD_OPTIES,
-  rangschikRecepten,
-  ingredientenVoorGerechten,
-} from '../lib/assistent.js'
+  RECIPES,
+  THEMES,
+  MEALS,
+  BASE_INGREDIENTS,
+  COOK_TIME_OPTIONS,
+  rankRecipes,
+  ingredientsForDishes,
+} from '../lib/assistant.js'
 
-const DIEET_OPTIES = ['Glutenvrij', 'Lactosevrij', 'Vegetarisch', 'Veganistisch', 'Suikervrij']
-const PRIJS_OPTIES = ['Budget', 'Middenklasse', 'Premium']
+const DIET_OPTIONS = ['Gluten-free', 'Lactose-free', 'Vegetarian', 'Vegan', 'Sugar-free']
+const PRICE_OPTIONS = ['Budget', 'Mid', 'Premium']
 
-// Stap 2 — voor hoeveel personen kook je? (breed, één keuze)
-const PERSONEN_OPTIES = [
-  { id: '1', label: 'Voor mezelf', sub: '1 persoon', emoji: '🧑' },
-  { id: '2', label: "Met z'n tweeën", sub: '2 personen', emoji: '👫' },
-  { id: '3-4', label: 'Klein gezin', sub: '3 – 4 personen', emoji: '👨‍👩‍👧' },
-  { id: '5+', label: 'Groot gezin', sub: '5+ personen', emoji: '👨‍👩‍👧‍👦' },
+// Step 2 — how many people are you cooking for? (wide, single choice)
+const HOUSEHOLD_SIZE_OPTIONS = [
+  { id: '1', label: 'Just me', sub: '1 person', emoji: '🧑' },
+  { id: '2', label: 'The two of us', sub: '2 people', emoji: '👫' },
+  { id: '3-4', label: 'Small family', sub: '3 – 4 people', emoji: '👨‍👩‍👧' },
+  { id: '5+', label: 'Large family', sub: '5+ people', emoji: '👨‍👩‍👧‍👦' },
 ]
 
-// Stap 2 — hoe vaak kook je per week? (één keuze)
-const FREQUENTIE_OPTIES = [
+// Step 2 — how often do you cook per week? (single choice)
+const FREQUENCY_OPTIONS = [
   { id: '1-2', label: '1 – 2×', sub: 'per week', emoji: '🗓️' },
   { id: '3-4', label: '3 – 4×', sub: 'per week', emoji: '📅' },
-  { id: '5-7', label: '5 – 7×', sub: 'bijna dagelijks', emoji: '🔥' },
+  { id: '5-7', label: '5 – 7×', sub: 'almost daily', emoji: '🔥' },
 ]
 
-const WINKELS = [
-  { id: 'colruyt', naam: 'Colruyt', emoji: '🛒', kleur: 'bg-red-600' },
-  { id: 'delhaize', naam: 'Delhaize', emoji: '🦁', kleur: 'bg-green-600' },
-  { id: 'carrefour', naam: 'Carrefour', emoji: '🛍️', kleur: 'bg-blue-600' },
-  { id: 'aldi', naam: 'Aldi', emoji: '🏷️', kleur: 'bg-slate-600' },
-  { id: 'lidl', naam: 'Lidl', emoji: '🌻', kleur: 'bg-yellow-500' },
+const STORES = [
+  { id: 'colruyt', name: 'Colruyt', emoji: '🛒', color: 'bg-red-600' },
+  { id: 'delhaize', name: 'Delhaize', emoji: '🦁', color: 'bg-green-600' },
+  { id: 'carrefour', name: 'Carrefour', emoji: '🛍️', color: 'bg-blue-600' },
+  { id: 'aldi', name: 'Aldi', emoji: '🏷️', color: 'bg-slate-600' },
+  { id: 'lidl', name: 'Lidl', emoji: '🌻', color: 'bg-yellow-500' },
 ]
 
-const STAP_TITELS = [
+const STEP_TITLES = [
   'Account',
-  'Huishouden',
-  'Kooktijd',
-  'Keukenstijl',
-  'Maaltijd',
-  'Ingrediënten',
-  'Vermijden',
-  'Dieet & prijs',
-  'Gerechten',
-  'Winkels',
+  'Household',
+  'Cook time',
+  'Cuisine',
+  'Meal',
+  'Ingredients',
+  'Avoid',
+  'Diet & price',
+  'Dishes',
+  'Stores',
 ]
-const AANTAL_STAPPEN = STAP_TITELS.length
-// Vaste merk-accentkleur (violet) voor nieuwe accounts.
-const ACCENT_KLEUR = '#7c3aed'
-const DEMO_EMAILS = ['sander@neverlost.be', 'marc@neverlost.be', 'gast@neverlost.be']
+const STEP_COUNT = STEP_TITLES.length
+// Fixed brand accent color (violet) for new accounts.
+const ACCENT_COLOR = '#7c3aed'
+const DEMO_EMAILS = ['sander@neverlost.be', 'marc@neverlost.be', 'guest@neverlost.be']
 
 function CheckBadge() {
   return (
@@ -64,28 +65,28 @@ function CheckBadge() {
   )
 }
 
-// Sectiekop binnen een stap.
-function VeldKop({ titel }) {
-  return <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{titel}</p>
+// Section heading within a step.
+function SectionHeading({ title }) {
+  return <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
 }
 
-// Herbruikbaar raster van keuzekaarten met emoji + label (+ optioneel subtekst).
-// `enkel` = één keuze (radio-gedrag), anders meervoudige selectie.
-function KaartGrid({ opties, geselecteerd, onToggle, kolommen = 2, enkel = false }) {
-  const isAan = (id) => (enkel ? geselecteerd === id : geselecteerd.includes(id))
+// Reusable grid of choice cards with emoji + label (+ optional subtext).
+// `singleSelect` = one choice (radio behavior), otherwise multiple selection.
+function CardGrid({ options, selected, onToggle, columns = 2, singleSelect = false }) {
+  const isSelected = (id) => (singleSelect ? selected === id : selected.includes(id))
   return (
-    <div className={`grid gap-2 ${kolommen === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-      {opties.map((o) => {
-        const aan = isAan(o.id)
+    <div className={`grid gap-2 ${columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      {options.map((o) => {
+        const on = isSelected(o.id)
         return (
           <button
             key={o.id}
             onClick={() => onToggle(o.id)}
             className={`relative rounded-xl px-3 py-4 text-left transition active:scale-[0.97] ${
-              aan ? 'bg-brand-50 ring-2 ring-brand-400' : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
+              on ? 'bg-brand-50 ring-2 ring-brand-400' : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
             }`}
           >
-            {aan && <CheckBadge />}
+            {on && <CheckBadge />}
             <span className="mb-1.5 block text-2xl">{o.emoji}</span>
             <span className="block text-sm font-medium leading-tight text-slate-800">{o.label}</span>
             {o.sub && <span className="mt-0.5 block text-xs text-slate-400">{o.sub}</span>}
@@ -96,21 +97,21 @@ function KaartGrid({ opties, geselecteerd, onToggle, kolommen = 2, enkel = false
   )
 }
 
-// Herbruikbare rij van pill-knoppen (meervoudige selectie).
-function PillGroep({ opties, geselecteerd, onToggle }) {
+// Reusable row of pill buttons (multiple selection).
+function PillGroup({ options, selected, onToggle }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {opties.map((o) => {
+      {options.map((o) => {
         const id = typeof o === 'string' ? o : o.id
         const label = typeof o === 'string' ? o : o.label
         const emoji = typeof o === 'string' ? null : o.emoji
-        const aan = geselecteerd.includes(id)
+        const on = selected.includes(id)
         return (
           <button
             key={id}
             onClick={() => onToggle(id)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.97] ${
-              aan
+              on
                 ? 'bg-brand-600 text-white shadow-sm'
                 : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200'
             }`}
@@ -127,156 +128,158 @@ function PillGroep({ opties, geselecteerd, onToggle }) {
 export default function SignupPage() {
   const { login, addIngredients } = useStore()
   const navigate = useNavigate()
-  const [stap, setStap] = useState(1)
-  const [fout, setFout] = useState('')
+  const [step, setStep] = useState(1)
+  const [error, setError] = useState('')
 
-  // Stap 1 — account
-  const [naam, setNaam] = useState('')
+  // Step 1 — account
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [wachtwoord, setWachtwoord] = useState('')
+  const [password, setPassword] = useState('')
 
-  // Stap 2 — huishouden
-  const [personen, setPersonen] = useState('')
-  const [frequentie, setFrequentie] = useState('')
+  // Step 2 — household
+  const [household, setHousehold] = useState('')
+  const [frequency, setFrequency] = useState('')
 
-  // Stap 3 — hoelang wil je koken?
-  const [kooktijd, setKooktijd] = useState('')
+  // Step 3 — how long do you want to cook?
+  const [cookTime, setCookTime] = useState('')
 
-  // Stap 4 — keukenstijl (thema's uit de echte recepten)
-  const [themas, setThemas] = useState([])
+  // Step 4 — cuisine (themes from the real recipes)
+  const [themes, setThemes] = useState([])
 
-  // Stap 5 — maaltijdmoment
-  const [maaltijden, setMaaltijden] = useState([])
+  // Step 5 — meal moment
+  const [meals, setMeals] = useState([])
 
-  // Stap 6 — met welke ingrediënten
-  const [ingredienten, setIngredienten] = useState([])
+  // Step 6 — which ingredients
+  const [ingredients, setIngredients] = useState([])
 
-  // Stap 7 — wat liever vermijden
-  const [vermijden, setVermijden] = useState([])
+  // Step 7 — what to avoid
+  const [avoid, setAvoid] = useState([])
 
-  // Stap 8 — dieet & prijsklasse
-  const [dieet, setDieet] = useState([])
-  const [prijsklasse, setPrijsklasse] = useState('')
+  // Step 8 — diet & price tier
+  const [diet, setDiet] = useState([])
+  const [priceTier, setPriceTier] = useState('')
 
-  // Stap 9 — favoriete gerechten
-  const [gerechten, setGerechten] = useState([])
+  // Step 9 — favorite dishes
+  const [dishes, setDishes] = useState([])
 
-  // Stap 10 — favoriete winkels
-  const [winkels, setWinkels] = useState([])
+  // Step 10 — favorite stores
+  const [favoriteStores, setFavoriteStores] = useState([])
 
-  // Gerechten komen rechtstreeks uit de echte recepten via de gedeelde
-  // rangschik-functie (assistent.js) — dezelfde die de kok-chat gebruikt.
-  const gerechtenGefilterd = useMemo(
-    () => rangschikRecepten({ dieet, kooktijd, vermijden, themas, maaltijden, ingredienten, prijsklasse }),
-    [dieet, kooktijd, vermijden, themas, maaltijden, ingredienten, prijsklasse],
+  // Dishes come straight from the real recipes via the shared ranking function
+  // (assistant.js) — the same one the chef chat uses.
+  const filteredDishes = useMemo(
+    () => rankRecipes({ diet, cookTime, avoid, themes, meals, ingredients, priceTier }),
+    [diet, cookTime, avoid, themes, meals, ingredients, priceTier],
   )
 
   function toggleIn(setter) {
     return (item) => setter((prev) => (prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]))
   }
-  const toggleDieet = toggleIn(setDieet)
-  const toggleThema = toggleIn(setThemas)
-  const toggleMaaltijd = toggleIn(setMaaltijden)
-  const toggleIngredient = toggleIn(setIngredienten)
-  const toggleVermijden = toggleIn(setVermijden)
-  const toggleGerecht = toggleIn(setGerechten)
-  const toggleWinkel = toggleIn(setWinkels)
+  const toggleDiet = toggleIn(setDiet)
+  const toggleTheme = toggleIn(setThemes)
+  const toggleMeal = toggleIn(setMeals)
+  const toggleIngredient = toggleIn(setIngredients)
+  const toggleAvoid = toggleIn(setAvoid)
+  const toggleDish = toggleIn(setDishes)
+  const toggleStore = toggleIn(setFavoriteStores)
 
-  function valideerAccount() {
-    const naamTrim = naam.trim()
-    if (!naamTrim) return 'Vul je naam in.'
-    const naamLetters = (naamTrim.match(/\p{L}/gu) || []).length
-    if (naamLetters < 5) return 'Je naam moet minimaal 5 letters bevatten.'
+  function validateAccount() {
+    const trimmedName = name.trim()
+    if (!trimmedName) return 'Enter your name.'
+    const letterCount = (trimmedName.match(/\p{L}/gu) || []).length
+    if (letterCount < 5) return 'Your name must contain at least 5 letters.'
 
-    const emailTrim = email.trim()
-    if (!emailTrim) return 'Vul je e-mailadres in.'
-    if (!emailTrim.includes('@')) return 'zorg ervoor dat het een bestaand emailadress is'
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) return 'Enter your email address.'
+    if (!trimmedEmail.includes('@')) return "Make sure it's a valid email address."
 
-    if (!wachtwoord) return 'Vul een wachtwoord in.'
-    if (wachtwoord.length < 7) return 'Wachtwoord moet minimaal 7 tekens bevatten.'
+    if (!password) return 'Enter a password.'
+    if (password.length < 7) return 'Password must contain at least 7 characters.'
+    if (password.length > MAX_PASSWORD_LENGTH) return 'Password is too long (max. 128 characters).'
 
-    const emailLower = emailTrim.toLowerCase()
+    const emailLower = trimmedEmail.toLowerCase()
     if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
-      return 'Er bestaat al een account met dit e-mailadres.'
+      return 'An account with this email address already exists.'
     }
     return null
   }
 
-  function valideerStap() {
-    if (stap === 1) return valideerAccount()
+  function validateStep() {
+    if (step === 1) return validateAccount()
     return null
   }
 
-  function volgende() {
-    const foutMsg = valideerStap()
-    if (foutMsg) { setFout(foutMsg); return }
-    setFout('')
-    if (stap < AANTAL_STAPPEN) { setStap((s) => s + 1); return }
-    maakAccount()
+  function next() {
+    const errorMsg = validateStep()
+    if (errorMsg) { setError(errorMsg); return }
+    setError('')
+    if (step < STEP_COUNT) { setStep((s) => s + 1); return }
+    void createAccount()
   }
 
-  function vorige() {
-    setFout('')
-    setStap((s) => s - 1)
+  function previous() {
+    setError('')
+    setStep((s) => s - 1)
   }
 
-  function maakAccount() {
-    const accountFout = valideerAccount()
-    if (accountFout) {
-      setStap(1)
-      setFout(accountFout)
+  async function createAccount() {
+    const accountError = validateAccount()
+    if (accountError) {
+      setStep(1)
+      setError(accountError)
       return
     }
 
     const emailLower = email.trim().toLowerCase()
 
-    // Laatste controle: één account per e-mailadres. Voorkomt dat een
-    // bestaand account stil overschreven wordt als de flow wordt hervat.
+    // Final check: one account per email address. Prevents silently overwriting
+    // an existing account when the flow is resumed.
     if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
-      setStap(1)
-      setFout('Er bestaat al een account met dit e-mailadres.')
+      setStep(1)
+      setError('An account with this email address already exists.')
       return
     }
 
-    const omschrijving = [prijsklasse, ...dieet].filter(Boolean).join(' · ') || 'Standaard account'
+    const description = [priceTier, ...diet].filter(Boolean).join(' · ') || 'Standard account'
 
-    const profiel = {
+    const profile = {
       id: emailLower,
-      naam: naam.trim(),
-      type: 'lid',
-      omschrijving,
-      kleur: ACCENT_KLEUR,
-      accent: ACCENT_KLEUR,
-      persoon: { email: emailLower, telefoon: '', adres: '' },
-      voorkeuren: {
-        dieet,
-        prijsklasse: prijsklasse ? prijsklasse.toLowerCase() : 'budget',
-        merken: [],
-        afdelingen: [],
-        personen,
-        frequentie,
-        kooktijd,
-        themas,
-        maaltijden,
-        ingredienten,
-        vermijden,
+      name: name.trim(),
+      type: 'member',
+      description,
+      color: ACCENT_COLOR,
+      accent: ACCENT_COLOR,
+      person: { email: emailLower, phone: '', address: '' },
+      preferences: {
+        diet,
+        priceTier: priceTier ? priceTier.toLowerCase() : 'budget',
+        brands: [],
+        departments: [],
+        household,
+        frequency,
+        cookTime,
+        themes,
+        meals,
+        ingredients,
+        avoid,
       },
-      gerechten,
-      geschiedenis: { winkels },
-      loyaltyPunten: 0,
-      cashbackSaldo: 0,
-      cashbackTier: 'Standaard',
+      dishes,
+      history: { stores: favoriteStores },
+      loyaltyPoints: 0,
+      cashbackBalance: 0,
+      cashbackTier: 'Standard',
     }
 
-    saveAccount(emailLower, { wachtwoord, profiel })
-    login(profiel)
+    const passwordHash = await hashPassword(password)
+    saveAccount(emailLower, { password: passwordHash, profile })
+    login(profile, 'customer-account')
 
-    // Gekozen gerechten meteen omzetten naar ingrediënten op de boodschappenlijst,
-    // via dezelfde recepten-bron als de assistent.
-    if (gerechten.length) {
-      const gekozenRecepten = RECEPTEN.filter((r) => gerechten.includes(r.naam))
-      const { termen } = ingredientenVoorGerechten(gekozenRecepten)
-      if (termen.length) addIngredients(termen)
+    // Immediately turn the chosen dishes into ingredients on the shopping list,
+    // via the same recipe source as the assistant.
+    if (dishes.length) {
+      const chosenRecipes = RECIPES.filter((r) => dishes.includes(r.name))
+      const { terms } = ingredientsForDishes(chosenRecipes)
+      if (terms.length) addIngredients(terms)
     }
 
     navigate('/')
@@ -293,153 +296,153 @@ export default function SignupPage() {
           <span className="text-base font-bold text-slate-900">Never Lost</span>
         </div>
 
-        {/* Voortgangsbalk */}
+        {/* Progress bar */}
         <div className="space-y-2">
           <div className="flex gap-1.5">
-            {Array.from({ length: AANTAL_STAPPEN }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: STEP_COUNT }, (_, i) => i + 1).map((n) => (
               <div
                 key={n}
                 className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                  n <= stap ? 'bg-brand-600' : 'bg-slate-200'
+                  n <= step ? 'bg-brand-600' : 'bg-slate-200'
                 }`}
               />
             ))}
           </div>
           <p className="text-xs text-slate-400">
-            Stap {stap} van {AANTAL_STAPPEN} &middot;{' '}
-            <span className="text-slate-600">{STAP_TITELS[stap - 1]}</span>
-            {naam && stap > 1 && (
-              <> &middot; <span className="text-slate-600">{naam}</span></>
+            Step {step} of {STEP_COUNT} &middot;{' '}
+            <span className="text-slate-600">{STEP_TITLES[step - 1]}</span>
+            {name && step > 1 && (
+              <> &middot; <span className="text-slate-600">{name}</span></>
             )}
           </p>
         </div>
 
-        {/* Stap inhoud */}
+        {/* Step content */}
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
 
-          {/* Stap 1 — Account */}
-          {stap === 1 && (
+          {/* Step 1 — Account */}
+          {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Maak je account aan</h2>
-                <p className="mt-0.5 text-sm text-slate-500">We personaliseren jouw winkelervaring</p>
+                <h2 className="text-lg font-semibold text-slate-900">Create your account</h2>
+                <p className="mt-0.5 text-sm text-slate-500">We personalize your shopping experience</p>
               </div>
               <div className="space-y-3">
-                <Input type="text" value={naam} onChange={(e) => setNaam(e.target.value)} placeholder="Naam" aria-label="Naam" autoComplete="name" />
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mailadres" aria-label="E-mailadres" autoComplete="email" />
+                <Input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" aria-label="Name" autoComplete="name" />
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" aria-label="Email address" autoComplete="email" />
                 <Input
                   type="password"
-                  value={wachtwoord}
-                  onChange={(e) => setWachtwoord(e.target.value)}
-                  placeholder="Wachtwoord (min. 7 tekens)"
-                  aria-label="Wachtwoord"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password (min. 7 characters)"
+                  aria-label="Password"
                   autoComplete="new-password"
                 />
               </div>
               <p className="text-sm text-slate-500">
-                Al een account?{' '}
+                Already have an account?{' '}
                 <Link to="/login" className="font-medium text-brand-600 transition hover:text-brand-700">
-                  Inloggen
+                  Log in
                 </Link>
               </p>
             </div>
           )}
 
-          {/* Stap 2 — Huishouden */}
-          {stap === 2 && (
+          {/* Step 2 — Household */}
+          {step === 2 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Voor wie kook je?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Zo stemmen we porties en hoeveelheden af</p>
+                <h2 className="text-lg font-semibold text-slate-900">Who are you cooking for?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">This is how we tune portions and quantities</p>
               </div>
               <div>
-                <VeldKop titel="Aantal personen" />
-                <KaartGrid opties={PERSONEN_OPTIES} geselecteerd={personen} enkel onToggle={(id) => setPersonen((c) => (c === id ? '' : id))} />
+                <SectionHeading title="Number of people" />
+                <CardGrid options={HOUSEHOLD_SIZE_OPTIONS} selected={household} singleSelect onToggle={(id) => setHousehold((c) => (c === id ? '' : id))} />
               </div>
               <div>
-                <VeldKop titel="Hoe vaak kook je?" />
-                <KaartGrid opties={FREQUENTIE_OPTIES} geselecteerd={frequentie} enkel kolommen={3} onToggle={(id) => setFrequentie((c) => (c === id ? '' : id))} />
+                <SectionHeading title="How often do you cook?" />
+                <CardGrid options={FREQUENCY_OPTIONS} selected={frequency} singleSelect columns={3} onToggle={(id) => setFrequency((c) => (c === id ? '' : id))} />
               </div>
             </div>
           )}
 
-          {/* Stap 3 — Hoelang wil je koken? */}
-          {stap === 3 && (
+          {/* Step 3 — How long do you want to cook? */}
+          {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Hoelang wil je koken?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Zo stemmen we de gerechten af op je tijd</p>
+                <h2 className="text-lg font-semibold text-slate-900">How long do you want to cook?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">This is how we match the dishes to your time</p>
               </div>
-              <KaartGrid opties={KOOKTIJD_OPTIES} geselecteerd={kooktijd} enkel onToggle={(id) => setKooktijd((c) => (c === id ? '' : id))} />
+              <CardGrid options={COOK_TIME_OPTIONS} selected={cookTime} singleSelect onToggle={(id) => setCookTime((c) => (c === id ? '' : id))} />
             </div>
           )}
 
-          {/* Stap 4 — Keukenstijl */}
-          {stap === 4 && (
+          {/* Step 4 — Cuisine */}
+          {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Welke keuken spreekt aan?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Kies een of meerdere stijlen</p>
+                <h2 className="text-lg font-semibold text-slate-900">Which cuisine appeals to you?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Pick one or more styles</p>
               </div>
-              <KaartGrid opties={THEMAS} geselecteerd={themas} onToggle={toggleThema} />
+              <CardGrid options={THEMES} selected={themes} onToggle={toggleTheme} />
             </div>
           )}
 
-          {/* Stap 5 — Maaltijdmoment */}
-          {stap === 5 && (
+          {/* Step 5 — Meal moment */}
+          {step === 5 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Wat wil je klaarmaken?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Kies een of meerdere momenten</p>
+                <h2 className="text-lg font-semibold text-slate-900">What would you like to make?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Pick one or more moments</p>
               </div>
-              <KaartGrid opties={MAALTIJDEN} geselecteerd={maaltijden} kolommen={3} onToggle={toggleMaaltijd} />
+              <CardGrid options={MEALS} selected={meals} columns={3} onToggle={toggleMeal} />
             </div>
           )}
 
-          {/* Stap 6 — Ingrediënten */}
-          {stap === 6 && (
+          {/* Step 6 — Ingredients */}
+          {step === 6 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Waar kook je graag mee?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Selecteer je favoriete basisingrediënten</p>
+                <h2 className="text-lg font-semibold text-slate-900">What do you like to cook with?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Select your favorite base ingredients</p>
               </div>
-              <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={ingredienten} onToggle={toggleIngredient} />
+              <PillGroup options={BASE_INGREDIENTS} selected={ingredients} onToggle={toggleIngredient} />
             </div>
           )}
 
-          {/* Stap 7 — Vermijden */}
-          {stap === 7 && (
+          {/* Step 7 — Avoid */}
+          {step === 7 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Iets dat je liever vermijdt?</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Deze ingrediënten laten we uit je gerechten — sla over als er niets is</p>
+                <h2 className="text-lg font-semibold text-slate-900">Anything you'd rather avoid?</h2>
+                <p className="mt-0.5 text-sm text-slate-500">We'll leave these ingredients out of your dishes — skip if there's nothing</p>
               </div>
-              <PillGroep opties={BASIS_INGREDIENTEN} geselecteerd={vermijden} onToggle={toggleVermijden} />
+              <PillGroup options={BASE_INGREDIENTS} selected={avoid} onToggle={toggleAvoid} />
             </div>
           )}
 
-          {/* Stap 8 — Dieet & prijsklasse */}
-          {stap === 8 && (
+          {/* Step 8 — Diet & price tier */}
+          {step === 8 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Dieet &amp; prijsklasse</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Selecteer wat op jou van toepassing is</p>
+                <h2 className="text-lg font-semibold text-slate-900">Diet &amp; price tier</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Select what applies to you</p>
               </div>
 
               <div>
-                <VeldKop titel="Dieetvoorkeur" />
-                <PillGroep opties={DIEET_OPTIES} geselecteerd={dieet} onToggle={toggleDieet} />
+                <SectionHeading title="Dietary preference" />
+                <PillGroup options={DIET_OPTIONS} selected={diet} onToggle={toggleDiet} />
               </div>
 
               <div>
-                <VeldKop titel="Prijsklasse" />
+                <SectionHeading title="Price tier" />
                 <div className="flex gap-2">
-                  {PRIJS_OPTIES.map((item) => (
+                  {PRICE_OPTIONS.map((item) => (
                     <button
                       key={item}
-                      onClick={() => setPrijsklasse((cur) => (cur === item ? '' : item))}
+                      onClick={() => setPriceTier((cur) => (cur === item ? '' : item))}
                       className={`flex-1 rounded-full py-2.5 text-sm font-medium transition active:scale-[0.97] ${
-                        prijsklasse === item
+                        priceTier === item
                           ? 'bg-brand-600 text-white shadow-sm'
                           : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200'
                       }`}
@@ -452,38 +455,38 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Stap 9 — Favoriete gerechten */}
-          {stap === 9 && (
+          {/* Step 9 — Favorite dishes */}
+          {step === 9 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Welke gerechten spreken aan?</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Which dishes appeal to you?</h2>
                 <p className="mt-0.5 text-sm text-slate-500">
-                  Op maat van je keuzes — de beste matches staan bovenaan
+                  Tailored to your choices — the best matches are at the top
                 </p>
               </div>
 
-              {gerechtenGefilterd.length === 0 ? (
+              {filteredDishes.length === 0 ? (
                 <p className="py-6 text-center text-sm text-slate-400">
-                  Geen gerechten gevonden voor deze combinatie.<br />Ga terug om je dieet, kooktijd of vermeden ingrediënten aan te passen.
+                  No dishes found for this combination.<br />Go back to adjust your diet, cook time or avoided ingredients.
                 </p>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {gerechtenGefilterd.map((g) => {
-                    const geselecteerd = gerechten.includes(g.naam)
+                  {filteredDishes.map((g) => {
+                    const selected = dishes.includes(g.name)
                     return (
                       <button
-                        key={g.naam}
-                        onClick={() => toggleGerecht(g.naam)}
+                        key={g.name}
+                        onClick={() => toggleDish(g.name)}
                         className={`relative rounded-xl px-3 py-3.5 text-left transition active:scale-[0.97] ${
-                          geselecteerd
+                          selected
                             ? 'bg-brand-50 ring-2 ring-brand-400'
                             : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        {geselecteerd && <CheckBadge />}
+                        {selected && <CheckBadge />}
                         <span className="mb-1.5 block text-2xl">{g.emoji}</span>
-                        <span className="block text-xs font-medium capitalize leading-tight text-slate-800">{g.naam}</span>
-                        <span className="mt-1 block text-[10px] text-slate-400">{g.tijd} min</span>
+                        <span className="block text-xs font-medium capitalize leading-tight text-slate-800">{g.name}</span>
+                        <span className="mt-1 block text-[10px] text-slate-400">{g.time} min</span>
                       </button>
                     )
                   })}
@@ -492,31 +495,31 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Stap 10 — Favoriete winkels */}
-          {stap === 10 && (
+          {/* Step 10 — Favorite stores */}
+          {step === 10 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Favoriete winkels</h2>
-                <p className="mt-0.5 text-sm text-slate-500">Selecteer je vaste supermarkten</p>
+                <h2 className="text-lg font-semibold text-slate-900">Favorite stores</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Select your regular supermarkets</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {WINKELS.map((w) => {
-                  const geselecteerd = winkels.includes(w.id)
+                {STORES.map((w) => {
+                  const selected = favoriteStores.includes(w.id)
                   return (
                     <button
                       key={w.id}
-                      onClick={() => toggleWinkel(w.id)}
+                      onClick={() => toggleStore(w.id)}
                       className={`relative rounded-xl px-3 py-4 text-left transition active:scale-[0.97] ${
-                        geselecteerd
+                        selected
                           ? 'bg-brand-50 ring-2 ring-brand-400'
                           : 'bg-slate-50 ring-1 ring-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      {geselecteerd && <CheckBadge />}
-                      <span className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${w.kleur} text-lg shadow-sm`}>
+                      {selected && <CheckBadge />}
+                      <span className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${w.color} text-lg shadow-sm`}>
                         {w.emoji}
                       </span>
-                      <span className="block text-sm font-medium text-slate-800">{w.naam}</span>
+                      <span className="block text-sm font-medium text-slate-800">{w.name}</span>
                     </button>
                   )
                 })}
@@ -525,24 +528,24 @@ export default function SignupPage() {
           )}
         </div>
 
-        {/* Foutmelding */}
-        {fout && (
+        {/* Error message */}
+        {error && (
           <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 ring-1 ring-rose-200">
-            {fout}
+            {error}
           </div>
         )}
 
-        {/* Navigatieknoppen */}
+        {/* Navigation buttons */}
         <div className="flex gap-3">
-          {stap > 1 && (
-            <Button variant="secondary" size="lg" onClick={vorige} className="px-5">
+          {step > 1 && (
+            <Button variant="secondary" size="lg" onClick={previous} className="px-5">
               <ChevronLeft className="h-4 w-4" />
-              Vorige
+              Previous
             </Button>
           )}
-          <Button size="lg" onClick={volgende} className="flex-1">
-            {stap === AANTAL_STAPPEN ? 'Account aanmaken' : 'Volgende'}
-            {stap < AANTAL_STAPPEN && <ChevronRight className="h-4 w-4" />}
+          <Button size="lg" onClick={next} className="flex-1">
+            {step === STEP_COUNT ? 'Create account' : 'Next'}
+            {step < STEP_COUNT && <ChevronRight className="h-4 w-4" />}
           </Button>
         </div>
       </div>

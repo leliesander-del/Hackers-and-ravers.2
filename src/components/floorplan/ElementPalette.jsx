@@ -1,9 +1,9 @@
 import { floorplanTypes } from '../../data/floorplanTypes.js'
 import { getDefaultStyleForType } from '../../lib/floorplanElementStyle.js'
 
-/** Mini-preview — zelfde stijl als ShelfVisual / KassaVisual / DoorVisual op de kaart. */
+/** Mini preview — same style as ShelfVisual / checkout / door visuals on the map. */
 function PaletteElementPreview({ type }) {
-  if (type === 'muur') {
+  if (type === 'wall') {
     return (
       <svg viewBox="0 0 56 10" className="h-2.5 w-14" aria-hidden>
         <rect x="0" y="3" width="56" height="4" fill="#1e293b" />
@@ -14,8 +14,8 @@ function PaletteElementPreview({ type }) {
   const def = getDefaultStyleForType(type)
   if (!def) return null
 
-  if (type === 'vast-rek' || type === 'tijdelijk-rek') {
-    const isTemp = type === 'tijdelijk-rek'
+  if (type === 'fixed-shelf' || type === 'temp-shelf') {
+    const isTemp = type === 'temp-shelf'
     return (
       <svg viewBox="0 0 56 40" className="h-10 w-14" aria-hidden>
         <rect
@@ -49,7 +49,7 @@ function PaletteElementPreview({ type }) {
           y="19"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={type === 'kassa' ? 8 : 9}
+          fontSize={type === 'checkout' ? 8 : 9}
           fontWeight="700"
           fill={def.textColor}
         >
@@ -70,8 +70,8 @@ export default function ElementPalette({ onDragStart }) {
   return (
     <aside className="flex w-56 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <div className="border-b border-slate-100 px-4 py-4">
-        <h2 className="text-sm font-bold text-slate-800">Elementen</h2>
-        <p className="mt-0.5 text-xs text-slate-500">Sleep muur, rekken, kassa, ingang of uitgang naar je winkel</p>
+        <h2 className="text-sm font-bold text-slate-800">Elements</h2>
+        <p className="mt-0.5 text-xs text-slate-500">Drag a wall, shelves, checkout, entrance or exit onto your store</p>
       </div>
       <ul className="flex-1 space-y-1 overflow-y-auto p-3">
         {floorplanTypes.map((item) => (

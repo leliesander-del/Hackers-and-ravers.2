@@ -1,13 +1,13 @@
-// Hulpfuncties voor het magazijn/rekken-voorraadmodel.
+// Helper functions for the warehouse/shelves stock model.
 
-import { doelRekkenVoorraad } from './staffStock.js'
+import { targetShelfStock } from './staffStock.js'
 
 export function buildInitialInventory(products) {
   const inv = {}
   for (const p of products) {
     inv[p.id] = {
-      magazijn: p.magazijnVoorraad ?? 0,
-      rekken: p.rekkenVoorraad ?? 0,
+      warehouse: p.warehouseStock ?? 0,
+      shelves: p.shelfStock ?? 0,
     }
   }
   return inv
@@ -15,29 +15,29 @@ export function buildInitialInventory(products) {
 
 export function enrichProduct(product, stock) {
   if (!product) return null
-  const magazijn = stock?.magazijn ?? product.magazijnVoorraad ?? 0
-  const rekken = stock?.rekken ?? product.rekkenVoorraad ?? 0
-  const opRekken = rekken > 0
-  const inMagazijn = magazijn > 0
-  let voorraadStatus = 'rekken'
-  if (!opRekken && inMagazijn) voorraadStatus = 'magazijn'
-  if (!opRekken && !inMagazijn) voorraadStatus = 'op'
+  const warehouse = stock?.warehouse ?? product.warehouseStock ?? 0
+  const shelves = stock?.shelves ?? product.shelfStock ?? 0
+  const onShelf = shelves > 0
+  const inWarehouse = warehouse > 0
+  let stockStatus = 'shelf'
+  if (!onShelf && inWarehouse) stockStatus = 'warehouse'
+  if (!onShelf && !inWarehouse) stockStatus = 'out'
 
-  const doelRekken = doelRekkenVoorraad(product)
+  const targetShelves = targetShelfStock(product)
 
   return {
     ...product,
-    magazijnVoorraad: magazijn,
-    rekkenVoorraad: rekken,
-    doelRekkenVoorraad: doelRekken,
-    opVoorraad: opRekken,
-    opRekken,
-    inMagazijn,
-    voorraadStatus,
+    warehouseStock: warehouse,
+    shelfStock: shelves,
+    targetShelfStock: targetShelves,
+    inStock: onShelf,
+    onShelf,
+    inWarehouse,
+    stockStatus,
   }
 }
 
-// QR of handmatige invoer -> product-id (bijv. storenav://product/p-koffiebonen).
+// QR or manual input -> product id (e.g. storenav://product/p-koffiebonen).
 export function parseProductQr(input) {
   const raw = input.trim()
   if (!raw) return null

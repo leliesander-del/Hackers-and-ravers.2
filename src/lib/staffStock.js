@@ -1,53 +1,53 @@
-// Voorraadclassificatie voor het rekkenvuller-scherm.
+// Stock classification for the shelf-stocker screen.
 
-/** Product staat fysiek op de rekken (kassa toont alleen deze). */
-export function ligtOpRekken(product) {
-  return (product.rekkenVoorraad ?? 0) > 0
+/** Product is physically on the shelves (checkout only shows these). */
+export function isOnShelf(product) {
+  return (product.shelfStock ?? 0) > 0
 }
 
-export function filterOpRekken(producten) {
-  return producten.filter(ligtOpRekken)
+export function filterOnShelf(products) {
+  return products.filter(isOnShelf)
 }
 
-export function doelRekkenVoorraad(product) {
-  if (product.doelRekkenVoorraad != null) return product.doelRekkenVoorraad
-  if (product.rekkenVoorraad > 0) return product.rekkenVoorraad
-  return product.afdeling === 'elektronica' || product.afdeling === 'sport' ? 4 : 10
+export function targetShelfStock(product) {
+  if (product.targetShelfStock != null) return product.targetShelfStock
+  if (product.shelfStock > 0) return product.shelfStock
+  return product.department === 'electronics' || product.department === 'sport' ? 4 : 10
 }
 
-export function classificeerRekkenVoorraad(product) {
-  const doel = doelRekkenVoorraad(product)
-  const rekken = product.rekkenVoorraad ?? 0
-  const magazijn = product.magazijnVoorraad ?? 0
-  const halveDrempel = Math.ceil(doel / 2)
+export function classifyShelfStock(product) {
+  const target = targetShelfStock(product)
+  const shelves = product.shelfStock ?? 0
+  const warehouse = product.warehouseStock ?? 0
+  const halfThreshold = Math.ceil(target / 2)
 
-  if (rekken === 0 && magazijn === 0) return 'uit'
-  if (rekken === 0 && magazijn > 0) return 'legeRekken'
-  if (rekken > 0 && rekken <= halveDrempel) return 'rekkenBijnaOp'
-  return 'veel'
+  if (shelves === 0 && warehouse === 0) return 'out'
+  if (shelves === 0 && warehouse > 0) return 'emptyShelves'
+  if (shelves > 0 && shelves <= halfThreshold) return 'shelfLow'
+  return 'wellStocked'
 }
 
-export function groepeerVoorraadPerRekken(producten) {
-  const uit = []
-  const legeRekken = []
-  const rekkenBijnaOp = []
-  const veel = []
+export function groupStockByShelf(products) {
+  const out = []
+  const emptyShelves = []
+  const shelfLow = []
+  const wellStocked = []
 
-  for (const p of producten) {
-    const status = classificeerRekkenVoorraad(p)
-    if (status === 'uit') uit.push(p)
-    else if (status === 'legeRekken') legeRekken.push(p)
-    else if (status === 'rekkenBijnaOp') rekkenBijnaOp.push(p)
-    else veel.push(p)
+  for (const p of products) {
+    const status = classifyShelfStock(p)
+    if (status === 'out') out.push(p)
+    else if (status === 'emptyShelves') emptyShelves.push(p)
+    else if (status === 'shelfLow') shelfLow.push(p)
+    else wellStocked.push(p)
   }
 
-  const sortNaam = (a, b) => a.naam.localeCompare(b.naam)
-  const sortRekkenLaag = (a, b) => a.rekkenVoorraad - b.rekkenVoorraad
+  const sortByName = (a, b) => a.name.localeCompare(b.name)
+  const sortByShelfAsc = (a, b) => a.shelfStock - b.shelfStock
 
-  uit.sort(sortNaam)
-  legeRekken.sort(sortNaam)
-  rekkenBijnaOp.sort(sortRekkenLaag)
-  veel.sort((a, b) => b.rekkenVoorraad - a.rekkenVoorraad)
+  out.sort(sortByName)
+  emptyShelves.sort(sortByName)
+  shelfLow.sort(sortByShelfAsc)
+  wellStocked.sort((a, b) => b.shelfStock - a.shelfStock)
 
-  return { uit, legeRekken, rekkenBijnaOp, veel }
+  return { out, emptyShelves, shelfLow, wellStocked }
 }

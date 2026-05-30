@@ -2,85 +2,97 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { stores, getStore } from '../data/stores.js'
-import { findManagerByCredentials } from '../data/managers.js'
+import { findManagerByCredentials, MANAGER_DEMO_HINTS } from '../data/managers.js'
 import StoreLogo from '../components/StoreLogo.jsx'
+import { clearLoginAttempts, getLoginLockout, recordFailedLogin } from '../lib/security.js'
 import { AuthLayout, Button, Field, Select, Input, Card } from '../components/ui/index.js'
 
 export default function ManagerLoginPage() {
   const { managerLogin } = useStore()
   const navigate = useNavigate()
   const [storeId, setStoreId] = useState(stores[0]?.id || '')
-  const [wachtwoord, setWachtwoord] = useState('')
-  const [fout, setFout] = useState('')
-  const geselecteerdeWinkel = getStore(storeId)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const selectedStore = getStore(storeId)
 
-  function inloggen(e) {
+  function handleLogin(e) {
     e.preventDefault()
-    const manager = findManagerByCredentials(storeId, wachtwoord.trim())
-    if (!manager) {
-      setFout('Onjuiste winkel of wachtwoord.')
+
+    const lockout = getLoginLockout()
+    if (lockout.locked) {
+      setError(`Too many attempts. Try again in ${lockout.secondsLeft} seconds.`)
       return
     }
-    setFout('')
+
+    const manager = findManagerByCredentials(storeId, password.trim())
+    if (!manager) {
+      recordFailedLogin()
+      setError('Incorrect store or password.')
+      return
+    }
+
+    clearLoginAttempts()
+    setError('')
     managerLogin(manager.id)
-    navigate('/beheer')
+    navigate('/manage')
   }
 
   return (
     <AuthLayout
       logo={
-        geselecteerdeWinkel ? (
-          <StoreLogo store={geselecteerdeWinkel} sizeClass="h-14 w-14" emojiClass="text-2xl" />
+        selectedStore ? (
+          <StoreLogo store={selectedStore} sizeClass="h-14 w-14" emojiClass="text-2xl" />
         ) : (
           <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-2xl">
             🏪
           </span>
         )
       }
-      title="Winkelbeheer"
-      subtitle="Log in om de plattegrond van je winkel aan te maken. Klanten zien deze daarna in de app."
+      title="Store management"
+      subtitle="Log in to build your store's floor plan. Customers then see it in the app."
       footer={
         <Link to="/login" className="underline underline-offset-2 transition hover:text-brand-600">
-          ← Terug naar klantenlogin
+          ← Back to customer login
         </Link>
       }
     >
       <Card className="p-6">
-        <form onSubmit={inloggen} className="space-y-4">
-          <Field label="Jouw winkel">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Field label="Your store">
             <Select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
               {stores.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.naam}
+                  {s.name}
                 </option>
               ))}
             </Select>
           </Field>
 
-          <Field label="Wachtwoord">
+          <Field label="Password">
             <Input
               type="password"
-              value={wachtwoord}
-              onChange={(e) => setWachtwoord(e.target.value)}
-              placeholder="Demo-wachtwoord"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Demo password"
+              autoComplete="current-password"
             />
           </Field>
 
-          {fout && <p className="text-sm text-rose-600">{fout}</p>}
+          {error && <p className="text-sm text-rose-600">{error}</p>}
 
           <Button type="submit" size="lg" pill className="w-full">
-            Inloggen als beheerder
+            Log in as manager
           </Button>
         </form>
 
         <details className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
-          <summary className="cursor-pointer font-medium text-slate-600">Demo-wachtwoorden</summary>
+          <summary className="cursor-pointer font-medium text-slate-600">Demo passwords</summary>
           <ul className="mt-2 space-y-1">
-            <li>AH XL Gent → <code className="text-brand-600">ahxl</code></li>
-            <li>MediaMarkt → <code className="text-brand-600">media</code></li>
-            <li>Decathlon → <code className="text-brand-600">sport</code></li>
-            <li>HEMA → <code className="text-brand-600">hema</code></li>
-            <li>Delhaize → <code className="text-brand-600">delhaize</code></li>
+            {MANAGER_DEMO_HINTS.map(({ label, hint }) => (
+              <li key={label}>
+                {label} → <code className="text-brand-600">{hint}</code>
+              </li>
+            ))}
           </ul>
         </details>
       </Card>

@@ -55,12 +55,12 @@ export default function EditorCanvas({
       w: def.defaultW,
       h: def.defaultH,
       label:
-        type === 'kassa'
-          ? 'KASSA'
-          : type === 'ingang'
-            ? 'Ingang'
-            : type === 'uitgang'
-              ? 'Uitgang'
+        type === 'checkout'
+          ? 'CHECKOUT'
+          : type === 'entrance'
+            ? 'Entrance'
+            : type === 'exit'
+              ? 'Exit'
               : getFloorplanType(type)?.labelable
                 ? ''
                 : undefined,
@@ -181,7 +181,7 @@ export default function EditorCanvas({
           />
         </div>
         <p className="mt-3 text-center text-xs text-slate-500">
-          Sleep · Zachte snap · Witte hoeken = uitrekken · Dubbelklik = draaien
+          Drag · Soft snap · White corners = resize · Double-click = rotate
         </p>
       </div>
     </main>

@@ -1,44 +1,44 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import BeheerHeader from '../components/BeheerHeader.jsx'
+import ManagerHeader from '../components/ManagerHeader.jsx'
 
-const TEGELS = [
+const TILES = [
   {
-    to: '/beheer/plattegrond',
+    to: '/manage/floorplan',
     emoji: '🗺️',
-    titel: 'Plattegrond bewerken',
-    tekst: 'Maak of pas de plattegrond van je winkel aan.',
+    title: 'Edit floor plan',
+    text: "Create or update your store's floor plan.",
   },
   {
-    to: '/beheer/catalogus',
+    to: '/manage/catalog',
     emoji: '📦',
-    titel: 'Catalogus',
-    tekst: 'Bekijk producten met live voorraad van je winkel.',
+    title: 'Catalog',
+    text: 'View products with live stock for your store.',
   },
   {
-    to: '/beheer/connecties',
+    to: '/manage/connections',
     emoji: '🔌',
-    titel: 'Connecties',
-    tekst: "Koppel andere systemen via custom API's.",
+    title: 'Connections',
+    text: 'Connect other systems via custom APIs.',
   },
 ]
 
-export default function BeheerHomePage() {
-  const { activeManager, isManagerIngelogd } = useStore()
+export default function ManagerHomePage() {
+  const { activeManager, isManagerLoggedIn } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
-  if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
+  if (!isManagerLoggedIn || !store) return <Navigate to="/manage/login" replace />
 
   return (
     <div className="min-h-screen bg-[#f6f4fc]">
-      <BeheerHeader store={store} titel="Winkelbeheer" subtitel={store.naam} />
+      <ManagerHeader store={store} title="Store management" subtitle={store.name} />
 
       <main className="mx-auto max-w-md px-6 py-8">
-        <h2 className="mb-4 text-lg font-bold text-slate-800">Wat wil je doen?</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-800">What would you like to do?</h2>
 
         <div className="space-y-3">
-          {TEGELS.map((t) => (
+          {TILES.map((t) => (
             <Link
               key={t.to}
               to={t.to}
@@ -48,8 +48,8 @@ export default function BeheerHomePage() {
                 {t.emoji}
               </span>
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800">{t.titel}</p>
-                <p className="text-sm text-slate-500">{t.tekst}</p>
+                <p className="font-semibold text-slate-800">{t.title}</p>
+                <p className="text-sm text-slate-500">{t.text}</p>
               </div>
               <span className="ml-auto text-brand-400">→</span>
             </Link>

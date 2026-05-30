@@ -1,78 +1,78 @@
-// Winkels rond Gent. De gesimuleerde gebruiker staat op de Korenmarkt (centrum).
-// `afdeling` koppelt aan de voorkeuren van een profiel voor de personalisatie.
+// Stores around Ghent. The simulated user stands at the Korenmarkt (city center).
+// `department` links to a profile's preferences for personalization.
 
-export const userLocation = { lat: 51.0538, lng: 3.722, label: 'Korenmarkt, Gent' }
+export const userLocation = { lat: 51.0538, lng: 3.722, label: 'Korenmarkt, Ghent' }
 
 export const stores = [
   {
     id: 'ah-xl',
     logoDomain: 'ah.be',
-    naam: 'AH XL Gent',
-    straat: 'Brusselsesteenweg 707, Gentbrugge',
-    afdeling: 'boodschappen',
-    type: 'Supermarkt',
+    name: 'AH XL Ghent',
+    street: 'Brusselsesteenweg 707, Gentbrugge',
+    department: 'groceries',
+    type: 'Supermarket',
     lat: 51.0495,
     lng: 3.7305,
     cashback: 2,
-    kleur: '#0aa0e0',
+    color: '#0aa0e0',
     emoji: '🛒',
-    heeftPlattegrond: true,
+    hasFloorplan: true,
   },
   {
     id: 'mediamarkt',
     logoDomain: 'mediamarkt.be',
-    naam: 'MediaMarkt Gent',
-    straat: 'Woodrow Wilsonplein 4, Gent',
-    afdeling: 'elektronica',
-    type: 'Elektronica',
+    name: 'MediaMarkt Ghent',
+    street: 'Woodrow Wilsonplein 4, Ghent',
+    department: 'electronics',
+    type: 'Electronics',
     lat: 51.0588,
     lng: 3.7485,
     cashback: 3,
-    kleur: '#e3001b',
+    color: '#e3001b',
     emoji: '📺',
-    heeftPlattegrond: true,
+    hasFloorplan: true,
   },
   {
     id: 'decathlon',
     logoDomain: 'decathlon.be',
-    naam: 'Decathlon Gent',
-    straat: 'Koopvaardijlaan 40, Gent',
-    afdeling: 'sport',
-    type: 'Sport',
+    name: 'Decathlon Ghent',
+    street: 'Koopvaardijlaan 40, Ghent',
+    department: 'sport',
+    type: 'Sports',
     lat: 51.0285,
     lng: 3.751,
     cashback: 1.5,
-    kleur: '#1559b2',
+    color: '#1559b2',
     emoji: '⚽',
-    heeftPlattegrond: true,
+    hasFloorplan: true,
   },
   {
     id: 'hema',
     logoDomain: 'hema.be',
-    naam: 'HEMA Veldstraat',
-    straat: 'Veldstraat 88, Gent',
-    afdeling: 'speelgoed',
-    type: 'Warenhuis',
+    name: 'HEMA Veldstraat',
+    street: 'Veldstraat 88, Ghent',
+    department: 'toys',
+    type: 'Department store',
     lat: 51.0511,
     lng: 3.7235,
     cashback: 2.5,
-    kleur: '#008bcb',
+    color: '#008bcb',
     emoji: '🧸',
-    heeftPlattegrond: true,
+    hasFloorplan: true,
   },
   {
     id: 'delhaize',
     logoDomain: 'delhaize.be',
-    naam: 'Delhaize Sint-Pieters',
-    straat: 'Sint-Pietersplein 12, Gent',
-    afdeling: 'boodschappen',
-    type: 'Supermarkt',
+    name: 'Delhaize Sint-Pieters',
+    street: 'Sint-Pietersplein 12, Ghent',
+    department: 'groceries',
+    type: 'Supermarket',
     lat: 51.0365,
     lng: 3.7105,
     cashback: 2,
-    kleur: '#d11f2e',
+    color: '#d11f2e',
     emoji: '🛒',
-    heeftPlattegrond: true,
+    hasFloorplan: true,
   },
 ]
 
@@ -80,8 +80,8 @@ export function getStore(id) {
   return stores.find((s) => s.id === id) || null
 }
 
-// Hemelsbrede afstand (km, 1 decimaal) van de gebruiker tot een winkel.
-export function afstandTotGebruiker(store) {
+// Straight-line distance (km, 1 decimal) from the user to a store.
+export function distanceToUser(store) {
   const R = 6371
   const dLat = ((store.lat - userLocation.lat) * Math.PI) / 180
   const dLng = ((store.lng - userLocation.lng) * Math.PI) / 180

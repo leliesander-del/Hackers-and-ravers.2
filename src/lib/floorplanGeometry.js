@@ -43,11 +43,11 @@ export function getBounds(el) {
 }
 
 export function isSnappable(type) {
-  return ['muur', 'vast-rek', 'tijdelijk-rek', 'kassa', 'ingang', 'uitgang'].includes(type)
+  return ['wall', 'fixed-shelf', 'temp-shelf', 'checkout', 'entrance', 'exit'].includes(type)
 }
 
 export function isShelf(type) {
-  return type === 'vast-rek' || type === 'tijdelijk-rek'
+  return type === 'fixed-shelf' || type === 'temp-shelf'
 }
 
 export function isResizable(type) {
@@ -89,7 +89,7 @@ export function localToWorld(lx, ly, el) {
   }
 }
 
-/** Vast hoekpunt (tegenover de sleephoek) in lokale coördinaten. */
+/** Fixed corner (opposite the drag corner) in local coordinates. */
 export function anchorLocalForCorner(corner, w, h) {
   const map = {
     se: { lx: -w / 2, ly: -h / 2 },

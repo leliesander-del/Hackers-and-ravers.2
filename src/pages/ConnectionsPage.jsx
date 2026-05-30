@@ -2,162 +2,170 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import BeheerHeader from '../components/BeheerHeader.jsx'
+import ManagerHeader from '../components/ManagerHeader.jsx'
 import {
   loadConnections,
   saveConnection,
   deleteConnection,
   toggleConnection,
 } from '../lib/connectionsStorage.js'
+import { sanitizeAuthHeader, sanitizeHttpMethod, validateApiUrl } from '../lib/security.js'
 
-const LEEG_FORMULIER = {
+const EMPTY_FORM = {
   id: null,
-  naam: '',
+  name: '',
   baseUrl: '',
   method: 'GET',
   authHeader: '',
   apiKey: '',
-  actief: true,
+  active: true,
   demo: false,
 }
 
-const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+const METHODS = ['GET', 'POST', 'PUT', 'PATCH']
 
 export default function ConnectionsPage() {
-  const { activeManager, isManagerIngelogd, syncVoorraadVanConnectie } = useStore()
+  const { activeManager, isManagerLoggedIn, syncStockFromConnection } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
-  const [connecties, setConnecties] = useState([])
-  const [formulier, setFormulier] = useState(LEEG_FORMULIER)
-  const [toonFormulier, setToonFormulier] = useState(false)
-  const [fout, setFout] = useState('')
-  // Sync-status per connectie-id: { bezig, ok, tekst }.
+  const [connections, setConnections] = useState([])
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [showForm, setShowForm] = useState(false)
+  const [error, setError] = useState('')
+  // Sync status per connection id: { busy, ok, text }.
   const [syncStatus, setSyncStatus] = useState({})
 
-  async function synchroniseer(connectie) {
-    setSyncStatus((s) => ({ ...s, [connectie.id]: { bezig: true } }))
-    const r = await syncVoorraadVanConnectie(store.id, connectie.id)
+  async function syncConnection(connection) {
+    setSyncStatus((s) => ({ ...s, [connection.id]: { busy: true } }))
+    const r = await syncStockFromConnection(store.id, connection.id)
     setSyncStatus((s) => ({
       ...s,
-      [connectie.id]: {
-        bezig: false,
+      [connection.id]: {
+        busy: false,
         ok: r.ok,
-        tekst: r.ok
-          ? `✓ ${r.herkend} producten gesynchroniseerd (${r.gewijzigd} aangepast)`
-          : `✕ ${r.fout}`,
+        text: r.ok
+          ? `✓ ${r.recognized} products synced (${r.changed} updated)`
+          : `✕ ${r.error}`,
       },
     }))
   }
 
   useEffect(() => {
-    if (store) setConnecties(loadConnections(store.id))
+    if (store) setConnections(loadConnections(store.id))
   }, [store])
 
-  if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
+  if (!isManagerLoggedIn || !store) return <Navigate to="/manage/login" replace />
 
-  const bewerkt = !!formulier.id
+  const isEditing = !!form.id
 
-  function start(connectie) {
-    setFout('')
-    setFormulier(connectie ? { ...connectie } : LEEG_FORMULIER)
-    setToonFormulier(true)
+  function start(connection) {
+    setError('')
+    setForm(connection ? { ...connection } : EMPTY_FORM)
+    setShowForm(true)
   }
 
-  function annuleer() {
-    setToonFormulier(false)
-    setFormulier(LEEG_FORMULIER)
-    setFout('')
+  function cancel() {
+    setShowForm(false)
+    setForm(EMPTY_FORM)
+    setError('')
   }
 
-  function opslaan(e) {
+  function save(e) {
     e.preventDefault()
-    if (!formulier.naam.trim()) {
-      setFout('Geef de connectie een naam.')
+    if (!form.name.trim()) {
+      setError('Give the connection a name.')
       return
     }
-    // Een demo-databron heeft geen URL nodig; een echte API wel.
-    if (!formulier.demo) {
-      if (!formulier.baseUrl.trim()) {
-        setFout('Vul een API-URL in (of kies een demo-databron).')
+    // A demo data source needs no URL; a real API does.
+    if (!form.demo) {
+      if (!form.baseUrl.trim()) {
+        setError('Enter an API URL (or choose a demo data source).')
         return
       }
-      try {
-        // eslint-disable-next-line no-new
-        new URL(formulier.baseUrl.trim())
-      } catch {
-        setFout('De API-URL is geen geldige URL (begin met https://).')
+      const urlCheck = validateApiUrl(form.baseUrl.trim())
+      if (!urlCheck.ok) {
+        setError(urlCheck.error)
         return
+      }
+      if (form.authHeader.trim()) {
+        const headerName = sanitizeAuthHeader(form.authHeader)
+        if (!headerName) {
+          setError('The authorization header name contains invalid characters.')
+          return
+        }
       }
     }
     saveConnection(store.id, {
-      ...formulier,
-      naam: formulier.naam.trim(),
-      baseUrl: formulier.baseUrl.trim(),
+      ...form,
+      name: form.name.trim(),
+      baseUrl: form.baseUrl.trim(),
+      method: sanitizeHttpMethod(form.method),
+      authHeader: form.authHeader.trim() ? sanitizeAuthHeader(form.authHeader.trim()) : '',
     })
-    setConnecties(loadConnections(store.id))
-    annuleer()
+    setConnections(loadConnections(store.id))
+    cancel()
   }
 
-  function verwijder(id) {
+  function remove(id) {
     deleteConnection(store.id, id)
-    setConnecties(loadConnections(store.id))
+    setConnections(loadConnections(store.id))
   }
 
-  function wissel(id) {
+  function toggleActive(id) {
     toggleConnection(store.id, id)
-    setConnecties(loadConnections(store.id))
+    setConnections(loadConnections(store.id))
   }
 
-  function set(veld, waarde) {
-    setFormulier((f) => ({ ...f, [veld]: waarde }))
+  function setField(field, value) {
+    setForm((f) => ({ ...f, [field]: value }))
   }
 
   return (
     <div className="min-h-screen bg-[#f6f4fc]">
-      <BeheerHeader store={store} titel="Connecties" subtitel={store.naam} />
+      <ManagerHeader store={store} title="Connections" subtitle={store.name} />
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="text-sm text-slate-600">
-            Koppel de databank van je winkel via een custom API en synchroniseer de voorraad,
-            zodat de inventaris in de app klopt.
+            Connect your store's database via a custom API and sync the stock, so the
+            inventory in the app stays correct.
           </p>
-          {!toonFormulier && (
+          {!showForm && (
             <button
               type="button"
               onClick={() => start(null)}
               className="shrink-0 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
-              + Nieuwe connectie
+              + New connection
             </button>
           )}
         </div>
 
-        {toonFormulier && (
+        {showForm && (
           <form
-            onSubmit={opslaan}
+            onSubmit={save}
             className="mb-8 space-y-4 rounded-2xl border border-brand-100 bg-white p-6 shadow-sm"
           >
             <h2 className="text-base font-bold text-slate-800">
-              {bewerkt ? 'Connectie bewerken' : 'Nieuwe connectie'}
+              {isEditing ? 'Edit connection' : 'New connection'}
             </h2>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Naam</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Name</label>
               <input
-                value={formulier.naam}
-                onChange={(e) => set('naam', e.target.value)}
-                placeholder="bv. Voorraadsysteem"
+                value={form.name}
+                onChange={(e) => setField('name', e.target.value)}
+                placeholder="e.g. Stock system"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
 
             <div className="grid grid-cols-[7rem_1fr] gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Methode</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">Method</label>
                 <select
-                  value={formulier.method}
-                  onChange={(e) => set('method', e.target.value)}
+                  value={form.method}
+                  onChange={(e) => setField('method', e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 >
                   {METHODS.map((m) => (
@@ -168,11 +176,11 @@ export default function ConnectionsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">API-URL</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">API URL</label>
                 <input
-                  value={formulier.baseUrl}
-                  onChange={(e) => set('baseUrl', e.target.value)}
-                  placeholder="https://api.voorbeeld.be/v1/voorraad"
+                  value={form.baseUrl}
+                  onChange={(e) => setField('baseUrl', e.target.value)}
+                  placeholder="https://api.example.com/v1/stock"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
               </div>
@@ -181,23 +189,23 @@ export default function ConnectionsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-500">
-                  Auth-header (optioneel)
+                  Auth header (optional)
                 </label>
                 <input
-                  value={formulier.authHeader}
-                  onChange={(e) => set('authHeader', e.target.value)}
+                  value={form.authHeader}
+                  onChange={(e) => setField('authHeader', e.target.value)}
                   placeholder="Authorization"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-500">
-                  API-sleutel (optioneel)
+                  API key (optional)
                 </label>
                 <input
                   type="password"
-                  value={formulier.apiKey}
-                  onChange={(e) => set('apiKey', e.target.value)}
+                  value={form.apiKey}
+                  onChange={(e) => setField('apiKey', e.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
@@ -208,62 +216,62 @@ export default function ConnectionsPage() {
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
-                  checked={formulier.actief}
-                  onChange={(e) => set('actief', e.target.checked)}
+                  checked={form.active}
+                  onChange={(e) => setField('active', e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                 />
-                Connectie actief
+                Connection active
               </label>
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
-                  checked={formulier.demo}
-                  onChange={(e) => set('demo', e.target.checked)}
+                  checked={form.demo}
+                  onChange={(e) => setField('demo', e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                 />
-                Demo-databron (gesimuleerde winkeldatabank — werkt zonder echte server)
+                Demo data source (simulated store database — works without a real server)
               </label>
             </div>
 
             <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
-              Deze connectie haalt de voorraad uit de databank van je winkel. Verwachte JSON:
-              een lijst met per product een <code className="text-brand-600">sku</code> (= product-id),{' '}
-              <code className="text-brand-600">magazijn</code> en{' '}
-              <code className="text-brand-600">rekken</code>. Synchroniseren werkt de live
-              inventaris bij (zichtbaar in catalogus en personeelsdashboard).
+              This connection fetches the stock from your store's database. Expected JSON:
+              a list with per product a <code className="text-brand-600">sku</code> (= product id),{' '}
+              <code className="text-brand-600">warehouse</code> and{' '}
+              <code className="text-brand-600">shelves</code>. Syncing updates the live
+              inventory (visible in the catalog and staff dashboard).
             </p>
 
-            {fout && <p className="text-sm text-red-600">{fout}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <div className="flex gap-2 pt-2">
               <button
                 type="submit"
                 className="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
-                {bewerkt ? 'Opslaan' : 'Toevoegen'}
+                {isEditing ? 'Save' : 'Add'}
               </button>
               <button
                 type="button"
-                onClick={annuleer}
+                onClick={cancel}
                 className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100"
               >
-                Annuleren
+                Cancel
               </button>
             </div>
           </form>
         )}
 
-        {connecties.length === 0 && !toonFormulier ? (
+        {connections.length === 0 && !showForm ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-10 text-center">
             <p className="text-3xl">🔌</p>
-            <p className="mt-2 font-medium text-slate-700">Nog geen connecties</p>
+            <p className="mt-2 font-medium text-slate-700">No connections yet</p>
             <p className="mt-1 text-sm text-slate-500">
-              Voeg een custom API toe om dit systeem aan andere systemen te koppelen.
+              Add a custom API to connect this system to other systems.
             </p>
           </div>
         ) : (
           <ul className="space-y-3">
-            {connecties.map((c) => (
+            {connections.map((c) => (
               <li
                 key={c.id}
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -271,20 +279,20 @@ export default function ConnectionsPage() {
                <div className="flex items-center gap-4">
                 <span
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
-                    c.actief ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                    c.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                   }`}
                 >
                   🔌
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="truncate font-semibold text-slate-800">{c.naam}</p>
+                    <p className="truncate font-semibold text-slate-800">{c.name}</p>
                     <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500">
                       {c.method}
                     </span>
-                    {!c.actief && (
+                    {!c.active && (
                       <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
-                        inactief
+                        inactive
                       </span>
                     )}
                   </div>
@@ -293,50 +301,50 @@ export default function ConnectionsPage() {
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => wissel(c.id)}
+                    onClick={() => toggleActive(c.id)}
                     className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100"
                   >
-                    {c.actief ? 'Pauzeer' : 'Activeer'}
+                    {c.active ? 'Pause' : 'Activate'}
                   </button>
                   <button
                     type="button"
                     onClick={() => start(c)}
                     className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
                   >
-                    Bewerk
+                    Edit
                   </button>
                   <button
                     type="button"
-                    onClick={() => verwijder(c.id)}
+                    onClick={() => remove(c.id)}
                     className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                   >
-                    Verwijder
+                    Delete
                   </button>
                 </div>
                </div>
 
-                {c.actief ? (
+                {c.active ? (
                   <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
                     <button
                       type="button"
-                      onClick={() => synchroniseer(c)}
-                      disabled={syncStatus[c.id]?.bezig}
+                      onClick={() => syncConnection(c)}
+                      disabled={syncStatus[c.id]?.busy}
                       className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
                     >
-                      {syncStatus[c.id]?.bezig ? 'Synchroniseren…' : '🔄 Voorraad synchroniseren'}
+                      {syncStatus[c.id]?.busy ? 'Syncing…' : '🔄 Sync stock'}
                     </button>
                     {c.demo && (
                       <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-600">
-                        demo-databron
+                        demo data source
                       </span>
                     )}
-                    {syncStatus[c.id]?.tekst && (
+                    {syncStatus[c.id]?.text && (
                       <span
                         className={`text-xs font-medium ${
                           syncStatus[c.id].ok ? 'text-emerald-600' : 'text-red-600'
                         }`}
                       >
-                        {syncStatus[c.id].tekst}
+                        {syncStatus[c.id].text}
                       </span>
                     )}
                   </div>

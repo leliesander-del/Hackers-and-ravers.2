@@ -1,49 +1,66 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Compass } from '../components/icons.jsx'
-import { useStore, getAccounts } from '../context/StoreContext.jsx'
+import { useStore, getAccounts, saveAccount } from '../context/StoreContext.jsx'
+import { DEMO_CUSTOMER_ACCOUNTS } from '../lib/demoCredentials.js'
+import {
+  clearLoginAttempts,
+  getLoginLockout,
+  hashPassword,
+  isLegacyPassword,
+  recordFailedLogin,
+  verifyDemoPassword,
+  verifyPassword,
+} from '../lib/security.js'
 import { AuthLayout, AuthLogo, Button, Input, Card } from '../components/ui/index.js'
-
-const DEMO_ACCOUNTS = [
-  { email: 'sander@neverlost.be', wachtwoord: 'sander123', profielId: 'sander' },
-  { email: 'marc@neverlost.be', wachtwoord: 'marc123', profielId: 'marc' },
-  { email: 'gast@neverlost.be', wachtwoord: 'gast', profielId: 'gast' },
-]
 
 export default function LoginPage() {
   const { login } = useStore()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
-  const [wachtwoord, setWachtwoord] = useState('')
-  const [fout, setFout] = useState('')
-  const [laden, setLaden] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    setFout('')
-    setLaden(true)
+    setError('')
 
-    setTimeout(() => {
-      const emailLower = email.trim().toLowerCase()
+    const lockout = getLoginLockout()
+    if (lockout.locked) {
+      setError(`Too many attempts. Try again in ${lockout.secondsLeft} seconds.`)
+      return
+    }
 
-      const demo = DEMO_ACCOUNTS.find((u) => u.email === emailLower && u.wachtwoord === wachtwoord)
-      if (demo) {
-        login(demo.profielId)
+    setLoading(true)
+    const emailLower = email.trim().toLowerCase()
+
+    try {
+      const demo = DEMO_CUSTOMER_ACCOUNTS.find((u) => u.email === emailLower)
+      if (demo && verifyDemoPassword(password, demo.passwordHash)) {
+        clearLoginAttempts()
+        login(demo.profileId, 'customer-demo')
         navigate('/')
         return
       }
 
       const accounts = getAccounts()
       const account = accounts[emailLower]
-      if (account && account.wachtwoord === wachtwoord) {
-        login(account.profiel)
+      if (account && (await verifyPassword(password, account.password))) {
+        clearLoginAttempts()
+        if (isLegacyPassword(account.password)) {
+          saveAccount(emailLower, { ...account, password: await hashPassword(password) })
+        }
+        login(account.profile, 'customer-account')
         navigate('/')
         return
       }
 
-      setFout('E-mail of wachtwoord is onjuist.')
-      setLaden(false)
-    }, 500)
+      recordFailedLogin()
+      setError('Email or password is incorrect.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -54,14 +71,19 @@ export default function LoginPage() {
         </AuthLogo>
       }
       title="Never Lost"
-      subtitle="Jouw gepersonaliseerde winkel-navigator"
+      subtitle={
+        <>
+          Your personalized store navigator
+          <span className="mt-1 block font-medium text-brand-600">Shopping made easy, cooking made easy.</span>
+        </>
+      }
       footer={
         <span className="space-x-3">
-          <Link to="/personeel/login" className="underline underline-offset-2 transition hover:text-brand-600">
-            Personeel inloggen
+          <Link to="/staff/login" className="underline underline-offset-2 transition hover:text-brand-600">
+            Staff login
           </Link>
-          <Link to="/beheer/login" className="underline underline-offset-2 transition hover:text-brand-600">
-            Winkelbeheerder inloggen
+          <Link to="/manage/login" className="underline underline-offset-2 transition hover:text-brand-600">
+            Store manager login
           </Link>
         </span>
       }
@@ -69,13 +91,13 @@ export default function LoginPage() {
       {/* Tabs */}
       <div className="flex gap-1 rounded-full bg-slate-100 p-1">
         <button className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-brand-700 shadow-sm">
-          Inloggen
+          Log in
         </button>
         <Link
           to="/signup"
           className="flex-1 rounded-full py-2.5 text-center text-sm font-semibold text-slate-500 transition hover:text-slate-700"
         >
-          Account aanmaken
+          Create account
         </Link>
       </div>
 
@@ -87,28 +109,28 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="E-mailadres"
-            aria-label="E-mailadres"
+            placeholder="Email address"
+            aria-label="Email address"
             autoComplete="email"
           />
           <Input
             type="password"
             required
-            value={wachtwoord}
-            onChange={(e) => setWachtwoord(e.target.value)}
-            placeholder="Wachtwoord"
-            aria-label="Wachtwoord"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            aria-label="Password"
             autoComplete="current-password"
           />
 
-          {fout && (
+          {error && (
             <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 ring-1 ring-rose-200">
-              {fout}
+              {error}
             </div>
           )}
 
-          <Button type="submit" size="lg" disabled={laden} className="w-full">
-            {laden ? 'Bezig…' : 'Inloggen'}
+          <Button type="submit" size="lg" disabled={loading} className="w-full">
+            {loading ? 'Working…' : 'Log in'}
           </Button>
         </form>
       </Card>
@@ -118,7 +140,7 @@ export default function LoginPage() {
         <p className="mb-2 text-xs font-medium text-slate-400">Demo accounts</p>
         <p className="font-mono text-xs text-slate-500">sander@neverlost.be / sander123</p>
         <p className="font-mono text-xs text-slate-500">marc@neverlost.be / marc123</p>
-        <p className="font-mono text-xs text-slate-500">gast@neverlost.be / gast</p>
+        <p className="font-mono text-xs text-slate-500">guest@neverlost.be / guest</p>
       </Card>
     </AuthLayout>
   )

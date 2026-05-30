@@ -52,8 +52,8 @@ export default function EditorPropertiesPanel({
   if (!selected) {
     return (
       <aside className="flex w-72 shrink-0 flex-col border-l border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-bold text-slate-800">Eigenschappen</h2>
-        <p className="mt-2 text-xs text-slate-500">Selecteer een element om te bewerken.</p>
+        <h2 className="text-sm font-bold text-slate-800">Properties</h2>
+        <p className="mt-2 text-xs text-slate-500">Select an element to edit it.</p>
         <label className="mt-6 flex items-center gap-2 text-sm text-slate-600">
           <input
             type="checkbox"
@@ -61,19 +61,19 @@ export default function EditorPropertiesPanel({
             onChange={(e) => onSnapToggle(e.target.checked)}
             className="rounded border-slate-300 text-brand-600"
           />
-          Magnetisch uitlijnen (snap)
+          Magnetic alignment (snap)
         </label>
       </aside>
     )
   }
 
   const def = getFloorplanType(selected.type)
-  const kanLabel = def?.labelable
-  const isShelf = selected.type === 'vast-rek' || selected.type === 'tijdelijk-rek'
-  const kanResize = isResizable(selected.type)
-  const kanStijl = isStyleable(selected.type)
+  const canLabel = def?.labelable
+  const isShelf = selected.type === 'fixed-shelf' || selected.type === 'temp-shelf'
+  const canResize = isResizable(selected.type)
+  const canStyle = isStyleable(selected.type)
   const styleDefaults = getDefaultStyleForType(selected.type)
-  const style = kanStijl
+  const style = canStyle
     ? {
         fillColor: selected.fillColor || styleDefaults.fillColor,
         strokeColor: selected.strokeColor || styleDefaults.strokeColor,
@@ -112,17 +112,17 @@ export default function EditorPropertiesPanel({
 
   return (
     <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-slate-200 bg-white p-4">
-      <h2 className="text-sm font-bold text-slate-800">Eigenschappen</h2>
+      <h2 className="text-sm font-bold text-slate-800">Properties</h2>
       <p className="mt-0.5 text-xs text-brand-600">{def?.label}</p>
 
-      {kanLabel && (
+      {canLabel && (
         <div className="mt-4">
           <label htmlFor="el-label" className="mb-1 block text-xs font-medium text-slate-500">
-            {selected.type === 'kassa'
-              ? 'Tekst op kassa'
-              : selected.type === 'ingang' || selected.type === 'uitgang'
+            {selected.type === 'checkout'
+              ? 'Checkout text'
+              : selected.type === 'entrance' || selected.type === 'exit'
                 ? 'Label'
-                : 'Categorie van het rek'}
+                : 'Shelf category'}
           </label>
           {isShelf ? (
             <select
@@ -131,7 +131,7 @@ export default function EditorPropertiesPanel({
               onChange={(e) => onLabelChange(selected.id, e.target.value)}
               className="w-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             >
-              <option value="">— Kies categorie —</option>
+              <option value="">— Choose category —</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {formatCategoryLabel(cat)}
@@ -145,58 +145,58 @@ export default function EditorPropertiesPanel({
               value={selected.label || ''}
               onChange={(e) => onLabelChange(selected.id, e.target.value)}
               placeholder={
-                selected.type === 'kassa'
-                  ? 'KASSA'
-                  : selected.type === 'ingang'
-                    ? 'Ingang'
-                    : 'Uitgang'
+                selected.type === 'checkout'
+                  ? 'CHECKOUT'
+                  : selected.type === 'entrance'
+                    ? 'Entrance'
+                    : 'Exit'
               }
               className="w-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
           )}
           {isShelf && (
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              Kies een categorie uit je assortiment. Producten en ingrediënten uit het mandje worden hier naartoe gerouteerd.
+              Choose a category from your assortment. Products and ingredients from the cart are routed here.
             </p>
           )}
         </div>
       )}
 
-      {kanStijl && style && (
+      {canStyle && style && (
         <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-600">Uiterlijk</p>
+            <p className="text-xs font-semibold text-slate-600">Appearance</p>
             <button
               type="button"
               onClick={resetStyle}
               className="text-[10px] font-medium text-violet-600 hover:text-violet-800"
             >
-              Standaard
+              Default
             </button>
           </div>
 
           <ColorField
             id="fill-color"
-            label="Achtergrond"
+            label="Background"
             value={style.fillColor}
             onChange={(fillColor) => patchStyle({ fillColor })}
           />
           <ColorField
             id="stroke-color"
-            label="Rand"
+            label="Border"
             value={style.strokeColor}
             onChange={(strokeColor) => patchStyle({ strokeColor })}
           />
           <ColorField
             id="text-color"
-            label="Tekstkleur"
+            label="Text color"
             value={style.textColor}
             onChange={(textColor) => patchStyle({ textColor })}
           />
 
           <div>
             <label htmlFor="text-size" className="mb-1 flex items-center justify-between text-[10px] font-medium uppercase tracking-wide text-slate-400">
-              <span>Tekstgrootte</span>
+              <span>Text size</span>
               <span className="font-mono normal-case text-slate-600">{style.textSize}</span>
             </label>
             <input
@@ -210,19 +210,19 @@ export default function EditorPropertiesPanel({
               className="w-full accent-violet-600"
             />
             <div className="mt-1 flex justify-between text-[10px] text-slate-400">
-              <span>Klein</span>
-              <span>Groot</span>
+              <span>Small</span>
+              <span>Large</span>
             </div>
           </div>
         </div>
       )}
 
-      {kanResize && (
+      {canResize && (
         <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-          <p className="text-xs font-medium text-slate-500">Afmetingen (sleep hoeken op canvas)</p>
+          <p className="text-xs font-medium text-slate-500">Dimensions (drag corners on the canvas)</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="mb-1 block text-[10px] uppercase text-slate-400">Breedte</label>
+              <label className="mb-1 block text-[10px] uppercase text-slate-400">Width</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -234,7 +234,7 @@ export default function EditorPropertiesPanel({
               />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] uppercase text-slate-400">Diepte</label>
+              <label className="mb-1 block text-[10px] uppercase text-slate-400">Depth</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -256,11 +256,11 @@ export default function EditorPropertiesPanel({
           onChange={(e) => onSnapToggle(e.target.checked)}
           className="rounded border-slate-300 text-brand-600"
         />
-        Magnetisch uitlijnen (snap)
+        Magnetic alignment (snap)
       </label>
 
       <p className="mt-4 text-[11px] leading-relaxed text-slate-400">
-        Kies een categorie per rek. Sleep hoeken om te schalen of typ breedte en diepte hierboven.
+        Choose a category per shelf. Drag corners to scale or type width and depth above.
       </p>
     </aside>
   )

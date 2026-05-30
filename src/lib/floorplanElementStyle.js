@@ -1,36 +1,36 @@
 const STYLE_DEFAULTS = {
-  'vast-rek': {
+  'fixed-shelf': {
     fillColor: '#7c3aed',
     strokeColor: '#5b21b6',
     textColor: '#ffffff',
     textSize: 2.4,
   },
-  'tijdelijk-rek': {
+  'temp-shelf': {
     fillColor: '#a78bfa',
     strokeColor: '#7c3aed',
     textColor: '#ffffff',
     textSize: 2.4,
   },
-  kassa: {
+  checkout: {
     fillColor: '#5b21b6',
     strokeColor: '#4c1d95',
     textColor: '#ffffff',
     textSize: 2.4,
-    label: 'KASSA',
+    label: 'CHECKOUT',
   },
-  ingang: {
+  entrance: {
     fillColor: '#dcfce7',
     strokeColor: '#16a34a',
     textColor: '#15803d',
     textSize: 3,
-    label: 'Ingang',
+    label: 'Entrance',
   },
-  uitgang: {
+  exit: {
     fillColor: '#fee2e2',
     strokeColor: '#dc2626',
     textColor: '#b91c1c',
     textSize: 3,
-    label: 'Uitgang',
+    label: 'Exit',
   },
 }
 
@@ -42,7 +42,7 @@ export function getDefaultStyleForType(type) {
   return STYLE_DEFAULTS[type] ? { ...STYLE_DEFAULTS[type] } : null
 }
 
-/** Label met standaard als het veld leeg is (bv. na leegmaken in het paneel). */
+/** Label with a default when the field is empty (e.g. after clearing it in the panel). */
 export function resolveElementLabel(el) {
   const def = STYLE_DEFAULTS[el.type]
   const raw = typeof el.label === 'string' ? el.label.trim() : ''

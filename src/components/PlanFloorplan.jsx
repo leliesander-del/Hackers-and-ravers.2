@@ -73,7 +73,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
       else if (inRoute) states.set(el.id, 'route')
       else if (highlightId) {
         const prod = products.find((p) => p.id === highlightId)
-        if (prod && normLabel(prod.categorie) === slug) {
+        if (prod && normLabel(prod.category) === slug) {
           states.set(el.id, 'current')
         }
       }
@@ -137,7 +137,7 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
     })
   }
 
-  function zoomNaarRoute() {
+  function zoomToRoute() {
     const points = activePos
       ? [activePos, ...remainingStops.map((s) => ({ x: s.element.x, y: s.element.y })), ...(kassa ? [kassa] : []), end]
       : []
@@ -188,14 +188,14 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
     }
   }
 
-  const ingezoomd = vb.w < FULL.w - 0.5
-  const wachtOpKlik = hasRouteList && !startPos
+  const isZoomedIn = vb.w < FULL.w - 0.5
+  const waitingForTap = hasRouteList && !startPos
 
   return (
     <div className="flex flex-col gap-3">
-      {wachtOpKlik && (
+      {waitingForTap && (
         <p className="rounded-xl bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-700">
-          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna langs je producten, kassa en uitgang.
+          Tap the map (not a shelf) to choose your starting point. Then along your products, checkout and exit.
         </p>
       )}
 
@@ -220,19 +220,19 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
         />
 
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <button type="button" onClick={() => zoomBy(0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Inzoomen">
+          <button type="button" onClick={() => zoomBy(0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Zoom in">
             +
           </button>
-          <button type="button" onClick={() => zoomBy(1 / 0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Uitzoomen">
+          <button type="button" onClick={() => zoomBy(1 / 0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Zoom out">
             −
           </button>
           {routeActive && (
-            <button type="button" onClick={zoomNaarRoute} className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md" aria-label="Zoom naar route">
+            <button type="button" onClick={zoomToRoute} className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md" aria-label="Zoom to route">
               🎯
             </button>
           )}
-          {ingezoomd && (
-            <button type="button" onClick={() => setVb(FULL)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md" aria-label="Volledig overzicht">
+          {isZoomedIn && (
+            <button type="button" onClick={() => setVb(FULL)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md" aria-label="Full overview">
               ⤢
             </button>
           )}
@@ -254,12 +254,12 @@ export default function PlanFloorplan({ elements, products, highlightId, routeId
       )}
 
       {hasRouteList && !routeActive && previewStops.length > 0 && (
-        <p className="text-center text-[11px] text-slate-400">{previewStops.length} rekken · tik op de kaart om te starten</p>
+        <p className="text-center text-[11px] text-slate-400">{previewStops.length} shelves · tap the map to start</p>
       )}
 
       {hasRouteList && !routeActive && previewStops.length === 0 && (
         <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-[11px] text-amber-800">
-          Geen rekken op de plattegrond — voeg vast of tijdelijk rekken toe in de editor.
+          No shelves on the floor plan — add fixed or temporary shelves in the editor.
         </p>
       )}
     </div>

@@ -1,6 +1,6 @@
-// Eén knop-primitive voor de hele app. Het merk-accent is violet (brand).
-// Varianten: primary (gevuld), secondary (neutraal), ghost, danger.
-const VARIANTEN = {
+// One button primitive for the whole app. The brand accent is violet.
+// Variants: primary (filled), secondary (neutral), ghost, danger.
+const VARIANTS = {
   primary:
     'bg-brand-600 text-white shadow-sm hover:bg-brand-700 disabled:opacity-50',
   secondary:
@@ -11,8 +11,8 @@ const VARIANTEN = {
     'bg-danger text-white shadow-sm hover:brightness-95 disabled:opacity-50',
 }
 
-// Maten houden rekening met een minimale tap-hoogte van ~44px (touch-target).
-const MATEN = {
+// Sizes account for a minimum tap height of ~44px (touch target).
+const SIZES = {
   sm: 'min-h-[40px] px-3 py-2 text-sm',
   md: 'min-h-[44px] px-5 py-3 text-sm',
   lg: 'min-h-[48px] py-3.5 text-sm',
@@ -32,7 +32,7 @@ export default function Button({
       type={type}
       className={`inline-flex items-center justify-center gap-1.5 font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed ${
         pill ? 'rounded-full' : 'rounded-xl'
-      } ${MATEN[size]} ${VARIANTEN[variant]} ${className}`}
+      } ${SIZES[size]} ${VARIANTS[variant]} ${className}`}
       {...rest}
     >
       {children}

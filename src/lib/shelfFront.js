@@ -6,8 +6,8 @@ export const SHELF_APPROACH_MARGIN = 1.2
 export const SHELF_PRE_APPROACH_STANDOFF = 5
 
 /**
- * In rek-lokale coördinaten: labelbalk bovenaan (y = -h/2).
- * Voorkant = onderrand (y = +h/2) — daar staan klanten.
+ * In shelf-local coordinates: label bar at the top (y = -h/2).
+ * Front = bottom edge (y = +h/2) — where customers stand.
  */
 export function shelfFrontApproachWorld(el, margin = SHELF_APPROACH_MARGIN) {
   const { h } = elementSize(el)
@@ -19,7 +19,7 @@ export function shelfFrontEdgeWorld(el) {
   return localToWorld(0, h / 2, el)
 }
 
-/** Eenheidsvector van rekcentrum naar voorkant (buitenwaarts). */
+/** Unit vector from the shelf center to the front (outward). */
 export function shelfFrontNormalWorld(el) {
   const edge = shelfFrontEdgeWorld(el)
   const nx = edge.x - el.x
@@ -28,7 +28,7 @@ export function shelfFrontNormalWorld(el) {
   return { nx: nx / len, ny: ny / len }
 }
 
-/** Punt vóór de voorkant — route eindigt hier via A*, daarna rechtdoor naar voorkant. */
+/** Point in front of the shelf — the route ends here via A*, then straight to the front. */
 export function shelfPreApproachWorld(el, standoff = SHELF_PRE_APPROACH_STANDOFF) {
   const approach = shelfFrontApproachWorld(el)
   const { nx, ny } = shelfFrontNormalWorld(el)
@@ -38,13 +38,13 @@ export function shelfPreApproachWorld(el, standoff = SHELF_PRE_APPROACH_STANDOFF
   }
 }
 
-/** Aanloop aan de binnenkant van een deur (uitgang/ingang) — vanuit de winkel. */
+/** Approach on the inside of a door (exit/entrance) — from within the store. */
 export function doorInwardApproachWorld(el, margin = 1) {
   const { h } = elementSize(el)
   return localToWorld(0, -h / 2 - margin, el)
 }
 
-/** Fallback: aanloopkant richting winkelcentrum. */
+/** Fallback: approach side toward store center. */
 export function approachTowardStoreCenter(el, margin = 1, storeCenter = { x: 50, y: 52 }) {
   const { w, h } = elementSize(el)
   const dx = storeCenter.x - el.x
@@ -54,11 +54,11 @@ export function approachTowardStoreCenter(el, margin = 1, storeCenter = { x: 50,
   return { x: el.x + (dx / len) * off, y: el.y + (dy / len) * off }
 }
 
-/** Demo-rek: roteer zodat voorkant naar het gangpad wijst (side -1 = links van gang). */
+/** Demo shelf: rotate so the front faces the aisle path (side -1 = left of aisle). */
 export function demoRackAsElement(rack) {
-  const def = getDefaultStyleForType('vast-rek')
+  const def = getDefaultStyleForType('fixed-shelf')
   return {
-    type: 'vast-rek',
+    type: 'fixed-shelf',
     x: rack.cx,
     y: rack.cy,
     w: RACK_W,
@@ -73,7 +73,7 @@ export function demoRackFrontApproach(rack, margin = SHELF_APPROACH_MARGIN) {
   return shelfFrontApproachWorld(demoRackAsElement(rack), margin)
 }
 
-/** Rotatie (graden) voor SVG-weergave demo-rekken. */
+/** Rotation (degrees) for SVG rendering of demo shelves. */
 export function demoRackRotation(side) {
   return side === -1 ? 270 : 90
 }

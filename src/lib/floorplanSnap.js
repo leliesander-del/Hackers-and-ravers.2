@@ -27,7 +27,7 @@ function collectEdgeTargets(el, w, h, allElements) {
   return { xTargets, yTargets }
 }
 
-/** Zachte uitlijning: subtiel raster + lichte rand-magnet. */
+/** Soft alignment: subtle grid + light edge magnet. */
 export function snapElement(el, x, y, allElements, enabled = true) {
   const { w, h } = orientedSize({ ...el, x, y })
 

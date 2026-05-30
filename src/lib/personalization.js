@@ -1,124 +1,124 @@
-// De personalisatie-engine. Eén patroon overal: filter -> score -> sorteer -> label.
-// Een profiel zonder `voorkeuren` (de gast) valt terug op prijs/alfabet.
+// The personalization engine. One pattern everywhere: filter -> score -> sort -> label.
+// A profile without `preferences` (the guest) falls back to price/alphabet.
 
 // =========================================================================
-// Producten (zoekresultaten in een winkel)
+// Products (search results in a store)
 // =========================================================================
 export function rankProducts(products, profile) {
-  const lid = !!profile?.voorkeuren
+  const isMember = !!profile?.preferences
 
-  const verrijkt = products.map((p) => {
+  const enriched = products.map((p) => {
     let score = 0
-    let reden = null
+    let reason = null
 
-    if (lid) {
-      const v = profile.voorkeuren
-      if (v.merken.includes(p.merk)) {
+    if (isMember) {
+      const v = profile.preferences
+      if (v.brands.includes(p.brand)) {
         score += 40
-        reden = 'Jouw merk'
+        reason = 'Your brand'
       }
-      if (v.afdelingen.includes(p.afdeling)) score += 12
-      if (v.dieet.length && v.dieet.every((d) => p.dieet.includes(d))) {
+      if (v.departments.includes(p.department)) score += 12
+      if (v.diet.length && v.diet.every((d) => p.diet.includes(d))) {
         score += 30
-        reden = reden || `${v.dieet[0]} ✓`
+        reason = reason || `${v.diet[0]} ✓`
       }
-      if (p.prijsklasse === v.prijsklasse) {
+      if (p.priceTier === v.priceTier) {
         score += 12
-        reden = reden || (v.prijsklasse === 'budget' ? 'Past bij je budget' : 'Past bij je voorkeur')
+        reason = reason || (v.priceTier === 'budget' ? 'Fits your budget' : 'Fits your preference')
       }
     }
 
-    // Niet op voorraad altijd onderaan.
-    if (!p.opVoorraad) score -= 100
+    // Out of stock always at the bottom.
+    if (!p.inStock) score -= 100
 
-    const waarschuwing =
-      lid &&
-      profile.voorkeuren.dieet.includes('glutenvrij') &&
-      ['pasta', 'brood', 'snacks'].includes(p.categorie) &&
-      !p.dieet.includes('glutenvrij')
-        ? 'Bevat mogelijk gluten'
+    const warning =
+      isMember &&
+      profile.preferences.diet.includes('gluten-free') &&
+      ['pasta', 'bread', 'snacks'].includes(p.category) &&
+      !p.diet.includes('gluten-free')
+        ? 'May contain gluten'
         : null
 
-    return { ...p, _score: score, _reden: reden, _waarschuwing: waarschuwing }
+    return { ...p, _score: score, _reason: reason, _warning: warning }
   })
 
-  verrijkt.sort((a, b) => {
-    if (lid && b._score !== a._score) return b._score - a._score
-    // Gast (of gelijke score): op voorraad eerst, dan alfabetisch.
-    if (a.opVoorraad !== b.opVoorraad) return a.opVoorraad ? -1 : 1
-    return a.naam.localeCompare(b.naam)
+  enriched.sort((a, b) => {
+    if (isMember && b._score !== a._score) return b._score - a._score
+    // Guest (or equal score): in stock first, then alphabetical.
+    if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+    return a.name.localeCompare(b.name)
   })
-  return verrijkt
+  return enriched
 }
 
 // =========================================================================
-// Alternatieven (bij lege rekken)
+// Alternatives (when shelves are empty)
 // =========================================================================
 export function rankAlternatives(product, allProducts, profile) {
-  const lid = !!profile?.voorkeuren
+  const isMember = !!profile?.preferences
 
-  const kandidaten = allProducts.filter(
-    (p) => p.storeId === product.storeId && p.categorie === product.categorie && p.id !== product.id && p.opVoorraad,
+  const candidates = allProducts.filter(
+    (p) => p.storeId === product.storeId && p.category === product.category && p.id !== product.id && p.inStock,
   )
 
-  const verrijkt = kandidaten.map((p) => {
+  const enriched = candidates.map((p) => {
     let score = 0
-    let reden = 'Zelfde categorie'
+    let reason = 'Same category'
 
-    if (lid) {
-      const v = profile.voorkeuren
-      if (v.dieet.length) {
-        if (v.dieet.every((d) => p.dieet.includes(d))) {
+    if (isMember) {
+      const v = profile.preferences
+      if (v.diet.length) {
+        if (v.diet.every((d) => p.diet.includes(d))) {
           score += 60
-          reden = `${v.dieet[0]} ✓`
+          reason = `${v.diet[0]} ✓`
         } else {
-          score -= 70 // een glutenvrij lid krijgt nooit gluten vooraan
+          score -= 70 // a gluten-free member never gets gluten up front
         }
       }
-      if (v.merken.includes(p.merk)) {
+      if (v.brands.includes(p.brand)) {
         score += 40
-        reden = reden.includes('✓') ? reden : 'Zelfde merk'
+        reason = reason.includes('✓') ? reason : 'Same brand'
       }
-      if (p.prijsklasse === v.prijsklasse) {
+      if (p.priceTier === v.priceTier) {
         score += 20
-        if (reden === 'Zelfde categorie') reden = v.prijsklasse === 'budget' ? 'Voordeliger' : 'Past bij je voorkeur'
+        if (reason === 'Same category') reason = v.priceTier === 'budget' ? 'Cheaper' : 'Fits your preference'
       }
     } else {
-      // Gast: voorrang aan goedkoper.
-      score += Math.max(0, 20 - p.prijs)
-      reden = p.prijs < product.prijs ? 'Voordeliger' : 'Zelfde categorie'
+      // Guest: prefer cheaper.
+      score += Math.max(0, 20 - p.price)
+      reason = p.price < product.price ? 'Cheaper' : 'Same category'
     }
 
-    // Prijs dicht bij het origineel telt licht mee.
-    score += Math.max(0, 15 - Math.abs(p.prijs - product.prijs))
+    // Price close to the original counts slightly.
+    score += Math.max(0, 15 - Math.abs(p.price - product.price))
 
-    return { ...p, _score: score, _reden: reden }
+    return { ...p, _score: score, _reason: reason }
   })
 
-  verrijkt.sort((a, b) => b._score - a._score)
-  return verrijkt
+  enriched.sort((a, b) => b._score - a._score)
+  return enriched
 }
 
-function normalizeTekst(tekst) {
-  return tekst
+function normalizeText(text) {
+  return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
 }
 
-// Zelfde product (naam + merk) bij andere winkels die wél op rekken liggen.
-export function findZelfdeProductAndereWinkels(product, allProducts) {
-  const naam = normalizeTekst(product.naam)
-  const merk = normalizeTekst(product.merk)
+// Same product (name + brand) at other stores that do have it on the shelves.
+export function findSameProductOtherStores(product, allProducts) {
+  const name = normalizeText(product.name)
+  const brand = normalizeText(product.brand)
 
   return allProducts
     .filter(
       (p) =>
         p.id !== product.id &&
         p.storeId !== product.storeId &&
-        normalizeTekst(p.naam) === naam &&
-        normalizeTekst(p.merk) === merk &&
-        p.opVoorraad,
+        normalizeText(p.name) === name &&
+        normalizeText(p.brand) === brand &&
+        p.inStock,
     )
-    .map((p) => ({ ...p, _reden: 'Zelfde product' }))
+    .map((p) => ({ ...p, _reason: 'Same product' }))
 }

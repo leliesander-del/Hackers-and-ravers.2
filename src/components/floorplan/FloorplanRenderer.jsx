@@ -3,7 +3,7 @@ import { getElementStyle, resolveElementLabel } from '../../lib/floorplanElement
 import { shelfFrontApproachWorld } from '../../lib/shelfFront.js'
 import ShelfVisual from './ShelfVisual.jsx'
 
-// Zichtbare hoekgreep vs. grotere onzichtbare klikzone (viewBox 100×104)
+// Visible corner handle vs. larger invisible hit zone (viewBox 100×104)
 const HANDLE_R = 0.55
 const HANDLE_HIT = 1.25
 
@@ -48,7 +48,7 @@ function truncateLabel(label, max = 18) {
   return label.length > max ? `${label.slice(0, max - 1)}…` : label
 }
 
-function KassaVisual({ el, w, h, selected }) {
+function CheckoutVisual({ el, w, h, selected }) {
   const style = getElementStyle(el)
   const label = resolveElementLabel(el)
   const fontSize = Math.min(style.textSize ?? 2.4, w / 4.5, h / 3.5)
@@ -193,7 +193,7 @@ function FloorplanElement({
   const showHandles = editorMode && selected && isResizable(el.type)
 
   const inner = () => {
-    if (el.type === 'muur') {
+    if (el.type === 'wall') {
       return (
         <rect
           x={-w / 2}
@@ -209,10 +209,10 @@ function FloorplanElement({
     if (isRack) {
       return <ShelfVisual el={el} w={w} h={h} selected={selected} rackState={rackState} />
     }
-    if (el.type === 'kassa') {
-      return <KassaVisual el={el} w={w} h={h} selected={selected} />
+    if (el.type === 'checkout') {
+      return <CheckoutVisual el={el} w={w} h={h} selected={selected} />
     }
-    if (el.type === 'ingang' || el.type === 'uitgang') {
+    if (el.type === 'entrance' || el.type === 'exit') {
       return <DoorVisual el={el} w={w} h={h} selected={selected} />
     }
     return null
@@ -271,17 +271,17 @@ export default function FloorplanRenderer({
   currentIndex = 0,
   visitedIds,
 }) {
-  const rekkenLocaties = []
+  const shelfLocations = []
   if (showShelves) {
     for (const p of products) {
-      if (p.rekkenlocatie && !rekkenLocaties.some((s) => s.label === p.rekkenlocatie.label)) {
-        rekkenLocaties.push(p.rekkenlocatie)
+      if (p.shelfLocation && !shelfLocations.some((s) => s.label === p.shelfLocation.label)) {
+        shelfLocations.push(p.shelfLocation)
       }
     }
   }
 
-  const ingangEl = elements.find((el) => el.type === 'ingang')
-  const ingang = entrance || (ingangEl ? { x: ingangEl.x, y: ingangEl.y } : { x: 50, y: 96 })
+  const entranceEl = elements.find((el) => el.type === 'entrance')
+  const entrancePos = entrance || (entranceEl ? { x: entranceEl.x, y: entranceEl.y } : { x: 50, y: 96 })
   const vb = viewBox ? `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}` : '0 0 100 104'
 
   return (
@@ -290,7 +290,7 @@ export default function FloorplanRenderer({
       viewBox={vb}
       className={className}
       role="img"
-      aria-label="Plattegrond"
+      aria-label="Floor plan"
       onPointerDown={onSvgPointerDown}
       onPointerMove={onSvgPointerMove}
       onPointerUp={onSvgPointerUp}
@@ -376,8 +376,8 @@ export default function FloorplanRenderer({
 
       {highlight && !routePath && (
         <line
-          x1={ingang.x}
-          y1={ingang.y}
+          x1={entrancePos.x}
+          y1={entrancePos.y}
           x2={highlight.x}
           y2={highlight.y}
           stroke="#7c3aed"
@@ -387,8 +387,8 @@ export default function FloorplanRenderer({
       )}
 
       {showShelves &&
-        rekkenLocaties.map((s) => {
-          const actief = highlight && highlight.label === s.label
+        shelfLocations.map((s) => {
+          const active = highlight && highlight.label === s.label
           return (
             <g key={s.label}>
               <rect
@@ -396,8 +396,8 @@ export default function FloorplanRenderer({
                 y={s.y - 3}
                 width="10"
                 height="6"
-                fill={actief ? '#ede9fe' : '#fef3c7'}
-                stroke={actief ? '#7c3aed' : '#f59e0b'}
+                fill={active ? '#ede9fe' : '#fef3c7'}
+                stroke={active ? '#7c3aed' : '#f59e0b'}
                 strokeWidth="0.4"
               />
               <text x={s.x} y={s.y + 0.8} textAnchor="middle" fontSize="2.2" fill="#92400e">

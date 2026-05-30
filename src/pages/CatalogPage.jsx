@@ -2,129 +2,130 @@ import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { fuzzyZoekProducten } from '../lib/fuzzySearch.js'
-import BeheerHeader from '../components/BeheerHeader.jsx'
+import { fuzzySearchProducts } from '../lib/fuzzySearch.js'
+import { formatCategoryLabel } from '../lib/productCategories.js'
+import ManagerHeader from '../components/ManagerHeader.jsx'
 
-// Een product telt als "bijna op" zodra de totale voorraad hier of lager zit.
-const BIJNA_OP_DREMPEL = 5
+// A product counts as "low" once the total stock is at or below this.
+const LOW_STOCK_THRESHOLD = 5
 
-function statusVan(p) {
-  const totaal = p.magazijnVoorraad + p.rekkenVoorraad
-  if (totaal === 0) return { label: 'Uit voorraad', kleur: 'bg-rose-100 text-rose-700' }
-  if (totaal <= BIJNA_OP_DREMPEL) return { label: 'Bijna op', kleur: 'bg-amber-100 text-amber-700' }
-  if (!p.opSchap) return { label: 'Enkel magazijn', kleur: 'bg-slate-100 text-slate-600' }
-  return { label: 'Op voorraad', kleur: 'bg-emerald-100 text-emerald-700' }
+function statusFor(p) {
+  const total = p.warehouseStock + p.shelfStock
+  if (total === 0) return { label: 'Out of stock', color: 'bg-rose-100 text-rose-700' }
+  if (total <= LOW_STOCK_THRESHOLD) return { label: 'Low stock', color: 'bg-amber-100 text-amber-700' }
+  if (!p.onShelf) return { label: 'Warehouse only', color: 'bg-slate-100 text-slate-600' }
+  return { label: 'In stock', color: 'bg-emerald-100 text-emerald-700' }
 }
 
-// De catalogus van één winkel: alle producten met live voorraad- en prijsdata.
-// Dit is de bron van waarheid over wat de winkel voert; klanten matchen hun
-// lijst hiertegen wanneer ze deze winkel kiezen.
+// One store's catalog: all products with live stock and price data.
+// This is the source of truth about what the store carries; customers match
+// their list against it when they pick this store.
 export default function CatalogPage() {
-  const { activeManager, isManagerIngelogd, productsByStoreLive } = useStore()
+  const { activeManager, isManagerLoggedIn, productsByStoreLive } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
-  const [zoek, setZoek] = useState('')
-  const [categorie, setCategorie] = useState('alle')
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
 
-  const producten = useMemo(
+  const products = useMemo(
     () => (store ? productsByStoreLive(store.id) : []),
     [productsByStoreLive, store],
   )
 
-  const categorieen = useMemo(() => {
-    const set = new Set(producten.map((p) => p.categorie))
-    return ['alle', ...[...set].sort((a, b) => a.localeCompare(b))]
-  }, [producten])
+  const categories = useMemo(() => {
+    const set = new Set(products.map((p) => p.category))
+    return ['all', ...[...set].sort((a, b) => a.localeCompare(b))]
+  }, [products])
 
-  const zichtbaar = useMemo(() => {
-    let lijst = categorie === 'alle' ? producten : producten.filter((p) => p.categorie === categorie)
-    lijst = fuzzyZoekProducten(lijst, zoek)
-    return [...lijst].sort((a, b) => a.naam.localeCompare(b.naam))
-  }, [producten, categorie, zoek])
+  const visible = useMemo(() => {
+    let list = category === 'all' ? products : products.filter((p) => p.category === category)
+    list = fuzzySearchProducts(list, search)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name))
+  }, [products, category, search])
 
-  const samenvatting = useMemo(() => {
-    let op = 0
-    let bijna = 0
-    let uit = 0
-    for (const p of producten) {
-      const totaal = p.magazijnVoorraad + p.rekkenVoorraad
-      if (totaal === 0) uit++
-      else if (totaal <= BIJNA_OP_DREMPEL) bijna++
-      else op++
+  const summary = useMemo(() => {
+    let inStock = 0
+    let low = 0
+    let out = 0
+    for (const p of products) {
+      const total = p.warehouseStock + p.shelfStock
+      if (total === 0) out++
+      else if (total <= LOW_STOCK_THRESHOLD) low++
+      else inStock++
     }
-    return { totaal: producten.length, op, bijna, uit }
-  }, [producten])
+    return { total: products.length, inStock, low, out }
+  }, [products])
 
-  if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
+  if (!isManagerLoggedIn || !store) return <Navigate to="/manage/login" replace />
 
   return (
-    <div className="beheer-layout flex flex-col bg-[#f6f4fc]">
-      <BeheerHeader store={store} titel="Catalogus" subtitel={`${store.naam} · live voorraad`} />
+    <div className="manage-layout flex flex-col bg-[#f6f4fc]">
+      <ManagerHeader store={store} title="Catalog" subtitle={`${store.name} · live stock`} />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto max-w-5xl space-y-5">
-          {/* Samenvatting */}
+          {/* Summary */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <SamenvattingTegel label="Producten" waarde={samenvatting.totaal} kleur="text-slate-800" achtergrond="bg-white" />
-            <SamenvattingTegel label="Op voorraad" waarde={samenvatting.op} kleur="text-emerald-600" achtergrond="bg-emerald-50 ring-emerald-100" />
-            <SamenvattingTegel label={`Bijna op (≤ ${BIJNA_OP_DREMPEL})`} waarde={samenvatting.bijna} kleur="text-amber-600" achtergrond="bg-amber-50 ring-amber-100" />
-            <SamenvattingTegel label="Uit voorraad" waarde={samenvatting.uit} kleur="text-rose-600" achtergrond="bg-rose-50 ring-rose-100" />
+            <SummaryTile label="Products" value={summary.total} color="text-slate-800" background="bg-white" />
+            <SummaryTile label="In stock" value={summary.inStock} color="text-emerald-600" background="bg-emerald-50 ring-emerald-100" />
+            <SummaryTile label={`Low stock (≤ ${LOW_STOCK_THRESHOLD})`} value={summary.low} color="text-amber-600" background="bg-amber-50 ring-amber-100" />
+            <SummaryTile label="Out of stock" value={summary.out} color="text-rose-600" background="bg-rose-50 ring-rose-100" />
           </div>
 
           {/* Filters */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input
-              value={zoek}
-              onChange={(e) => setZoek(e.target.value)}
-              placeholder="Zoek op naam, merk, categorie of locatie…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, brand, category or location…"
               className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
             <select
-              value={categorie}
-              onChange={(e) => setCategorie(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium capitalize text-slate-700 outline-none focus:border-brand-400"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-400"
             >
-              {categorieen.map((c) => (
-                <option key={c} value={c} className="capitalize">
-                  {c === 'alle' ? 'Alle categorieën' : c}
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c === 'all' ? 'All categories' : formatCategoryLabel(c)}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Tabel */}
+          {/* Table */}
           <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   <th className="px-4 py-3">Product</th>
-                  <th className="hidden px-4 py-3 sm:table-cell">Categorie</th>
-                  <th className="hidden px-4 py-3 md:table-cell">Locatie</th>
-                  <th className="px-4 py-3 text-right">Prijs</th>
-                  <th className="px-4 py-3 text-right">Magazijn</th>
-                  <th className="px-4 py-3 text-right">Schap</th>
+                  <th className="hidden px-4 py-3 sm:table-cell">Category</th>
+                  <th className="hidden px-4 py-3 md:table-cell">Location</th>
+                  <th className="px-4 py-3 text-right">Price</th>
+                  <th className="px-4 py-3 text-right">Warehouse</th>
+                  <th className="px-4 py-3 text-right">Shelf</th>
                   <th className="px-4 py-3 text-right">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {zichtbaar.length ? (
-                  zichtbaar.map((p) => {
-                    const status = statusVan(p)
+                {visible.length ? (
+                  visible.map((p) => {
+                    const status = statusFor(p)
                     return (
                       <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-slate-800">{p.naam}</p>
-                          <p className="text-xs text-slate-400">{p.merk}</p>
+                          <p className="font-medium text-slate-800">{p.name}</p>
+                          <p className="text-xs text-slate-400">{p.brand}</p>
                         </td>
-                        <td className="hidden px-4 py-3 capitalize text-slate-600 sm:table-cell">{p.categorie}</td>
-                        <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{p.rekkenlocatie?.label || '—'}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-700">€ {p.prijs.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">{p.magazijnVoorraad}</td>
-                        <td className={`px-4 py-3 text-right tabular-nums font-medium ${p.rekkenVoorraad > 0 ? 'text-slate-700' : 'text-rose-500'}`}>
-                          {p.rekkenVoorraad}
+                        <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{formatCategoryLabel(p.category)}</td>
+                        <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{p.shelfLocation?.label || '—'}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">€ {p.price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">{p.warehouseStock}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums font-medium ${p.shelfStock > 0 ? 'text-slate-700' : 'text-rose-500'}`}>
+                          {p.shelfStock}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${status.kleur}`}>
+                          <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${status.color}`}>
                             {status.label}
                           </span>
                         </td>
@@ -134,7 +135,7 @@ export default function CatalogPage() {
                 ) : (
                   <tr>
                     <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
-                      Geen producten gevonden{zoek ? ` voor "${zoek}"` : ''}.
+                      No products found{search ? ` for "${search}"` : ''}.
                     </td>
                   </tr>
                 )}
@@ -143,7 +144,7 @@ export default function CatalogPage() {
           </div>
 
           <p className="text-center text-xs text-slate-400">
-            {zichtbaar.length} van {samenvatting.totaal} producten · voorraad werkt live mee met het personeelsscherm
+            {visible.length} of {summary.total} products · stock updates live with the staff screen
           </p>
         </div>
       </div>
@@ -151,10 +152,10 @@ export default function CatalogPage() {
   )
 }
 
-function SamenvattingTegel({ label, waarde, kleur, achtergrond }) {
+function SummaryTile({ label, value, color, background }) {
   return (
-    <div className={`rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 ${achtergrond}`}>
-      <p className={`text-2xl font-bold ${kleur}`}>{waarde}</p>
+    <div className={`rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 ${background}`}>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
       <p className="text-xs font-medium text-slate-500">{label}</p>
     </div>
   )

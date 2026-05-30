@@ -1,5 +1,5 @@
-// Herbruikbare zoekbalk (Home en StorePage).
-export default function SearchBar({ value, onChange, placeholder = 'Zoeken', autoFocus = false }) {
+// Reusable search bar (Home and StorePage).
+export default function SearchBar({ value, onChange, placeholder = 'Search', autoFocus = false }) {
   return (
     <div className="flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/70 transition focus-within:ring-2 focus-within:ring-brand-400">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round">

@@ -1,360 +1,360 @@
-# StoreNav — jouw persoonlijke winkelassistent
+# StoreNav — your personal shopping assistant
 
-Een web-app die de fysieke winkelervaring **persoonlijk** maakt — van het moment dat je de app opent tot het moment dat je het juiste schap bereikt. Net zoals Uber je toont welke ritten relevant zijn op basis van waar je bent en waar je heen gaat, toont StoreNav jou welke winkels en producten op dít moment voor jou interessant zijn — en eenmaal in de winkel leidt het je rechtstreeks naar het juiste schap.
+A web app that makes the physical shopping experience **personal** — from the moment you open the app to the moment you reach the right shelf. Just like Uber shows you which rides are relevant based on where you are and where you're going, StoreNav shows you which stores and products are interesting for you *right now* — and once you're in the store, it leads you straight to the right shelf.
 
-Denk: **Uber's persoonlijke startscherm** + **Klarna's klantenkaart-laag** + **indoor-navigatie**, allemaal gebouwd rond één principe: **alles wat de gebruiker ziet, is afgestemd op wie hij of zij is.**
-
----
-
-## 🧭 De rode draad: personalisatie
-
-Personalisatie is geen feature in deze app. Het is de **fundamentele aanname** waaromheen alles is gebouwd. Elk scherm, elke lijst, elke route en elk alternatief wordt gefilterd, gesorteerd of gewogen op basis van het profiel van de gebruiker.
-
-Concreet betekent dat: een gast en een ingelogd lid zien **een andere app**. Niet gewoon "dezelfde app met een naam erbovenop", maar werkelijk andere content, andere volgorde, andere aanbevelingen.
-
-We laten dat verschil in elke laag van de app expliciet zien — dat is wat het project verkoopt.
+Think: **Uber's personalized home screen** + **Klarna's loyalty-card layer** + **indoor navigation**, all built around one principle: **everything the user sees is tailored to who they are.**
 
 ---
 
-## 📖 Probleem en oplossing
+## 🧭 The common thread: personalization
 
-Klanten staan voor drie wrijvingsmomenten in fysiek winkelen:
+Personalization is not a feature in this app. It's the **fundamental assumption** everything is built around. Every screen, every list, every route and every alternative is filtered, sorted or weighted based on the user's profile.
 
-1. **Vóór de winkel** — "waar moet ik heen voor wat ik nodig heb?" Mensen googelen, scrollen door losse winkel-apps, of gokken.
-2. **Binnenkomst in de winkel** — "waar ligt dit verdomme?" Eindeloos dwalen of personeel onderbreken.
-3. **Bij een leeg schap** — "het is er niet". De verkoop is weg, vaak ook de klant.
+Concretely that means: a guest and a logged-in member see **a different app**. Not just "the same app with a name on top", but genuinely different content, different ordering, different recommendations.
 
-StoreNav lost alle drie op, met personalisatie als kern:
+We make that difference explicit in every layer of the app — that's what sells the project.
 
-| Moment | Wat StoreNav doet |
+---
+
+## 📖 Problem and solution
+
+Customers face three points of friction in physical shopping:
+
+1. **Before the store** — "where should I go for what I need?" People google, scroll through separate store apps, or guess.
+2. **Entering the store** — "where is this thing?" Endless wandering or interrupting staff.
+3. **At an empty shelf** — "it's not here". The sale is gone, often the customer too.
+
+StoreNav solves all three, with personalization at its core:
+
+| Moment | What StoreNav does |
 |---|---|
-| **Vóór de winkel** | Persoonlijk startscherm met winkels dichtbij, jouw vaste winkels, en winkels op je route met producten die jij waarschijnlijk leuk vindt. |
-| **In de winkel** | Geoptimaliseerde route langs jouw boodschappenlijstje, gepersonaliseerde acties op locatie. |
-| **Bij een leeg schap** | Alternatieven die passen bij **jouw** voorkeuren (merk, dieet, prijsklasse), niet generieke "andere producten in dezelfde categorie". |
+| **Before the store** | Personal home screen with nearby stores, your regular stores, and stores on your route with products you'll likely enjoy. |
+| **In the store** | Optimized route along your shopping list, personalized on-location deals. |
+| **At an empty shelf** | Alternatives that match **your** preferences (brand, diet, price tier), not generic "other products in the same category". |
 
-## 🎯 Doelgroepen
+## 🎯 Target audiences
 
-| Doelgroep | Wat ze krijgen |
+| Audience | What they get |
 |---|---|
-| **De nieuwe gebruiker** | Een toegankelijk startscherm op basis van locatie alleen, met de uitnodiging om te personaliseren door in te loggen. |
-| **Het lid (klantenkaart)** | Een werkelijk persoonlijke ervaring — startscherm, zoekresultaten, routes en alternatieven zijn allemaal op hen afgestemd. |
-| **De winkel** | Meer relevante voetgang (mensen komen omdat ze écht geïnteresseerd zijn), hogere conversie via alternatieven, inzicht in zoekgedrag. |
+| **The new user** | An accessible home screen based on location alone, with an invitation to personalize by logging in. |
+| **The member (loyalty card)** | A genuinely personal experience — home screen, search results, routes and alternatives are all tailored to them. |
+| **The store** | More relevant footfall (people come because they're genuinely interested), higher conversion via alternatives, insight into search behavior. |
 
 ---
 
-## 🎯 Scope — wat zit er wél in, en wat niet
+## 🎯 Scope — what's in, and what's not
 
-### In scope (kern-demo)
+### In scope (core demo)
 
-Dit moet werken op de hackathon-demo en is jurybestendig:
+This must work in the hackathon demo and be jury-proof:
 
-1. **Persoonlijk startscherm (Uber-stijl)** met drie secties:
-   * **Winkels dichtbij jou** — op basis van (gesimuleerde) locatie.
-   * **Jouw vaste winkels** — voor ingelogde leden, op basis van geschiedenis.
-   * **Op je route** — winkels op een gedefinieerd traject met producten die matchen met jouw voorkeuren.
-2. **Klantenkaart-login** — twee tot drie voorbeeldprofielen die elk hun eigen startscherm en winkelervaring opleveren.
-3. **Per winkel: plattegrond + zoeker** — open een winkel, zoek een product, krijg een route over een 2D SVG-plattegrond.
-4. **QR-instap als alternatief** — een QR aan de winkelingang opent direct die winkel in de app (skipt het startscherm).
-5. **Gepersonaliseerde zoekresultaten** — leden zien hun voorkeurs-merken bovenaan, met dieet-tags die kloppen met hun profiel.
-6. **Alternatieven met profielweging** — leeg schap toont alternatieven die niet alleen in dezelfde categorie zitten, maar ook passen bij voorkeuren van de gebruiker.
-7. **Boodschappenlijst-modus** — meerdere producten tegelijk; route geoptimaliseerd langs alle stops.
-8. **Loyalty-acties op locatie** — leden zien gepersonaliseerde deals voor producten die zij waarschijnlijk willen.
+1. **Personal home screen (Uber-style)** with three sections:
+   * **Stores near you** — based on (simulated) location.
+   * **Your regular stores** — for logged-in members, based on history.
+   * **On your route** — stores along a defined route with products that match your preferences.
+2. **Loyalty-card login** — two to three sample profiles that each produce their own home screen and shopping experience.
+3. **Per store: floor plan + search** — open a store, search for a product, get a route over a 2D SVG floor plan.
+4. **QR entry as an alternative** — a QR at the store entrance opens that store directly in the app (skips the home screen).
+5. **Personalized search results** — members see their preferred brands at the top, with diet tags that match their profile.
+6. **Alternatives with profile weighting** — an empty shelf shows alternatives that aren't just in the same category, but also match the user's preferences.
+7. **Shopping-list mode** — multiple products at once; route optimized along all stops.
+8. **On-location loyalty deals** — members see personalized deals for products they likely want.
 
 ### Out of scope (stretch)
 
-* Live indoor-positionering (Bluetooth beacons, WiFi).
-* Camera/barcode-scanner voor producten.
-* Koppeling met echte kassa-/voorraadsystemen van winkels.
-* Personeelsdashboard met zoekstatistieken.
-* Semantische "lijkt op"-matching via embeddings.
-* Echte authenticatie en GDPR-compliant dataopslag.
-* Pushnotificaties als je in de buurt van een relevante winkel komt.
+* Live indoor positioning (Bluetooth beacons, WiFi).
+* Camera/barcode scanner for products.
+* Integration with real POS/inventory systems of stores.
+* Staff dashboard with search statistics.
+* Semantic "similar to" matching via embeddings.
+* Real authentication and GDPR-compliant data storage.
+* Push notifications when you get near a relevant store.
 
-### Expliciet géén onderdeel
+### Explicitly not included
 
-* Betalingen of kassafunctionaliteit.
-* Echte persoonsgegevens — alle profielen zijn fictief.
-* Onbeperkt aantal winkels — voor de demo bouwen we er 3 tot 4 uit, waarvan 1 met een volledige plattegrond.
+* Payments or checkout functionality.
+* Real personal data — all profiles are fictional.
+* Unlimited number of stores — for the demo we build out 3 to 4, of which 1 has a full floor plan.
 
 ---
 
-## ✨ Features in detail — met personalisatie als rode draad
+## ✨ Features in detail — with personalization as the common thread
 
-### 1. Het startscherm — waar personalisatie meteen voelbaar wordt
+### 1. The home screen — where personalization becomes immediately tangible
 
-Wanneer de app opent (zonder QR-scan), zie je een Uber-achtig scherm:
+When the app opens (without a QR scan), you see an Uber-like screen:
 
-**Voor een gast (niet ingelogd):**
-* Eén sectie: "Winkels dichtbij jou" — op basis van locatie alleen.
-* Subtiele banner bovenaan: "Log in met je klantenkaart om persoonlijke aanbevelingen te zien."
+**For a guest (not logged in):**
+* One section: "Stores near you" — based on location only.
+* A subtle banner at the top: "Log in with your loyalty card to see personal recommendations."
 
-**Voor een ingelogd lid:**
-* **Welkomstheader** met naam en loyalty-saldo.
-* **Sectie 1 — "Goedemorgen, Sander"** — winkels dichtbij, maar al gesorteerd op jouw voorkeur (bijv. supermarkten boven kledingwinkels als je vooral boodschappen doet).
-* **Sectie 2 — "Jouw vaste winkels"** — winkels waar je vaker komt, met snelle ingang naar je boodschappenlijst.
-* **Sectie 3 — "Op je route"** — als je een bestemming hebt gedefinieerd (bijv. "naar werk"), tonen we winkels langs die route met producten die jij waarschijnlijk leuk vindt. Bijvoorbeeld: "AH XL Brugge ligt op je route en heeft je favoriete koffie deze week in actie."
-* **Sectie 4 (optioneel) — "Misschien iets voor jou"** — winkels die je nog niet kent, maar die producten verkopen die passen bij je profiel.
+**For a logged-in member:**
+* **Welcome header** with name and loyalty balance.
+* **Section 1 — "Good morning, Sander"** — nearby stores, but already sorted by your preference (e.g. supermarkets above clothing stores if you mostly do groceries).
+* **Section 2 — "Your regular stores"** — stores you visit more often, with quick access to your shopping list.
+* **Section 3 — "On your route"** — if you've defined a destination (e.g. "to work"), we show stores along that route with products you'll likely enjoy. For example: "AH XL Bruges is on your route and has your favorite coffee on sale this week."
+* **Section 4 (optional) — "Maybe something for you"** — stores you don't know yet, but that sell products matching your profile.
 
-Dit scherm is de **kern van de pitch**. Hier zie je in één blik dat de app weet wie je bent.
+This screen is the **core of the pitch**. Here you see at a glance that the app knows who you are.
 
-### 2. De klantenkaart — wat zit er in een profiel
+### 2. The loyalty card — what's in a profile
 
-Op het loginscherm tonen we 2 tot 3 voorbeeldprofielen, elk met een herkenbare persoonlijkheid die in de demo zichtbaar tot andere resultaten leidt:
+On the login screen we show 2 to 3 sample profiles, each with a recognizable personality that visibly leads to different results in the demo:
 
-| Profiel | Karakteristieken |
+| Profile | Characteristics |
 |---|---|
-| **Sander** | Doet vooral boodschappen, glutenvrij dieet, premium merken, woont in Brugge centrum. |
-| **Lies** | Sportieve millennial, koopt regelmatig sportkleding en gezonde snacks, prijsbewust, fietst overal. |
-| **Marc** | Gezinsvader, grote weekboodschappen, koopt graag op aanbieding, vaste route school–werk–thuis. |
+| **Sander** | Mostly does groceries, gluten-free diet, premium brands, lives in central Bruges. |
+| **Lies** | Sporty millennial, regularly buys sportswear and healthy snacks, budget-conscious, cycles everywhere. |
+| **Marc** | Family father, big weekly groceries, likes buying on sale, fixed route school–work–home. |
 
-Elk profiel heeft:
-* **Voorkeuren** — favoriete merken, dieet-tags, prijsklasse, productcategorieën waar ze veel kopen.
-* **Geschiedenis** — eerder bezochte winkels en eerder gekochte producten.
-* **Vaste route** — een gesimuleerde dagelijkse route (thuis–werk, of thuis–school–werk).
-* **Boodschappenlijst** — een opgeslagen lijst voor "deze trip".
-* **Loyalty-saldo** — punten en actieve deals.
+Each profile has:
+* **Preferences** — favorite brands, diet tags, price tier, product categories they buy a lot.
+* **History** — previously visited stores and previously purchased products.
+* **Fixed route** — a simulated daily route (home–work, or home–school–work).
+* **Shopping list** — a saved list for "this trip".
+* **Loyalty balance** — points and active deals.
 
-Bij het wisselen tussen profielen tijdens de demo zie je het **hele startscherm veranderen**, en ook de winkelervaring erna. Dat is de kracht van de demo.
+When switching between profiles during the demo you see the **whole home screen change**, and the shopping experience afterwards too. That's the power of the demo.
 
-### 3. Een winkel openen
+### 3. Opening a store
 
-Drie manieren om bij een winkel uit te komen:
+Three ways to end up at a store:
 
-1. **Tikken op een winkelkaart** vanuit het startscherm.
-2. **QR scannen** aan de winkelingang (skipt startscherm, opent direct die winkel met locatie "ingang").
-3. **Direct via een product** — als je vanuit het startscherm op "Sanders favoriete koffie is in actie bij AH XL" tikt, opent de winkel en wordt de route naar dat product al ingeladen.
+1. **Tapping a store card** from the home screen.
+2. **Scanning a QR** at the store entrance (skips home screen, opens that store directly with location "entrance").
+3. **Directly via a product** — if you tap "Sander's favorite coffee is on sale at AH XL" from the home screen, the store opens and the route to that product is already loaded.
 
-### 4. In de winkel — plattegrond en route
+### 4. In the store — floor plan and route
 
-De winkel wordt intern gemodelleerd als een **graaf**:
-* **Knooppunten** — kruispunten, ganguiteinden, schappen.
-* **Randen** — loopbare verbindingen met gewicht (afstand).
+The store is modeled internally as a **graph**:
+* **Nodes** — intersections, aisle ends, shelves.
+* **Edges** — walkable connections with weight (distance).
 
-We renderen een SVG-plattegrond en tekenen de route met **Dijkstra** (of A* als optimalisatie) als duidelijke lijn over de kaart. Voor meerdere stops (lid met boodschappenlijst) gebruiken we een **greedy nearest-neighbour TSP** — voor 5–10 producten snel genoeg en geeft een logische volgorde.
+We render an SVG floor plan and draw the route with **Dijkstra** (or A* as an optimization) as a clear line over the map. For multiple stops (member with a shopping list) we use a **greedy nearest-neighbour TSP** — fast enough for 5–10 products and gives a logical order.
 
-### 5. Productzoeker — ook hier personaliseren we
+### 5. Product search — we personalize here too
 
-Het zoekveld geeft live resultaten. Voor leden:
-* **Voorkeurs-merken bovenaan** — als jij vaak merk X koopt, staat merk X-koffie boven merk Y-koffie.
-* **Dieet-tags zichtbaar én gefilterd** — een glutenvrij lid ziet glutenvrije opties als eerste, of een hint "💡 dit bevat gluten" bij niet-passende producten.
-* **Suggesties uit je lijst en geschiedenis** — voordat je iets typt, tonen we je opgeslagen boodschappenlijst en "vorige aankopen" als snelkeuze.
+The search field gives live results. For members:
+* **Preferred brands at the top** — if you often buy brand X, brand X coffee appears above brand Y coffee.
+* **Diet tags visible and filtered** — a gluten-free member sees gluten-free options first, or a hint "💡 this contains gluten" on unsuitable products.
+* **Suggestions from your list and history** — before you type anything, we show your saved shopping list and "previous purchases" as quick picks.
 
-Voor een gast: gewoon alfabetisch of relevantie-gesorteerd, geen tags.
+For a guest: just alphabetical or relevance-sorted, no tags.
 
-### 6. Alternatieven bij afwezigheid — opnieuw persoonlijk
+### 6. Alternatives on unavailability — personal again
 
-Wanneer een product niet op voorraad is:
+When a product is out of stock:
 
-1. **Categorie-match** — andere producten in dezelfde (sub)categorie, op voorraad. *(Basis, ook voor gasten.)*
-2. **Attribuut-overlap** — score op merk, prijs, maat. *(Basis.)*
-3. **Profielweging** — voor leden tellen voorkeuren extra zwaar. Een glutenvrij lid krijgt **nooit** een glutenbevattend alternatief vooraan zien. *(Personalisatie.)*
-4. **Locatie meenemen** — voorrang aan alternatieven die in de buurt van de huidige route liggen, om niet door de hele winkel te hoeven omlopen.
+1. **Category match** — other products in the same (sub)category, in stock. *(Basic, also for guests.)*
+2. **Attribute overlap** — score on brand, price, size. *(Basic.)*
+3. **Profile weighting** — for members, preferences count extra heavily. A gluten-free member will **never** see a gluten-containing alternative up front. *(Personalization.)*
+4. **Taking location into account** — priority to alternatives near the current route, to avoid having to walk through the whole store.
 
-Resultaat: een rij van 3 tot 5 alternatieven, elk met locatie, route-knop, en voor leden een korte uitleg waarom dit aanbevolen wordt ("zelfde merk, in actie deze week").
+Result: a row of 3 to 5 alternatives, each with a location, route button, and for members a short explanation of why it's recommended ("same brand, on sale this week").
 
-### 7. Loyalty-acties op locatie — persoonlijk, niet generiek
+### 7. On-location loyalty deals — personal, not generic
 
-In de seed-data markeren we ~10 producten als "in actie deze week". Maar voor leden tonen we **alleen acties die voor hen relevant zijn**:
+In the seed data we mark ~10 products as "on sale this week". But for members we only show **deals that are relevant to them**:
 
-* Sander (glutenvrij) ziet wel de actie op glutenvrije pasta, niet die op normale pasta.
-* Marc (gezinsvader, prijsbewust) ziet vooral grootverpakkingen en multipack-deals.
-* Lies (sportief) ziet sport-gerelateerde producten en gezonde snacks.
+* Sander (gluten-free) does see the deal on gluten-free pasta, not the one on regular pasta.
+* Marc (family father, budget-conscious) mostly sees bulk packs and multipack deals.
+* Lies (sporty) sees sport-related products and healthy snacks.
 
-Tijdens een route krijgen relevante actieproducten een badge op de plattegrond en in de lijst. Het voelt alsof de app voor jou is gemaakt — omdat dat ook zo is.
+During a route, relevant deal products get a badge on the floor plan and in the list. It feels like the app was made for you — because it was.
 
 ---
 
-## 🧠 Architectuur
+## 🧠 Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │  Frontend (React, single-page)                  │
 │                                                 │
-│  ├─ Startscherm (persoonlijk, Uber-stijl)       │
-│  │   ├─ Locatie-detectie (gesimuleerd)          │
-│  │   ├─ Profiel-engine (sortering & filtering)  │
-│  │   └─ Winkelkaarten met deeplinks             │
+│  ├─ Home screen (personal, Uber-style)          │
+│  │   ├─ Location detection (simulated)          │
+│  │   ├─ Profile engine (sorting & filtering)    │
+│  │   └─ Store cards with deep links             │
 │  │                                              │
-│  ├─ Winkelweergave                              │
-│  │   ├─ SVG-plattegrond                         │
-│  │   ├─ Zoeker (gepersonaliseerd)               │
-│  │   ├─ Routelogica (Dijkstra + greedy TSP)     │
-│  │   └─ Alternatieven-engine (gewogen)          │
+│  ├─ Store view                                  │
+│  │   ├─ SVG floor plan                          │
+│  │   ├─ Search (personalized)                   │
+│  │   ├─ Route logic (Dijkstra + greedy TSP)     │
+│  │   └─ Alternatives engine (weighted)          │
 │  │                                              │
-│  └─ Profiel-laag (overal beschikbaar)           │
+│  └─ Profile layer (available everywhere)        │
 │      ├─ Active profile state                    │
-│      ├─ Voorkeuren, geschiedenis, lijst         │
-│      └─ Loyalty & acties                        │
+│      ├─ Preferences, history, list              │
+│      └─ Loyalty & deals                         │
 └──────────────────┬──────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────┐
-│  Seed-data (JSON, in repo)                      │
-│  ├─ winkels (locatie, categorie, plattegrond)   │
-│  ├─ producten (per winkel, attributen, voorraad)│
-│  ├─ acties / deals                              │
-│  ├─ voorbeeldprofielen (3 stuks)                │
-│  └─ gesimuleerde gebruikerslocatie              │
+│  Seed data (JSON, in repo)                      │
+│  ├─ stores (location, category, floor plan)     │
+│  ├─ products (per store, attributes, stock)     │
+│  ├─ deals                                       │
+│  ├─ sample profiles (3)                         │
+│  └─ simulated user location                     │
 └─────────────────────────────────────────────────┘
 ```
 
-Alle logica draait in de frontend met seed-data. Geen backend, geen database, geen serverafhankelijkheid tijdens de demo. Dat geeft een gegarandeerd-werkende demo én een korte stack.
+All logic runs in the frontend with seed data. No backend, no database, no server dependency during the demo. That gives a guaranteed-to-work demo and a short stack.
 
-## 📦 Datamodel
+## 📦 Data model
 
-| Entiteit | Velden (kern) |
+| Entity | Fields (core) |
 |---|---|
-| **Winkel** | id, naam, type (supermarkt/kleding/etc.), locatie (lat/lng), openingstijden, heeft-plattegrond (bool) |
-| **Product** | id, winkel-id, naam, EAN, categorie-id, attributen (merk, maat, prijs, dieet-tags), voorraadstatus, schaplocatie-id, actie-id |
-| **Categorie** | id, naam, parent-id |
-| **Locatie (schap)** | id, winkel-id, label, graaf-knooppunt-id, SVG-coördinaat (x, y) |
-| **Plattegrond** | winkel-id, graaf (knooppunten + randen), SVG-source |
-| **Actie** | id, product-id, korting, doelgroep-tags |
-| **Profiel** | id, naam, voorkeuren (merken, dieet, prijsklasse, categorieën), geschiedenis (winkel-ids, product-ids), vaste route (lijn van punten), boodschappenlijst, loyalty-punten |
-| **Gebruikerslocatie** | (gesimuleerd) huidige lat/lng + actieve route |
+| **Store** | id, name, type (supermarket/clothing/etc.), location (lat/lng), opening hours, has-floor-plan (bool) |
+| **Product** | id, store-id, name, EAN, category-id, attributes (brand, size, price, diet tags), stock status, shelf-location-id, deal-id |
+| **Category** | id, name, parent-id |
+| **Location (shelf)** | id, store-id, label, graph-node-id, SVG coordinate (x, y) |
+| **Floor plan** | store-id, graph (nodes + edges), SVG source |
+| **Deal** | id, product-id, discount, audience tags |
+| **Profile** | id, name, preferences (brands, diet, price tier, categories), history (store ids, product ids), fixed route (line of points), shopping list, loyalty points |
+| **User location** | (simulated) current lat/lng + active route |
 
-De cruciale kruising die we maken — en waar de "magie" zit — is **profiel × locatie × productdata**. Dat is wat de personalisatie aandrijft.
+The crucial intersection we make — and where the "magic" lives — is **profile × location × product data**. That's what drives the personalization.
 
-### De personalisatie-engine — hoe het werkt
+### The personalization engine — how it works
 
-Voor elke lijst (winkels op startscherm, zoekresultaten, alternatieven) draait dezelfde flow:
+For every list (stores on the home screen, search results, alternatives) the same flow runs:
 
-1. **Filter** op harde criteria (binnen X km, voorraad aanwezig, dieet-compatibel).
-2. **Score** per item op basis van:
-   * Match met voorkeuren (gewicht hoog).
-   * Geschiedenis (heb je hier eerder gewinkeld? gekocht?).
-   * Locatie/route (afstand tot huidige positie of route).
-   * Acties (loyalty-deals tellen extra).
-3. **Sorteer** aflopend op totaalscore.
-4. **Label** waarom dit item bovenaan staat ("jouw vaste winkel", "in actie", "matcht je voorkeur").
+1. **Filter** on hard criteria (within X km, stock available, diet-compatible).
+2. **Score** per item based on:
+   * Match with preferences (high weight).
+   * History (have you shopped/bought here before?).
+   * Location/route (distance to current position or route).
+   * Deals (loyalty deals count extra).
+3. **Sort** descending on total score.
+4. **Label** why this item is on top ("your regular store", "on sale", "matches your preference").
 
-Voor een gast slaan we stap 2 grotendeels over en sorteren we alleen op afstand.
+For a guest we largely skip step 2 and sort only by distance.
 
 ---
 
 ## 🛠️ Tech stack
 
-| Onderdeel | Technologie |
+| Component | Technology |
 |---|---|
 | Frontend | React (Vite) |
 | Styling | Tailwind CSS |
-| Plattegronden | Hand-getekende SVG per winkel |
-| Routelogica | JavaScript — graaf + Dijkstra, greedy TSP voor meerdere stops |
-| Personalisatie-engine | JavaScript — gewogen scoring-functies |
-| Buitenkaart (winkels in de buurt) | Leaflet + OpenStreetMap-tiles (gratis, geen API-key) |
-| State | React Context voor het actieve profiel, localStorage voor sessie |
-| Data | JSON-bestanden in `/src/data/` |
-| QR-generatie | `qrcode` npm-package |
-| Hosting | Vercel of Netlify, HTTPS standaard |
+| Floor plans | Hand-drawn SVG per store |
+| Route logic | JavaScript — graph + Dijkstra, greedy TSP for multiple stops |
+| Personalization engine | JavaScript — weighted scoring functions |
+| Outdoor map (nearby stores) | Leaflet + OpenStreetMap tiles (free, no API key) |
+| State | React Context for the active profile, localStorage for the session |
+| Data | JSON files in `/src/data/` |
+| QR generation | `qrcode` npm package |
+| Hosting | Vercel or Netlify, HTTPS by default |
 
-Geen backend. Geen database. Eén externe dienst (OSM-tiles) voor de buitenkaart, gratis en zonder authenticatie.
-
----
-
-## 🔒 Security (Aikido-check)
-
-Het data-oppervlak blijft klein, dat werkt in ons voordeel:
-
-* **Geen API-keys, tokens of secrets in de repo** — `.env` met `.env.example`, `.env` in `.gitignore`.
-* **Dependencies up-to-date** — `npm audit` schoon houden.
-* **Input-validatie** op de zoekfunctie (XSS-veilig).
-* **HTTPS verplicht** — automatisch via Vercel/Netlify, nodig voor locatie-API in de browser.
-* **Geen echte persoonsgegevens** — profielen zijn hardgecodeerd en fictief.
-* **CSP-headers** — strikte Content Security Policy via hosting-config.
-* **Locatie-toestemming respecteren** — als de gebruiker de geo-API weigert, fallback op een geselecteerde stad zonder fouten.
-
-### Privacy-disclaimer voor de pitch
-
-Een product dat persoonlijke profielen, geschiedenis en locatie combineert, raakt direct aan GDPR. Voor de demo niet relevant (alles fictief), maar in de pitch benoemen we expliciet: opt-in, dataminimalisatie, transparantie over welke data waarvoor wordt gebruikt, en korte retentietermijnen. Juryleden vragen daar bij dit type idee altijd naar.
+No backend. No database. One external service (OSM tiles) for the outdoor map, free and without authentication.
 
 ---
 
-## 🗺️ Stappenplan — bouwvolgorde
+## 🔒 Security (Aikido check)
 
-Van **zekerheid naar pronk**. Elk blok is afgerond demobaar.
+The data surface stays small, which works in our favor:
 
-### Blok 1 — Fundament (dag 1 ochtend)
+* **No API keys, tokens or secrets in the repo** — `.env` with `.env.example`, `.env` in `.gitignore`.
+* **Dependencies up to date** — keep `npm audit` clean.
+* **Input validation** on the search function (XSS-safe).
+* **HTTPS required** — automatic via Vercel/Netlify, needed for the location API in the browser.
+* **No real personal data** — profiles are hardcoded and fictional.
+* **CSP headers** — strict Content Security Policy via hosting config.
+* **Respect location permission** — if the user denies the geo API, fall back to a selected city without errors.
 
-**Doel:** projectstructuur staat, profiel-laag werkt, lege app draait.
+### Privacy disclaimer for the pitch
 
-1. Vite + React + Tailwind opzetten.
-2. Profielen-JSON aanmaken (3 personas met alle velden).
-3. React Context voor het actieve profiel — switch werkt al, ook al is er nog niks om te tonen.
-4. Eenvoudige header met "ingelogd als X" / "verder als gast", en een knop om te wisselen.
-
-### Blok 2 — Het persoonlijke startscherm (dag 1 middag)
-
-**Doel:** dé pitch werkt al, ook zonder de winkel-binnen-flow.
-
-5. Winkels-JSON met 6–8 winkels (lat/lng, type, naam).
-6. Leaflet-kaart met markers voor winkels in de buurt.
-7. Onder de kaart: secties "Dichtbij", "Jouw vaste winkels", "Op je route" met winkel-kaartjes.
-8. Personalisatie-engine v1: scoring-functie die per profiel een andere volgorde teruggeeft. **Demo-moment:** wissel van profiel, scherm verandert volledig.
-9. Voor "Op je route": teken een gesimuleerde route op de kaart (hardcoded polyline per profiel) en filter winkels die er dichtbij liggen.
-
-### Blok 3 — Een winkel openen + plattegrond (dag 1 eind / dag 2 ochtend)
-
-**Doel:** tik op een winkel → zie de plattegrond.
-
-10. SVG-plattegrond voor één winkel (5–6 gangen). Andere winkels mogen "plattegrond komt eraan"-placeholder krijgen — focus op één goed uitgewerkte winkel.
-11. Graaf-datastructuur over de SVG, met (x, y) per knooppunt.
-12. Routing: Dijkstra implementeren, lege route nog niet tekenen.
-
-### Blok 4 — Productzoeker met personalisatie (dag 2 ochtend)
-
-**Doel:** zoeken werkt, en is duidelijk anders per profiel.
-
-13. Producten-JSON voor de hoofdwinkel: ~30 producten, gekoppeld aan schaplocaties, ~6 niet-op-voorraad.
-14. Zoeker met live filtering.
-15. Resultaten-sortering per profiel: voorkeurs-merken bovenaan, dieet-incompatibele producten met waarschuwing of onderaan.
-16. **Demo-moment:** zelfde zoekwoord ("pasta"), twee profielen, twee andere top-resultaten.
-
-### Blok 5 — Route op plattegrond + alternatieven (dag 2 middag)
-
-**Doel:** klikken op product = route, en bij leeg schap = persoonlijke alternatieven.
-
-17. Tik op product → route tekenen op SVG.
-18. Detectie "niet op voorraad" → alternatieven-paneel.
-19. Scoring-functie met profielweging: categorie + attribuut-overlap + voorkeuren + locatie-nabijheid.
-20. **Demo-moment:** zoek een leeg product met twee profielen, krijg twee andere top-alternatieven.
-
-### Blok 6 — Boodschappenlijst & loyalty op locatie (dag 2 eind)
-
-**Doel:** het volle plaatje — meerdere stops, gepersonaliseerde acties zichtbaar onderweg.
-
-21. Boodschappenlijst per profiel (uit JSON, ~5 producten).
-22. Greedy TSP-routing langs alle producten in de lijst.
-23. Acties-JSON met ~10 deals.
-24. Alleen acties tonen die matchen met het actieve profiel (op productcategorie en voorkeurs-tags).
-25. Badge op de plattegrond en in de lijst voor relevante actieproducten.
-
-### Blok 7 — QR + polish (dag 3 ochtend)
-
-**Doel:** demo-klaar.
-
-26. App deployen, live URL claimen.
-27. QR-code genereren met `?store=ah-xl-brugge&entry=ingang` als query, printen op A4.
-28. Visuele polish: kleuren, typografie, transities, mobiel-first check.
-29. **Demo-script repeteren** — exact 3 minuten, profiel-wissel laten zien, één heldere doorloop.
-
-### Blok 8 — Stretch (alleen als 1–7 staan)
-
-In deze volgorde:
-
-30. **Zone-QR's** binnen één winkel als her-positioneringspunten.
-31. **Camera/barcode-scanner** voor producten (`html5-qrcode`).
-32. **Mini-analytics** op `/admin`: meest gezochte producten per profiel-type.
+A product that combines personal profiles, history and location touches directly on GDPR. Not relevant for the demo (everything fictional), but in the pitch we explicitly mention: opt-in, data minimization, transparency about which data is used for what, and short retention periods. Jurors always ask about that with this type of idea.
 
 ---
 
-## 🚀 Aan de slag
+## 🗺️ Roadmap — build order
 
-### Vereisten
+From **certainty to showpiece**. Each block is a finished, demoable unit.
 
-* **Node.js 20+** met npm ([nodejs.org](https://nodejs.org/) of `winget install OpenJS.NodeJS.LTS`)
-* Na installatie: **nieuwe terminal** openen zodat `node` en `npm` in PATH staan
+### Block 1 — Foundation (day 1 morning)
 
-### Installatie
+**Goal:** project structure stands, profile layer works, empty app runs.
+
+1. Set up Vite + React + Tailwind.
+2. Create profiles JSON (3 personas with all fields).
+3. React Context for the active profile — switching already works, even if there's nothing to show yet.
+4. Simple header with "logged in as X" / "continue as guest", and a button to switch.
+
+### Block 2 — The personal home screen (day 1 afternoon)
+
+**Goal:** the pitch already works, even without the in-store flow.
+
+5. Stores JSON with 6–8 stores (lat/lng, type, name).
+6. Leaflet map with markers for nearby stores.
+7. Below the map: sections "Nearby", "Your regular stores", "On your route" with store cards.
+8. Personalization engine v1: scoring function that returns a different order per profile. **Demo moment:** switch profile, screen changes completely.
+9. For "On your route": draw a simulated route on the map (hardcoded polyline per profile) and filter stores nearby.
+
+### Block 3 — Opening a store + floor plan (day 1 end / day 2 morning)
+
+**Goal:** tap a store → see the floor plan.
+
+10. SVG floor plan for one store (5–6 aisles). Other stores may get a "floor plan coming soon" placeholder — focus on one well-developed store.
+11. Graph data structure over the SVG, with (x, y) per node.
+12. Routing: implement Dijkstra, don't draw the empty route yet.
+
+### Block 4 — Product search with personalization (day 2 morning)
+
+**Goal:** search works, and is clearly different per profile.
+
+13. Products JSON for the main store: ~30 products, linked to shelf locations, ~6 out of stock.
+14. Search with live filtering.
+15. Result sorting per profile: preferred brands at the top, diet-incompatible products with a warning or at the bottom.
+16. **Demo moment:** same search term ("pasta"), two profiles, two different top results.
+
+### Block 5 — Route on floor plan + alternatives (day 2 afternoon)
+
+**Goal:** clicking a product = route, and an empty shelf = personal alternatives.
+
+17. Tap a product → draw a route on the SVG.
+18. Detect "out of stock" → alternatives panel.
+19. Scoring function with profile weighting: category + attribute overlap + preferences + location proximity.
+20. **Demo moment:** search an empty product with two profiles, get two different top alternatives.
+
+### Block 6 — Shopping list & on-location loyalty (day 2 end)
+
+**Goal:** the full picture — multiple stops, personalized deals visible along the way.
+
+21. Shopping list per profile (from JSON, ~5 products).
+22. Greedy TSP routing along all products in the list.
+23. Deals JSON with ~10 deals.
+24. Only show deals that match the active profile (on product category and preference tags).
+25. Badge on the floor plan and in the list for relevant deal products.
+
+### Block 7 — QR + polish (day 3 morning)
+
+**Goal:** demo-ready.
+
+26. Deploy the app, claim a live URL.
+27. Generate a QR code with `?store=ah-xl-bruges&entry=entrance` as the query, print it on A4.
+28. Visual polish: colors, typography, transitions, mobile-first check.
+29. **Rehearse the demo script** — exactly 3 minutes, show the profile switch, one clear walkthrough.
+
+### Block 8 — Stretch (only if 1–7 are done)
+
+In this order:
+
+30. **Zone QRs** within one store as repositioning points.
+31. **Camera/barcode scanner** for products (`html5-qrcode`).
+32. **Mini analytics** on `/admin`: most searched products per profile type.
+
+---
+
+## 🚀 Getting started
+
+### Requirements
+
+* **Node.js 20+** with npm ([nodejs.org](https://nodejs.org/) or `winget install OpenJS.NodeJS.LTS`)
+* After installing: open a **new terminal** so `node` and `npm` are on the PATH
+
+### Installation
 
 ```bash
 git clone https://github.com/leliesander-del/Hackers-and-ravers.2.git
@@ -362,51 +362,51 @@ cd Hackers-and-ravers.2
 npm install
 ```
 
-**Windows (PowerShell)** — als `npm` niet wordt herkend:
+**Windows (PowerShell)** — if `npm` isn't recognized:
 
 ```powershell
-.\scripts\setup.ps1   # eenmalig: dependencies installeren
-.\scripts\dev.ps1     # dev-server starten
+.\scripts\setup.ps1   # one-time: install dependencies
+.\scripts\dev.ps1     # start the dev server
 ```
 
-**TLS-fout bij `npm install`** (school/uni-netwerk): in de repo staat een `.npmrc` met `strict-ssl=false`. Verwijder die regel zodra je op een netwerk zit waar npm normaal werkt.
+**TLS error during `npm install`** (school/uni network): the repo contains an `.npmrc` with `strict-ssl=false`. Remove that line once you're on a network where npm works normally.
 
-### Draaien
+### Running
 
 ```bash
 npm run dev
 ```
 
-Open daarna **http://localhost:5173** in je browser.
+Then open **http://localhost:5173** in your browser.
 
-| Commando | Doel |
+| Command | Purpose |
 |---|---|
-| `npm run dev` | Ontwikkelserver met hot reload |
-| `npm run build` | Productie-build in `dist/` |
-| `npm run preview` | Lokaal de productie-build bekijken |
+| `npm run dev` | Development server with hot reload |
+| `npm run build` | Production build in `dist/` |
+| `npm run preview` | View the production build locally |
 
-Voor het testen op mobiel: deploy naar Vercel/Netlify (gratis) en open de URL op je telefoon. Locatie-API werkt alleen op HTTPS.
-
----
-
-## 📋 Definition of Done — kern-demo
-
-De demo is "klaar" als:
-
-* [ ] Startscherm toont voor elk van de 3 profielen een **zichtbaar andere** volgorde en selectie van winkels.
-* [ ] Wisselen van profiel ververst het startscherm in realtime.
-* [ ] "Verder als gast" geeft een merkbaar uitgeklede versie van het startscherm.
-* [ ] Tik op een winkel → plattegrond opent.
-* [ ] QR scannen opent dezelfde winkel direct, met startpunt "ingang".
-* [ ] Zoeken naar een product geeft per profiel andere top-resultaten.
-* [ ] Niet-op-voorraad product → profielspecifieke alternatieven met route-knop.
-* [ ] Lid met boodschappenlijst → één geoptimaliseerde route langs ≥4 producten.
-* [ ] Loyalty-acties zijn alleen zichtbaar voor relevante profielen.
-* [ ] App draait live op HTTPS-URL, mobiel-vriendelijk.
-* [ ] Demo-pitch van 3 minuten staat, met expliciete profiel-wissel als climax.
+For testing on mobile: deploy to Vercel/Netlify (free) and open the URL on your phone. The location API only works over HTTPS.
 
 ---
 
-## 🎤 De pitch in één zin
+## 📋 Definition of Done — core demo
 
-> "We bouwen een persoonlijke assistent voor fysieke winkels — een Uber-achtig startscherm dat jou laat zien welke winkels en producten op dit moment voor jou relevant zijn, en eenmaal in de winkel een persoonlijke route langs jouw boodschappen, met alternatieven en acties die echt bij jou passen."
+The demo is "done" when:
+
+* [ ] The home screen shows a **visibly different** order and selection of stores for each of the 3 profiles.
+* [ ] Switching profiles refreshes the home screen in real time.
+* [ ] "Continue as guest" gives a noticeably stripped-down version of the home screen.
+* [ ] Tap a store → floor plan opens.
+* [ ] Scanning a QR opens the same store directly, with starting point "entrance".
+* [ ] Searching for a product gives different top results per profile.
+* [ ] Out-of-stock product → profile-specific alternatives with a route button.
+* [ ] Member with a shopping list → one optimized route along ≥4 products.
+* [ ] Loyalty deals are only visible to relevant profiles.
+* [ ] The app runs live on an HTTPS URL, mobile-friendly.
+* [ ] The 3-minute demo pitch is ready, with the explicit profile switch as the climax.
+
+---
+
+## 🎤 The pitch in one sentence
+
+> "We're building a personal assistant for physical stores — an Uber-like home screen that shows you which stores and products are relevant for you right now, and once you're in the store, a personal route along your groceries, with alternatives and deals that genuinely suit you."

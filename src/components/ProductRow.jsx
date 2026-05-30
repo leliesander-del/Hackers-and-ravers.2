@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 
-function voorraadLabel(product) {
-  if (product.voorraadStatus === 'magazijn') return 'Vraag medewerker om bij te halen'
-  if (product.voorraadStatus === 'op') return 'Niet op voorraad'
+function stockLabel(product) {
+  if (product.stockStatus === 'warehouse') return 'Ask staff to fetch it'
+  if (product.stockStatus === 'out') return 'Out of stock'
   return null
 }
 
-// Eén regel in de zoekresultaten van een winkel.
+// One row in a store's search results.
 export default function ProductRow({ product }) {
   const { inCart, addToCart, removeFromCart } = useStore()
-  const zit = inCart(product.id)
-  const label = voorraadLabel(product)
+  const inCartLocal = inCart(product.id)
+  const label = stockLabel(product)
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-slate-200">
@@ -21,23 +21,23 @@ export default function ProductRow({ product }) {
         </span>
         <span className="flex-1">
           <span className="flex items-center gap-2">
-            <span className="font-medium text-slate-800">{product.naam}</span>
-            {product._reden && (
+            <span className="font-medium text-slate-800">{product.name}</span>
+            {product._reason && (
               <span className="rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-medium text-brand-600">
-                {product._reden}
+                {product._reason}
               </span>
             )}
           </span>
           <span className="block text-xs text-slate-500">
-            {product.merk} · € {product.prijs.toFixed(2)} · {product.rekkenlocatie?.label}
+            {product.brand} · € {product.price.toFixed(2)} · {product.shelfLocation?.label}
           </span>
-          {product._waarschuwing && (
-            <span className="mt-0.5 block text-[11px] text-amber-600">⚠ {product._waarschuwing}</span>
+          {product._warning && (
+            <span className="mt-0.5 block text-[11px] text-amber-600">⚠ {product._warning}</span>
           )}
           {label && (
             <span
               className={`mt-0.5 block text-[11px] font-medium ${
-                product.voorraadStatus === 'magazijn' ? 'text-amber-700' : 'text-rose-500'
+                product.stockStatus === 'warehouse' ? 'text-amber-700' : 'text-rose-500'
               }`}
             >
               {label}
@@ -46,22 +46,22 @@ export default function ProductRow({ product }) {
         </span>
       </Link>
 
-      {product.opVoorraad ? (
+      {product.inStock ? (
         <button
-          onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
+          onClick={() => (inCartLocal ? removeFromCart(product.id) : addToCart(product.id))}
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
-            zit ? 'bg-brand-600 text-white shadow-sm shadow-brand-300' : 'bg-brand-100 text-brand-600'
+            inCartLocal ? 'bg-brand-600 text-white shadow-sm shadow-brand-300' : 'bg-brand-100 text-brand-600'
           }`}
-          aria-label={zit ? 'Verwijder uit mandje' : 'Voeg toe aan mandje'}
+          aria-label={inCartLocal ? 'Remove from cart' : 'Add to cart'}
         >
-          {zit ? '✓' : '+'}
+          {inCartLocal ? '✓' : '+'}
         </button>
       ) : (
         <Link
           to={`product/${product.id}`}
           className="shrink-0 rounded-full bg-amber-100 px-3 py-2 text-xs font-medium text-amber-700"
         >
-          {product.voorraadStatus === 'magazijn' ? 'Info' : 'Alternatief'}
+          {product.stockStatus === 'warehouse' ? 'Info' : 'Alternative'}
         </Link>
       )}
     </div>

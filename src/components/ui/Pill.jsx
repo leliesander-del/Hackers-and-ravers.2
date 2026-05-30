@@ -1,4 +1,4 @@
-// Selecteerbare pill-knop (chip). Actief = gevuld violet, anders neutraal.
+// Selectable pill button (chip). Active = filled violet, otherwise neutral.
 export default function Pill({ active = false, className = '', children, ...rest }) {
   return (
     <button

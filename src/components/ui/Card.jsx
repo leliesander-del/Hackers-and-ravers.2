@@ -1,4 +1,4 @@
-// Standaard kaart-oppervlak: wit, zachte schaduw, subtiele rand, rounded-2xl.
+// Standard card surface: white, soft shadow, subtle border, rounded-2xl.
 export default function Card({ as: Tag = 'div', className = '', children, ...rest }) {
   return (
     <Tag

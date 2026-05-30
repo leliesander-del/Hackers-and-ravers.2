@@ -1,25 +1,32 @@
 import { useNavigate } from 'react-router-dom'
 
-// Eenvoudige paginakop met optionele terug-knop en een slot rechts.
+// Simple page header with an optional back button and a slot on the right.
+// Purple brand bar with a centered, easy-to-read title (white on brand-600).
+// The back button and the right slot get a fixed width so the title always
+// stays exactly in the middle.
 export default function PageHeader({ title, subtitle, back = false, right = null }) {
   const navigate = useNavigate()
 
   return (
-    <div className="sticky top-0 z-[900] flex items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 py-3.5 backdrop-blur-md">
-      {back && (
-        <button
-          onClick={() => navigate(-1)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 active:scale-95"
-          aria-label="Terug"
-        >
-          ←
-        </button>
-      )}
-      <div className="flex-1">
-        <h1 className="text-xl font-bold leading-tight tracking-tight text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+    <div className="sticky top-0 z-[900] flex items-center gap-3 border-b border-brand-700/40 bg-brand-600 px-4 py-3.5 text-white shadow-sm">
+      <div className="flex w-11 shrink-0 justify-start">
+        {back && (
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-lg text-white transition hover:bg-white/25 active:scale-95"
+            aria-label="Back"
+          >
+            ←
+          </button>
+        )}
       </div>
-      {right}
+
+      <div className="min-w-0 flex-1 text-center">
+        <h1 className="truncate text-lg font-bold leading-tight tracking-tight text-white">{title}</h1>
+        {subtitle && <p className="mt-0.5 truncate text-xs text-white/75">{subtitle}</p>}
+      </div>
+
+      <div className="flex w-11 shrink-0 justify-end">{right}</div>
     </div>
   )
 }

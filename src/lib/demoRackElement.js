@@ -1,11 +1,11 @@
 import { RACK_H, RACK_W } from './floorplanLayout.js'
 import { getDefaultStyleForType } from './floorplanElementStyle.js'
 
-/** Synthetisch editor-element voor demo-rekken (zelfde stijl als vast-rek). */
+/** Synthetic editor element for demo shelves (same style as fixed-shelf). */
 export function demoRackElement(label) {
-  const def = getDefaultStyleForType('vast-rek')
+  const def = getDefaultStyleForType('fixed-shelf')
   return {
-    type: 'vast-rek',
+    type: 'fixed-shelf',
     label: label || '',
     ...def,
   }

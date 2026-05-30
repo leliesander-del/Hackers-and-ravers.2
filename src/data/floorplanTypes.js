@@ -1,13 +1,13 @@
-// Bloktypes voor de plattegrond-editor (palet links).
+// Block types for the floor plan editor (palette on the left).
 
-/** Standaardafmeting voor nieuwe rekken (vrij schaalbaar daarna). */
+/** Default size for new shelves (freely scalable afterwards). */
 export const UNIFORM_SHELF_W = 10
 export const UNIFORM_SHELF_H = 10
 
 export const floorplanTypes = [
   {
-    type: 'muur',
-    label: 'Muur',
+    type: 'wall',
+    label: 'Wall',
     defaultW: 24,
     defaultH: 2.5,
     minW: 4,
@@ -19,8 +19,8 @@ export const floorplanTypes = [
     labelable: false,
   },
   {
-    type: 'vast-rek',
-    label: 'Vast rek',
+    type: 'fixed-shelf',
+    label: 'Fixed shelf',
     defaultW: UNIFORM_SHELF_W,
     defaultH: UNIFORM_SHELF_H,
     minW: 4,
@@ -32,8 +32,8 @@ export const floorplanTypes = [
     labelable: true,
   },
   {
-    type: 'tijdelijk-rek',
-    label: 'Tijdelijk rek',
+    type: 'temp-shelf',
+    label: 'Temporary shelf',
     defaultW: UNIFORM_SHELF_W,
     defaultH: UNIFORM_SHELF_H,
     minW: 4,
@@ -45,8 +45,8 @@ export const floorplanTypes = [
     labelable: true,
   },
   {
-    type: 'kassa',
-    label: 'Kassa',
+    type: 'checkout',
+    label: 'Checkout',
     defaultW: 16,
     defaultH: 11,
     minW: 10,
@@ -58,8 +58,8 @@ export const floorplanTypes = [
     labelable: true,
   },
   {
-    type: 'ingang',
-    label: 'Ingang',
+    type: 'entrance',
+    label: 'Entrance',
     defaultW: 12,
     defaultH: 6.5,
     minW: 6,
@@ -71,8 +71,8 @@ export const floorplanTypes = [
     labelable: true,
   },
   {
-    type: 'uitgang',
-    label: 'Uitgang',
+    type: 'exit',
+    label: 'Exit',
     defaultW: 12,
     defaultH: 6.5,
     minW: 6,

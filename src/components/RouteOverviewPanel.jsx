@@ -18,7 +18,7 @@ export default function RouteOverviewPanel({
   if (!total) {
     return (
       <aside className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
-        <p className="text-xs text-slate-500">Geen producten in je mandje voor deze winkel.</p>
+        <p className="text-xs text-slate-500">No products in your cart for this store.</p>
       </aside>
     )
   }
@@ -30,9 +30,9 @@ export default function RouteOverviewPanel({
       }`}
     >
       <div className="border-b border-slate-100 px-3 py-2">
-        <h3 className="text-xs font-bold text-slate-800">Jouw route</h3>
+        <h3 className="text-xs font-bold text-slate-800">Your route</h3>
         <p className="mt-0.5 text-[10px] text-slate-500">
-          {done}/{total} rekken
+          {done}/{total} shelves
           {kassaLabel ? ` · ${kassaLabel}` : ''} · {endLabel}
         </p>
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
@@ -69,12 +69,12 @@ export default function RouteOverviewPanel({
                     {stop.label}
                   </span>
                   {!compact && (
-                    <span className="block text-[11px] text-slate-400">{stop.categorieën.map(formatCategoryLabel).join(' · ')}</span>
+                    <span className="block text-[11px] text-slate-400">{stop.categories.map(formatCategoryLabel).join(' · ')}</span>
                   )}
                   <ul className="mt-0.5 space-y-0">
                     {stop.products.map((p) => (
                       <li key={p.id} className="truncate text-[10px] text-slate-600">
-                        · {p.naam}
+                        · {p.name}
                       </li>
                     ))}
                   </ul>
@@ -100,7 +100,7 @@ export default function RouteOverviewPanel({
             onClick={onMarkVisited}
             className="w-full rounded-full bg-violet-600 py-1.5 text-[11px] font-semibold text-white hover:bg-violet-700"
           >
-            {orderedStops[currentIndex].label} afgevinkt
+            {orderedStops[currentIndex].label} checked off
           </button>
         )}
         {done > 0 && (
@@ -109,7 +109,7 @@ export default function RouteOverviewPanel({
             onClick={onResetProgress}
             className="w-full rounded-full bg-slate-100 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-200"
           >
-            Voortgang resetten
+            Reset progress
           </button>
         )}
       </div>

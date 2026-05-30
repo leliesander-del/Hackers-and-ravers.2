@@ -6,7 +6,7 @@ import {
   EXIT,
   FULL,
   KASSA,
-  kort,
+  truncate,
   MIN_W,
 } from '../lib/floorplanLayout.js'
 import {
@@ -123,7 +123,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
     if (!stop || visitedIds.has(stop.rackId)) return
 
     const slots = rackSlotsForStop(stop, racks)
-    const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.gangX, y: stop.cy }
+    const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.aisleX, y: stop.cy }
     setUserPos({ x: anchor.x, y: anchor.y })
 
     const newVisited = new Set([...visitedIds, stop.rackId])
@@ -150,9 +150,9 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
     })
   }
 
-  function zoomNaarRoute() {
+  function zoomToRoute() {
     const points = activePos
-      ? [activePos, ...remainingStops.map((s) => ({ x: s.gangX, y: s.cy })), EXIT]
+      ? [activePos, ...remainingStops.map((s) => ({ x: s.aisleX, y: s.cy })), KASSA, EXIT]
       : highlightRack
         ? [highlightRack]
         : []
@@ -207,19 +207,19 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
     }
   }
 
-  const ingezoomd = vb.w < FULL.w - 0.5
-  const wachtOpKlik = hasRouteList && !startPos
+  const isZoomedIn = vb.w < FULL.w - 0.5
+  const waitingForTap = hasRouteList && !startPos
   const previewStops = hasRouteList ? collectRackStops(products, routeIds) : []
 
   return (
     <div className="flex flex-col gap-3">
-      {wachtOpKlik && (
+      {waitingForTap && (
         <p className="rounded-xl bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-700">
-          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna langs je producten, kassa en uitgang.
+          Tap the map (not a shelf) to choose your starting point. Then along your products, checkout and exit.
         </p>
       )}
 
-      {/* Kaart altijd full-width — app-shell is max-w-md, dus geen side-by-side met breed paneel */}
+      {/* Map always full-width — the app shell is max-w-md, so no side-by-side with a wide panel */}
       <div className="relative w-full">
         <svg
           ref={svgRef}
@@ -228,7 +228,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
             hasRouteList ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
           }`}
           role="img"
-          aria-label="Plattegrond van de winkel"
+          aria-label="Store floor plan"
           onPointerDown={onSvgPointerDown}
           onPointerMove={onSvgPointerMove}
           onPointerUp={onSvgPointerUp}
@@ -265,7 +265,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
             <text
               key={h.label}
               x={h.cx}
-              y={h.gangTop - 1.6}
+              y={h.aisleTop - 1.6}
               textAnchor="middle"
               fontSize="2.4"
               fontWeight="700"
@@ -301,7 +301,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
             )
           })}
 
-          {ingezoomd &&
+          {isZoomedIn &&
             racks
               .filter((r) => routeRackIds.has(r.productId))
               .map((r) => (
@@ -315,7 +315,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
                   fontWeight={currentRackIds.has(r.productId) ? '700' : '400'}
                   pointerEvents="none"
                 >
-                  {kort(r.naam, 18)}
+                  {truncate(r.name, 18)}
                 </text>
               ))}
 
@@ -342,7 +342,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
               const current = k === currentIndex && !done
               if (done) return null
               const slots = rackSlotsForStop(stop, racks)
-              const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.gangX, y: stop.cy }
+              const anchor = slots[0] ? demoRackFrontApproach(slots[0]) : { x: stop.aisleX, y: stop.cy }
               return (
                 <g key={`stop-${stop.rackId}`} pointerEvents="none">
                   <circle cx={anchor.x} cy={anchor.y} r={current ? 2.8 : 2.2} fill={current ? '#7c3aed' : '#a78bfa'} stroke="#fff" strokeWidth="0.4" />
@@ -379,19 +379,19 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
         </svg>
 
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <button type="button" onClick={() => zoomBy(0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Inzoomen">
+          <button type="button" onClick={() => zoomBy(0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Zoom in">
             +
           </button>
-          <button type="button" onClick={() => zoomBy(1 / 0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Uitzoomen">
+          <button type="button" onClick={() => zoomBy(1 / 0.7)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md" aria-label="Zoom out">
             −
           </button>
           {(routeActive || highlightRack) && (
-            <button type="button" onClick={zoomNaarRoute} className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md" aria-label="Zoom naar route">
+            <button type="button" onClick={zoomToRoute} className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md" aria-label="Zoom to route">
               🎯
             </button>
           )}
-          {ingezoomd && (
-            <button type="button" onClick={() => setVb(FULL)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md" aria-label="Volledig overzicht">
+          {isZoomedIn && (
+            <button type="button" onClick={() => setVb(FULL)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md" aria-label="Full overview">
               ⤢
             </button>
           )}
@@ -414,7 +414,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
 
       {hasRouteList && !routeActive && previewStops.length > 0 && (
         <p className="text-center text-[11px] text-slate-400">
-          {previewStops.length} rekken · tik op de kaart om te starten
+          {previewStops.length} shelves · tap the map to start
         </p>
       )}
     </div>

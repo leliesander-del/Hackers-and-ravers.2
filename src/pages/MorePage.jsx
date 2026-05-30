@@ -4,15 +4,17 @@ import { useStore } from '../context/StoreContext.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import ProfileAvatar from '../components/ProfileAvatar.jsx'
 
-const AFDELINGEN = ['boodschappen', 'elektronica', 'sport', 'speelgoed']
-const DIEETEN = ['glutenvrij', 'lactosevrij', 'vegetarisch', 'veganistisch', 'notenvrij']
-const PRIJSKLASSEN = ['budget', 'middel', 'premium']
+const DEPARTMENTS = ['groceries', 'electronics', 'sport', 'toys']
+const DEPARTMENT_LABELS = { groceries: 'Groceries', electronics: 'Electronics', sport: 'Sport', toys: 'Toys' }
+const DIETS = ['gluten-free', 'lactose-free', 'vegetarian', 'vegan', 'nut-free']
+const PRICE_TIERS = ['budget', 'mid', 'premium']
+const PRICE_TIER_LABELS = { budget: 'Budget', mid: 'Mid', premium: 'Premium' }
 
 function toggle(arr, x) {
   return arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]
 }
 
-function Veld({ label, value, onChange, type = 'text', placeholder }) {
+function Field({ label, value, onChange, type = 'text', placeholder }) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-slate-400">{label}</span>
@@ -30,39 +32,39 @@ function Veld({ label, value, onChange, type = 'text', placeholder }) {
 export default function MorePage() {
   const { activeProfile, updateProfile, logout } = useStore()
   const navigate = useNavigate()
-  const [nieuwMerk, setNieuwMerk] = useState('')
+  const [newBrand, setNewBrand] = useState('')
 
-  const isGast = activeProfile.type === 'gast'
-  const v = activeProfile.voorkeuren
-  const persoon = activeProfile.persoon || {}
+  const isGuest = activeProfile.type === 'guest'
+  const v = activeProfile.preferences
+  const person = activeProfile.person || {}
 
-  function voegMerkToe() {
-    const m = nieuwMerk.trim()
-    if (!m || v.merken.includes(m)) return setNieuwMerk('')
-    updateProfile({ voorkeuren: { merken: [...v.merken, m] } })
-    setNieuwMerk('')
+  function addBrand() {
+    const m = newBrand.trim()
+    if (!m || v.brands.includes(m)) return setNewBrand('')
+    updateProfile({ preferences: { brands: [...v.brands, m] } })
+    setNewBrand('')
   }
 
   return (
     <div>
-      <PageHeader title="Profiel" subtitle="Persoonsgegevens & voorkeuren" />
+      <PageHeader title="Profile" subtitle="Personal details & preferences" />
 
       <div className="space-y-5 px-4 py-4">
-        {/* Profielkop */}
+        {/* Profile header */}
         <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          {!isGast ? (
-            <Link to="/profiel-foto" className="shrink-0 transition active:scale-95" aria-label="Profielfoto wijzigen">
+          {!isGuest ? (
+            <Link to="/profile-photo" className="shrink-0 transition active:scale-95" aria-label="Change profile photo">
               <ProfileAvatar profile={activeProfile} size="md" />
             </Link>
           ) : (
             <ProfileAvatar profile={activeProfile} size="md" />
           )}
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-slate-800">{activeProfile.naam}</p>
-            <p className="text-xs text-slate-500">{activeProfile.omschrijving}</p>
-            {!isGast && (
-              <Link to="/profiel-foto" className="mt-1 inline-block text-xs font-semibold text-brand-600 hover:text-brand-700">
-                Profielfoto wijzigen →
+            <p className="font-bold text-slate-800">{activeProfile.name}</p>
+            <p className="text-xs text-slate-500">{activeProfile.description}</p>
+            {!isGuest && (
+              <Link to="/profile-photo" className="mt-1 inline-block text-xs font-semibold text-brand-600 hover:text-brand-700">
+                Change profile photo →
               </Link>
             )}
           </div>
@@ -70,89 +72,89 @@ export default function MorePage() {
 
         {!v ? (
           <div className="rounded-2xl bg-white p-4 text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
-            {isGast
-              ? 'Als gast bewaren we geen gegevens en personaliseren we niets. Log in met een klantenkaart om je profiel in te stellen.'
-              : 'Dit profiel heeft geen persoonlijke voorkeuren om in te stellen.'}
+            {isGuest
+              ? 'As a guest we don\'t store any data and personalize nothing. Log in with a loyalty card to set up your profile.'
+              : 'This profile has no personal preferences to configure.'}
           </div>
         ) : (
           <>
-            {/* Persoonsgegevens */}
+            {/* Personal details */}
             <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-              <h2 className="text-sm font-semibold text-slate-500">Persoonsgegevens</h2>
-              <Veld label="Naam" value={activeProfile.naam} onChange={(x) => updateProfile({ naam: x })} />
-              <Veld label="E-mail" type="email" value={persoon.email} onChange={(x) => updateProfile({ persoon: { email: x } })} />
-              <Veld label="Telefoon" value={persoon.telefoon} onChange={(x) => updateProfile({ persoon: { telefoon: x } })} />
-              <Veld label="Adres" value={persoon.adres} onChange={(x) => updateProfile({ persoon: { adres: x } })} />
+              <h2 className="text-sm font-semibold text-slate-500">Personal details</h2>
+              <Field label="Name" value={activeProfile.name} onChange={(x) => updateProfile({ name: x })} />
+              <Field label="Email" type="email" value={person.email} onChange={(x) => updateProfile({ person: { email: x } })} />
+              <Field label="Phone" value={person.phone} onChange={(x) => updateProfile({ person: { phone: x } })} />
+              <Field label="Address" value={person.address} onChange={(x) => updateProfile({ person: { address: x } })} />
             </section>
 
-            {/* Afdelingen */}
+            {/* Departments */}
             <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-              <h2 className="text-sm font-semibold text-slate-500">Favoriete afdelingen</h2>
+              <h2 className="text-sm font-semibold text-slate-500">Favorite departments</h2>
               <div className="flex flex-wrap gap-2">
-                {AFDELINGEN.map((a) => {
-                  const aan = v.afdelingen.includes(a)
+                {DEPARTMENTS.map((a) => {
+                  const on = v.departments.includes(a)
                   return (
                     <button
                       key={a}
-                      onClick={() => updateProfile({ voorkeuren: { afdelingen: toggle(v.afdelingen, a) } })}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
-                        aan ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
+                      onClick={() => updateProfile({ preferences: { departments: toggle(v.departments, a) } })}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                        on ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {a}
+                      {DEPARTMENT_LABELS[a] || a}
                     </button>
                   )
                 })}
               </div>
             </section>
 
-            {/* Favoriete merken */}
+            {/* Favorite brands */}
             <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-              <h2 className="text-sm font-semibold text-slate-500">Favoriete merken</h2>
+              <h2 className="text-sm font-semibold text-slate-500">Favorite brands</h2>
               <div className="flex flex-wrap gap-2">
-                {v.merken.length ? (
-                  v.merken.map((m) => (
+                {v.brands.length ? (
+                  v.brands.map((m) => (
                     <span key={m} className="flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-medium text-brand-700">
                       {m}
                       <button
-                        onClick={() => updateProfile({ voorkeuren: { merken: v.merken.filter((x) => x !== m) } })}
+                        onClick={() => updateProfile({ preferences: { brands: v.brands.filter((x) => x !== m) } })}
                         className="text-brand-400"
-                        aria-label={`Verwijder ${m}`}
+                        aria-label={`Remove ${m}`}
                       >
                         ✕
                       </button>
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-slate-400">Nog geen merken toegevoegd.</span>
+                  <span className="text-sm text-slate-400">No brands added yet.</span>
                 )}
               </div>
               <div className="flex gap-2">
                 <input
-                  value={nieuwMerk}
-                  onChange={(e) => setNieuwMerk(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && voegMerkToe()}
-                  placeholder="Voeg een merk toe"
+                  value={newBrand}
+                  onChange={(e) => setNewBrand(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addBrand()}
+                  placeholder="Add a brand"
                   className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400"
                 />
-                <button onClick={voegMerkToe} className="rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-95">
+                <button onClick={addBrand} className="rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-95">
                   +
                 </button>
               </div>
             </section>
 
-            {/* Dieet */}
+            {/* Diet */}
             <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-              <h2 className="text-sm font-semibold text-slate-500">Dieetwensen</h2>
+              <h2 className="text-sm font-semibold text-slate-500">Dietary preferences</h2>
               <div className="flex flex-wrap gap-2">
-                {DIEETEN.map((d) => {
-                  const aan = v.dieet.includes(d)
+                {DIETS.map((d) => {
+                  const on = v.diet.includes(d)
                   return (
                     <button
                       key={d}
-                      onClick={() => updateProfile({ voorkeuren: { dieet: toggle(v.dieet, d) } })}
+                      onClick={() => updateProfile({ preferences: { diet: toggle(v.diet, d) } })}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
-                        aan ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
+                        on ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {d}
@@ -162,19 +164,19 @@ export default function MorePage() {
               </div>
             </section>
 
-            {/* Prijsklasse */}
+            {/* Price tier */}
             <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-              <h2 className="text-sm font-semibold text-slate-500">Prijsklasse</h2>
+              <h2 className="text-sm font-semibold text-slate-500">Price tier</h2>
               <div className="flex gap-2">
-                {PRIJSKLASSEN.map((p) => (
+                {PRICE_TIERS.map((p) => (
                   <button
                     key={p}
-                    onClick={() => updateProfile({ voorkeuren: { prijsklasse: p } })}
-                    className={`flex-1 rounded-xl py-2 text-sm font-medium capitalize ${
-                      v.prijsklasse === p ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
+                    onClick={() => updateProfile({ preferences: { priceTier: p } })}
+                    className={`flex-1 rounded-xl py-2 text-sm font-medium ${
+                      v.priceTier === p ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                     }`}
                   >
-                    {p}
+                    {PRICE_TIER_LABELS[p] || p}
                   </button>
                 ))}
               </div>

@@ -1,7 +1,7 @@
-const PREFIX = 'storenav.connecties.'
-export const CONNECTIONS_CHANGE_EVENT = 'storenav-connecties-change'
+const PREFIX = 'storenav.connections.'
+export const CONNECTIONS_CHANGE_EVENT = 'storenav-connections-change'
 
-// Eenvoudige id-generator zonder externe afhankelijkheden.
+// Simple id generator without external dependencies.
 function genId() {
   return 'conn-' + Math.random().toString(36).slice(2, 10)
 }
@@ -19,55 +19,55 @@ export function loadConnections(storeId) {
   }
 }
 
-function persist(storeId, connecties) {
-  localStorage.setItem(PREFIX + storeId, JSON.stringify(connecties))
+function persist(storeId, connections) {
+  localStorage.setItem(PREFIX + storeId, JSON.stringify(connections))
   window.dispatchEvent(
     new CustomEvent(CONNECTIONS_CHANGE_EVENT, { detail: { storeId } }),
   )
-  return connecties
+  return connections
 }
 
-export function saveConnection(storeId, connectie) {
+export function saveConnection(storeId, connection) {
   if (!storeId) return null
-  const connecties = loadConnections(storeId)
+  const connections = loadConnections(storeId)
   const now = new Date().toISOString()
 
-  if (connectie.id) {
-    const index = connecties.findIndex((c) => c.id === connectie.id)
+  if (connection.id) {
+    const index = connections.findIndex((c) => c.id === connection.id)
     if (index !== -1) {
-      connecties[index] = { ...connecties[index], ...connectie, updatedAt: now }
-      persist(storeId, connecties)
-      return connecties[index]
+      connections[index] = { ...connections[index], ...connection, updatedAt: now }
+      persist(storeId, connections)
+      return connections[index]
     }
   }
 
-  const nieuw = {
+  const newConnection = {
     id: genId(),
-    naam: '',
+    name: '',
     baseUrl: '',
     method: 'GET',
     authHeader: '',
     apiKey: '',
-    actief: true,
-    ...connectie,
+    active: true,
+    ...connection,
     createdAt: now,
     updatedAt: now,
   }
-  connecties.push(nieuw)
-  persist(storeId, connecties)
-  return nieuw
+  connections.push(newConnection)
+  persist(storeId, connections)
+  return newConnection
 }
 
 export function deleteConnection(storeId, id) {
   if (!storeId) return
-  const connecties = loadConnections(storeId).filter((c) => c.id !== id)
-  persist(storeId, connecties)
+  const connections = loadConnections(storeId).filter((c) => c.id !== id)
+  persist(storeId, connections)
 }
 
 export function toggleConnection(storeId, id) {
   if (!storeId) return
-  const connecties = loadConnections(storeId).map((c) =>
-    c.id === id ? { ...c, actief: !c.actief, updatedAt: new Date().toISOString() } : c,
+  const connections = loadConnections(storeId).map((c) =>
+    c.id === id ? { ...c, active: !c.active, updatedAt: new Date().toISOString() } : c,
   )
-  persist(storeId, connecties)
+  persist(storeId, connections)
 }

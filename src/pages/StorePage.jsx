@@ -3,6 +3,7 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { rankProducts } from '../lib/personalization.js'
+import { formatCategoryLabel } from '../lib/productCategories.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import ProductRow from '../components/ProductRow.jsx'
@@ -10,71 +11,70 @@ import Floorplan from '../components/Floorplan.jsx'
 import { useFloorplan } from '../lib/useFloorplan.js'
 
 const CAT_EMOJI = {
-  pasta: '🍝', brood: '🍞', zuivel: '🥛', koffie: '☕', frisdrank: '🥤', snacks: '🍿',
-  fruit: '🍎', groenten: '🥦', vlees: '🥩', vis: '🐟', ontbijt: '🥣',
-  audio: '🎧', accessoires: '🔌', smartphones: '📱', computers: '💻', tv: '📺', gaming: '🎮',
-  balsport: '⚽', sportvoeding: '🥨', schoenen: '👟', kleding: '👕', fitness: '🏋️', fietsen: '🚲',
-  bouwspeelgoed: '🧱', knuffels: '🧸', spellen: '🎲', hobby: '🎨',
+  pasta: '🍝', bread: '🍞', dairy: '🥛', coffee: '☕', soda: '🥤', snacks: '🍿',
+  fruit: '🍎', vegetables: '🥦', meat: '🥩', fish: '🐟', breakfast: '🥣',
+  audio: '🎧', accessories: '🔌', smartphones: '📱', computers: '💻', tv: '📺', gaming: '🎮',
+  'ball-sports': '⚽', 'sports-nutrition': '🥨', shoes: '👟', clothing: '👕', fitness: '🏋️', cycling: '🚲',
+  'building-toys': '🧱', plush: '🧸', games: '🎲', hobby: '🎨',
 }
-const CAT_LABEL = { tv: 'TV & Beeld' }
 const catEmoji = (c) => CAT_EMOJI[c] || '🛒'
-const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
+const catLabel = (c) => formatCategoryLabel(c)
 
 export default function StorePage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const { activeProfile, productCount, productsByStoreLive, resolveCartVoorWinkel } = useStore()
-  const [zoek, setZoek] = useState('')
-  const [categorie, setCategorie] = useState(null)
-  // Vanuit het mandje kun je rechtstreeks het winkelplan openen (?plan=1).
-  const [toonMap, setToonMap] = useState(searchParams.get('plan') === '1')
+  const { activeProfile, productCount, productsByStoreLive, resolveCartForStore } = useStore()
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState(null)
+  // From the cart you can open the store plan directly (?plan=1).
+  const [showMap, setShowMap] = useState(searchParams.get('plan') === '1')
 
   const store = getStore(id)
   const { hasPlan } = useFloorplan(id)
-  const winkelProducten = useMemo(() => productsByStoreLive(id), [productsByStoreLive, id])
+  const storeProducts = useMemo(() => productsByStoreLive(id), [productsByStoreLive, id])
 
-  // Los de boodschappenlijst hier pas op tegen dit winkel-assortiment: dít is
-  // waar de winkel aan de lijst gekoppeld wordt en de route ontstaat.
-  const mijnStops = useMemo(() => {
-    const resolved = resolveCartVoorWinkel(id)
+  // Resolve the shopping list against this store's assortment here: this is
+  // where the store gets linked to the list and the route is created.
+  const myStops = useMemo(() => {
+    const resolved = resolveCartForStore(id)
     return [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
-  }, [resolveCartVoorWinkel, id])
+  }, [resolveCartForStore, id])
 
-  const categorieen = useMemo(() => {
+  const categories = useMemo(() => {
     const m = new Map()
-    for (const p of winkelProducten) m.set(p.categorie, (m.get(p.categorie) || 0) + 1)
-    return [...m.entries()].map(([cat, aantal]) => ({ cat, aantal })).sort((a, b) => a.cat.localeCompare(b.cat))
-  }, [winkelProducten])
+    for (const p of storeProducts) m.set(p.category, (m.get(p.category) || 0) + 1)
+    return [...m.entries()].map(([cat, count]) => ({ cat, count })).sort((a, b) => a.cat.localeCompare(b.cat))
+  }, [storeProducts])
 
-  const zoekActief = zoek.trim().length > 0
+  const searchActive = search.trim().length > 0
 
-  const resultaten = useMemo(() => {
-    let lijst = winkelProducten
-    if (zoekActief) {
-      const q = zoek.toLowerCase()
-      lijst = lijst.filter((p) => p.naam.toLowerCase().includes(q) || p.merk.toLowerCase().includes(q))
-    } else if (categorie) {
-      lijst = lijst.filter((p) => p.categorie === categorie)
+  const results = useMemo(() => {
+    let list = storeProducts
+    if (searchActive) {
+      const q = search.toLowerCase()
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q))
+    } else if (category) {
+      list = list.filter((p) => p.category === category)
     }
-    return rankProducts(lijst, activeProfile)
-  }, [winkelProducten, zoek, zoekActief, categorie, activeProfile])
+    return rankProducts(list, activeProfile)
+  }, [storeProducts, search, searchActive, category, activeProfile])
 
   if (!store) return <Navigate to="/" replace />
 
-  const toonPlattegrond = store.heeftPlattegrond || hasPlan
-  const toonProducten = zoekActief || categorie
+  const showFloorplan = store.hasFloorplan || hasPlan
+  const showProducts = searchActive || category
 
   return (
     <div>
       <PageHeader
-        title={store.naam}
+        title={store.name}
         subtitle={`${store.type} · ${store.cashback}% cashback`}
         back
         right={
-          <Link to="/mandje" aria-label="Naar mandje" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100">
+          <Link to="/cart" aria-label="To cart" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25">
             🛍️
             {productCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-brand-700">
                 {productCount}
               </span>
             )}
@@ -83,40 +83,40 @@ export default function StorePage() {
       />
 
       <div className="space-y-4 px-4 py-4">
-        <SearchBar value={zoek} onChange={setZoek} placeholder={`Zoek in ${store.naam}`} />
+        <SearchBar value={search} onChange={setSearch} placeholder={`Search in ${store.name}`} />
 
-        {toonPlattegrond ? (
+        {showFloorplan ? (
           <button
-            onClick={() => setToonMap((v) => !v)}
+            onClick={() => setShowMap((v) => !v)}
             className={`w-full rounded-full py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
-              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-brand-100 text-brand-700 hover:bg-brand-200'
+              showMap ? 'bg-slate-100 text-slate-500' : 'bg-brand-100 text-brand-700 hover:bg-brand-200'
             }`}
           >
-            {toonMap ? 'Verberg plattegrond' : '🗺️ Bekijk de plattegrond'}
+            {showMap ? 'Hide floor plan' : '🗺️ View the floor plan'}
           </button>
         ) : (
           <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-400 shadow-sm">
-            🗺️ Plattegrond komt eraan voor deze winkel
+            🗺️ Floor plan coming soon for this store
           </div>
         )}
 
-        {toonMap && toonPlattegrond ? (
+        {showMap && showFloorplan ? (
           <div>
             <p className="mb-2 text-xs text-slate-400">
-              {mijnStops.length > 0
-                ? 'Tik op de kaart om je startpunt te kiezen — daarna loopt de route langs je producten naar de uitgang.'
-                : 'Voeg producten toe aan je mandje om de route te zien.'}
+              {myStops.length > 0
+                ? 'Tap the map to choose your starting point — then the route runs along your products to the exit.'
+                : 'Add products to your cart to see the route.'}
             </p>
-            <Floorplan storeId={store.id} products={winkelProducten} routeIds={mijnStops} />
+            <Floorplan storeId={store.id} products={storeProducts} routeIds={myStops} />
           </div>
-        ) : !toonProducten ? (
+        ) : !showProducts ? (
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-slate-500">Categorieën</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-500">Categories</h2>
             <div className="grid grid-cols-2 gap-3">
-              {categorieen.map(({ cat, aantal }) => (
+              {categories.map(({ cat, count }) => (
                 <button
                   key={cat}
-                  onClick={() => setCategorie(cat)}
+                  onClick={() => setCategory(cat)}
                   className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-200 active:scale-[0.97]"
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl">
@@ -124,7 +124,7 @@ export default function StorePage() {
                   </span>
                   <span>
                     <span className="block font-semibold text-slate-800">{catLabel(cat)}</span>
-                    <span className="block text-xs text-slate-400">{aantal} producten</span>
+                    <span className="block text-xs text-slate-400">{count} products</span>
                   </span>
                 </button>
               ))}
@@ -134,22 +134,22 @@ export default function StorePage() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-500">
-                {zoekActief ? `Resultaten voor "${zoek}"` : `${catEmoji(categorie)} ${catLabel(categorie)}`}
-                {!zoekActief && activeProfile.type !== 'gast' && (
-                  <span className="font-normal"> · op jouw voorkeur</span>
+                {searchActive ? `Results for "${search}"` : `${catEmoji(category)} ${catLabel(category)}`}
+                {!searchActive && activeProfile.type !== 'guest' && (
+                  <span className="font-normal"> · for your preference</span>
                 )}
               </h2>
-              {!zoekActief && categorie && (
-                <button onClick={() => setCategorie(null)} className="text-xs font-medium text-brand-600">
-                  ← Categorieën
+              {!searchActive && category && (
+                <button onClick={() => setCategory(null)} className="text-xs font-medium text-brand-600">
+                  ← Categories
                 </button>
               )}
             </div>
             <div className="space-y-2">
-              {resultaten.length ? (
-                resultaten.map((p) => <ProductRow key={p.id} product={p} />)
+              {results.length ? (
+                results.map((p) => <ProductRow key={p.id} product={p} />)
               ) : (
-                <p className="text-sm text-slate-400">Niets gevonden.</p>
+                <p className="text-sm text-slate-400">Nothing found.</p>
               )}
             </div>
           </div>

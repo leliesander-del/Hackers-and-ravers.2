@@ -1,5 +1,5 @@
-function normalize(tekst) {
-  return tekst
+function normalize(text) {
+  return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -10,50 +10,50 @@ function levenshtein(a, b) {
   if (!a.length) return b.length
   if (!b.length) return a.length
 
-  const rij = Array.from({ length: b.length + 1 }, (_, i) => i)
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i)
   for (let i = 1; i <= a.length; i++) {
-    let vorig = rij[0]
-    rij[0] = i
+    let prev = row[0]
+    row[0] = i
     for (let j = 1; j <= b.length; j++) {
-      const tmp = rij[j]
-      rij[j] = Math.min(rij[j] + 1, rij[j - 1] + 1, vorig + (a[i - 1] === b[j - 1] ? 0 : 1))
-      vorig = tmp
+      const tmp = row[j]
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1))
+      prev = tmp
     }
   }
-  return rij[b.length]
+  return row[b.length]
 }
 
-function scoreTekst(tekst, query) {
-  const t = normalize(tekst)
+function scoreText(text, query) {
+  const t = normalize(text)
   const q = normalize(query)
   if (!q) return 100
 
   if (t.includes(q)) return 100 - t.indexOf(q) * 0.05
 
-  const woorden = t.split(/\s+/).filter(Boolean)
-  for (const w of woorden) {
+  const words = t.split(/\s+/).filter(Boolean)
+  for (const w of words) {
     if (w.startsWith(q)) return 85
   }
 
-  let beste = levenshtein(q, t)
-  for (const w of woorden) {
-    if (w.length >= 2) beste = Math.min(beste, levenshtein(q, w))
+  let best = levenshtein(q, t)
+  for (const w of words) {
+    if (w.length >= 2) best = Math.min(best, levenshtein(q, w))
   }
 
-  const maxAfstand = q.length <= 4 ? 1 : q.length <= 8 ? 2 : 3
-  if (beste <= maxAfstand) return 70 - beste * 12
+  const maxDistance = q.length <= 4 ? 1 : q.length <= 8 ? 2 : 3
+  if (best <= maxDistance) return 70 - best * 12
 
   return 0
 }
 
-export function fuzzyZoekProducten(producten, query) {
+export function fuzzySearchProducts(products, query) {
   const q = query.trim()
-  if (!q) return producten
+  if (!q) return products
 
-  return producten
+  return products
     .map((p) => {
-      const velden = [p.naam, p.merk, p.categorie, p.rekkenlocatie?.label, p.id?.replace(/^p-/, '').replace(/-/g, ' ')]
-      const score = Math.max(...velden.filter(Boolean).map((v) => scoreTekst(v, q)))
+      const fields = [p.name, p.brand, p.category, p.shelfLocation?.label, p.id?.replace(/^p-/, '').replace(/-/g, ' ')]
+      const score = Math.max(...fields.filter(Boolean).map((v) => scoreText(v, q)))
       return { product: p, score }
     })
     .filter(({ score }) => score > 0)

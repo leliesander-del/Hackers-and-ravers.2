@@ -1,11 +1,11 @@
-// Tijdelijk: enkel Lisa (profiel-id 'bediende') heeft toegang tot het personeelspaneel.
-const GEKWALIFICEERDE_BEDIENDEN = new Set(['bediende'])
+// Temporary: only Lisa (profile id 'staff') has access to the staff panel.
+const QUALIFIED_STAFF = new Set(['staff'])
 
-export function isGekwalificeerdeBediende(profile) {
-  return profile?.type === 'bediende' && GEKWALIFICEERDE_BEDIENDEN.has(profile.id)
+export function isQualifiedStaff(profile) {
+  return profile?.type === 'staff' && QUALIFIED_STAFF.has(profile.id)
 }
 
-export function getPersoneelWinkelId(profile) {
-  if (!isGekwalificeerdeBediende(profile)) return null
-  return profile.personeelWinkelId ?? null
+export function getStaffStoreId(profile) {
+  if (!isQualifiedStaff(profile)) return null
+  return profile.staffStoreId ?? null
 }

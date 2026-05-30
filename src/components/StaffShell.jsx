@@ -1,51 +1,54 @@
 import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
-import { getPersoneelWinkelId } from '../lib/staffAccess.js'
+import { getStaffStoreId } from '../lib/staffAccess.js'
 import { getStore } from '../data/stores.js'
+import { isStaffSession } from '../lib/security.js'
 
-const PERSONEEL_TABS = [
-  { to: '/personeel', label: 'Rekkenvuller', end: true },
-  { to: '/personeel/kassa', label: 'Kassamedewerker', end: true },
+const STAFF_TABS = [
+  { to: '/staff', label: 'Shelf stocker', end: true },
+  { to: '/staff/checkout', label: 'Cashier', end: true },
 ]
 
-// Volledig gescheiden layout voor winkelpersoneel. Geen klant-onderbalk,
-// een eigen (groene) personeelskop. Klanten komen hier nooit binnen.
+// Fully separate layout for store staff. No customer bottom bar,
+// its own (green) staff header. Customers never end up here.
 export default function StaffShell() {
-  const { isIngelogd, isGekwalificeerdeBediende, activeProfile, logout } = useStore()
+  const { isLoggedIn, isQualifiedStaff, activeProfile, logout } = useStore()
   const navigate = useNavigate()
-  const winkel = getStore(getPersoneelWinkelId(activeProfile))
+  const store = getStore(getStaffStoreId(activeProfile))
 
-  if (!isIngelogd) return <Navigate to="/personeel/login" replace />
-  // Een ingelogde klant hoort niet in het personeelsgedeelte.
-  if (!isGekwalificeerdeBediende) return <Navigate to="/" replace />
+  if (!isLoggedIn || !isStaffSession()) return <Navigate to="/staff/login" replace />
+  // A logged-in customer doesn't belong in the staff area.
+  if (!isQualifiedStaff) return <Navigate to="/" replace />
 
-  function uitloggen() {
+  function handleLogout() {
     logout()
-    navigate('/personeel/login')
+    navigate('/staff/login')
   }
 
   return (
     <div className="relative mx-auto min-h-screen max-w-md bg-slate-50 pb-10 shadow-[0_0_60px_rgba(76,29,149,0.1)] ring-1 ring-black/5">
-      <header className="flex items-center justify-between bg-brand-600 px-4 py-3 text-white">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg">🏪</span>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold">Personeel</p>
-            <p className="text-[11px] text-white/70">
-              {activeProfile?.naam}
-              {winkel ? ` · ${winkel.naam}` : ''}
-            </p>
-          </div>
+      <header className="flex items-center gap-3 bg-brand-600 px-4 py-3 text-white">
+        <div className="flex flex-1 items-center">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg">🏪</span>
         </div>
-        <button
-          onClick={uitloggen}
-          className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium transition hover:bg-white/25"
-        >
-          Uitloggen
-        </button>
+        <div className="min-w-0 flex-1 text-center leading-tight">
+          <p className="truncate text-sm font-semibold">Staff</p>
+          <p className="truncate text-[11px] text-white/75">
+            {activeProfile?.name}
+            {store ? ` · ${store.name}` : ''}
+          </p>
+        </div>
+        <div className="flex flex-1 justify-end">
+          <button
+            onClick={handleLogout}
+            className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium transition hover:bg-white/25"
+          >
+            Log out
+          </button>
+        </div>
       </header>
       <nav className="flex gap-1 border-b border-slate-200 bg-white px-4">
-        {PERSONEEL_TABS.map((t) => (
+        {STAFF_TABS.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}

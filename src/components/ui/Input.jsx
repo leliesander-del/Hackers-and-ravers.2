@@ -1,4 +1,4 @@
-// Eén invoerstijl voor de hele app: wit, subtiele ring, violet focus.
+// One input style for the whole app: white, subtle ring, violet focus.
 export function Input({ className = '', ...rest }) {
   return (
     <input
@@ -8,7 +8,7 @@ export function Input({ className = '', ...rest }) {
   )
 }
 
-// Invoer met label erboven. Geef extra props door aan het input-element.
+// Input with a label above it. Pass extra props to the input element.
 export function Field({ label, className = '', children, ...rest }) {
   return (
     <label className="block">
@@ -18,7 +18,7 @@ export function Field({ label, className = '', children, ...rest }) {
   )
 }
 
-// Selectievak met dezelfde stijl als Input.
+// Select box with the same style as Input.
 export function Select({ className = '', children, ...rest }) {
   return (
     <select

@@ -1,26 +1,26 @@
 import { NavLink } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 
-// Minimale klant-navigatie: de home (winkelkeuze + lijst) is het centrale scherm.
+// Minimal customer navigation: the home (store choice + list) is the central screen.
 const tabs = [
   { to: '/', label: 'Home', icon: 'M3 9.5 12 3l9 6.5M5 9v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9' },
   {
-    to: '/mandje',
-    label: 'Mandje',
+    to: '/cart',
+    label: 'Cart',
     badge: true,
     icon: 'M8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z M19 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H5.1',
   },
-  { to: '/profiel', label: 'Profiel', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
+  { to: '/more', label: 'Profile', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
 ]
 
 export default function BottomNav() {
   const { productCount } = useStore()
-  const zichtbareTabs = tabs
+  const visibleTabs = tabs
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200/70 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
       <div className="flex items-stretch justify-around px-2 py-1.5">
-        {zichtbareTabs.map((t) => (
+        {visibleTabs.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}

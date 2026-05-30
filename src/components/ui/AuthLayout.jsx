@@ -1,7 +1,7 @@
-// Gedeelde lichte schil voor alle login/onboarding-schermen, zodat klant-,
-// personeel- en beheerderslogin er identiek uitzien (violet merk-accent).
-// `logo` = icoon/embleem bovenaan, `title`/`subtitle` = kop, `footer` = links
-// onderaan (bv. "terug naar klantenlogin"). `wide` voor de bredere signup-flow.
+// Shared light shell for all login/onboarding screens, so customer, staff and
+// manager login look identical (violet brand accent).
+// `logo` = icon/emblem at the top, `title`/`subtitle` = heading, `footer` = links
+// at the bottom (e.g. "back to customer login"). `wide` for the wider signup flow.
 export default function AuthLayout({ logo, title, subtitle, children, footer, wide = false }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-5 py-10">
@@ -22,7 +22,7 @@ export default function AuthLayout({ logo, title, subtitle, children, footer, wi
   )
 }
 
-// Herbruikbaar violet merk-embleem voor de auth-koppen.
+// Reusable violet brand emblem for the auth headers.
 export function AuthLogo({ children }) {
   return (
     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/25">

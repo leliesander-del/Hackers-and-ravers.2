@@ -36,6 +36,6 @@ export function saveFloorplan(storeId, elements) {
 export function getEntrancePosition(storeId, fallback = { x: 50, y: 96 }) {
   const plan = loadFloorplan(storeId)
   if (!plan) return fallback
-  const ingang = plan.elements.find((el) => el.type === 'ingang')
-  return ingang ? { x: ingang.x, y: ingang.y } : fallback
+  const entrance = plan.elements.find((el) => el.type === 'entrance')
+  return entrance ? { x: entrance.x, y: entrance.y } : fallback
 }

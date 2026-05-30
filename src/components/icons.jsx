@@ -1,6 +1,6 @@
-// Lichte inline-SVG iconen (zelfde stijl/props als lucide-react) zodat de app
-// geen externe icoonbibliotheek nodig heeft. Elk icoon accepteert `className`
-// en `strokeWidth`, net als voorheen.
+// Light inline SVG icons (same style/props as lucide-react) so the app
+// doesn't need an external icon library. Each icon accepts `className`
+// and `strokeWidth`, just like before.
 function Icon({ children, className, strokeWidth = 2, ...rest }) {
   return (
     <svg

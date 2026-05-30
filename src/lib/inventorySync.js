@@ -1,84 +1,91 @@
-// Voorraad-synchronisatie: trekt de actuele voorraad uit de databank van een
-// winkel via een geconfigureerde API-connectie en zet die om naar een patch
-// voor het inventaris-model in StoreContext.
+// Stock synchronization: pulls the current stock from a store's database via a
+// configured API connection and turns it into a patch for the inventory model
+// in StoreContext.
 //
-// Een connectie kan een echte HTTP-API zijn (live fetch met methode, auth-header
-// en API-sleutel) of een "demo-databron" die de gesimuleerde winkeldatabank
-// gebruikt, zodat de flow ook zonder externe server werkt.
+// A connection can be a real HTTP API (live fetch with method, auth header and
+// API key) or a "demo data source" that uses the simulated store database, so
+// the flow also works without an external server.
 
 import { fetchMockStoreDatabase } from './mockStoreApi.js'
+import { sanitizeAuthHeader, sanitizeHttpMethod, validateApiUrl } from './security.js'
 
-// Maakt van een externe API-respons een uniforme lijst { sku, magazijn, rekken }.
-// Ondersteunt de meest voorkomende vormen ({ voorraad/items/data: [...] } of
-// meteen een array) en verschillende veldnamen per rij.
-export function normaliseerVoorraadRespons(data) {
-  const lijst = Array.isArray(data) ? data : data?.voorraad || data?.items || data?.data || []
-  if (!Array.isArray(lijst)) return []
+// Turns an external API response into a uniform list { sku, warehouse, shelves }.
+// Supports the most common shapes ({ inventory/items/data: [...] } or an array
+// directly) and various field names per row.
+export function normalizeStockResponse(data) {
+  const list = Array.isArray(data) ? data : data?.inventory || data?.items || data?.data || []
+  if (!Array.isArray(list)) return []
 
-  return lijst
-    .map((rij) => {
-      const sku = rij.sku ?? rij.id ?? rij.productId ?? rij.productCode
+  return list
+    .map((row) => {
+      const sku = row.sku ?? row.id ?? row.productId ?? row.productCode
       if (!sku) return null
-      const magazijn = Number(rij.magazijn ?? rij.warehouse ?? rij.magazijnVoorraad ?? rij.stockMagazijn ?? 0)
-      const rekken = Number(rij.rekken ?? rij.shelf ?? rij.rekkenVoorraad ?? rij.stockRekken ?? 0)
+      const warehouse = Number(row.warehouse ?? row.warehouseStock ?? row.stockWarehouse ?? 0)
+      const shelves = Number(row.shelves ?? row.shelf ?? row.shelfStock ?? row.stockShelves ?? 0)
       return {
         sku: String(sku),
-        magazijn: Number.isFinite(magazijn) ? Math.max(0, Math.round(magazijn)) : 0,
-        rekken: Number.isFinite(rekken) ? Math.max(0, Math.round(rekken)) : 0,
+        warehouse: Number.isFinite(warehouse) ? Math.max(0, Math.round(warehouse)) : 0,
+        shelves: Number.isFinite(shelves) ? Math.max(0, Math.round(shelves)) : 0,
       }
     })
     .filter(Boolean)
 }
 
-// Haalt de voorraad op bij de connectie. Demo-databron -> gesimuleerde
-// databank; anders een echte HTTP-fetch. Gooit een duidelijke fout bij
-// netwerk-/statusproblemen.
-export async function haalVoorraadOp(connection, storeId) {
-  if (!connection) throw new Error('Geen connectie opgegeven.')
+// Fetches the stock from the connection. Demo data source -> simulated database;
+// otherwise a real HTTP fetch. Throws a clear error on network/status problems.
+export async function fetchStock(connection, storeId) {
+  if (!connection) throw new Error('No connection provided.')
 
   if (connection.demo) {
     const data = await fetchMockStoreDatabase(storeId)
-    return normaliseerVoorraadRespons(data)
+    return normalizeStockResponse(data)
   }
 
-  if (!connection.baseUrl) throw new Error('Deze connectie heeft geen API-URL.')
+  if (!connection.baseUrl) throw new Error('This connection has no API URL.')
+
+  const urlCheck = validateApiUrl(connection.baseUrl)
+  if (!urlCheck.ok) throw new Error(urlCheck.error)
 
   const headers = { Accept: 'application/json' }
   if (connection.authHeader && connection.apiKey) {
-    headers[connection.authHeader] = connection.apiKey
+    const headerName = sanitizeAuthHeader(connection.authHeader)
+    if (!headerName) throw new Error('The authorization header name is invalid.')
+    headers[headerName] = connection.apiKey
   }
+
+  const method = sanitizeHttpMethod(connection.method)
 
   let res
   try {
-    res = await fetch(connection.baseUrl, { method: connection.method || 'GET', headers })
+    res = await fetch(urlCheck.url, { method, headers })
   } catch {
-    throw new Error('Kon de API niet bereiken (netwerk of CORS).')
+    throw new Error('Could not reach the API (network or CORS).')
   }
-  if (!res.ok) throw new Error(`API gaf status ${res.status}${res.statusText ? ` (${res.statusText})` : ''}.`)
+  if (!res.ok) throw new Error(`API returned status ${res.status}${res.statusText ? ` (${res.statusText})` : ''}.`)
 
   let data
   try {
     data = await res.json()
   } catch {
-    throw new Error('De API gaf geen geldige JSON terug.')
+    throw new Error('The API did not return valid JSON.')
   }
-  return normaliseerVoorraadRespons(data)
+  return normalizeStockResponse(data)
 }
 
-// Bouwt de inventaris-patch { [productId]: { magazijn, rekken } } uit de
-// opgehaalde rijen, beperkt tot producten die deze winkel echt voert. `huidig`
-// (optioneel) laat toe te tellen hoeveel producten effectief wijzigen.
-export function bouwVoorraadPatch(rijen, winkelProducten, huidig = {}) {
-  const bestaat = new Set(winkelProducten.map((p) => p.id))
+// Builds the inventory patch { [productId]: { warehouse, shelves } } from the
+// fetched rows, limited to products this store actually carries. `current`
+// (optional) lets us count how many products actually change.
+export function buildStockPatch(rows, storeProducts, current = {}) {
+  const exists = new Set(storeProducts.map((p) => p.id))
   const patch = {}
-  let gewijzigd = 0
+  let changed = 0
 
-  for (const rij of rijen) {
-    if (!bestaat.has(rij.sku)) continue
-    patch[rij.sku] = { magazijn: rij.magazijn, rekken: rij.rekken }
-    const oud = huidig[rij.sku]
-    if (!oud || oud.magazijn !== rij.magazijn || oud.rekken !== rij.rekken) gewijzigd += 1
+  for (const row of rows) {
+    if (!exists.has(row.sku)) continue
+    patch[row.sku] = { warehouse: row.warehouse, shelves: row.shelves }
+    const old = current[row.sku]
+    if (!old || old.warehouse !== row.warehouse || old.shelves !== row.shelves) changed += 1
   }
 
-  return { patch, herkend: Object.keys(patch).length, gewijzigd }
+  return { patch, recognized: Object.keys(patch).length, changed }
 }

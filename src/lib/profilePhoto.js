@@ -1,14 +1,14 @@
 import { getAvatarPreset } from '../data/avatarPresets.js'
 
-/** Neutrale achtergrond — geen profielkleur, zodat die niet samenvalt met de foto. */
-export const PROFIEL_FOTO_ACHTERGROND = '#f1f5f9'
-const EXPORT_GROOTTE = 320
+/** Neutral background — not the profile color, so it doesn't clash with the photo. */
+export const PROFILE_PHOTO_BACKGROUND = '#f1f5f9'
+const EXPORT_SIZE = 320
 
-export function isCustomProfielFoto(value) {
+export function isCustomProfilePhoto(value) {
   return typeof value === 'string' && value.startsWith('data:')
 }
 
-function laadAfbeelding(file) {
+function loadImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
@@ -18,47 +18,47 @@ function laadAfbeelding(file) {
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(new Error('Afbeelding laden mislukt'))
+      reject(new Error('Failed to load image'))
     }
     img.src = url
   })
 }
 
-/** Vierkant bijsnijden op neutrale achtergrond (geen transparantie / profielkleur). */
-export async function processProfielFotoBestand(file) {
-  const img = await laadAfbeelding(file)
+/** Square crop on a neutral background (no transparency / profile color). */
+export async function processProfilePhotoFile(file) {
+  const img = await loadImage(file)
   const canvas = document.createElement('canvas')
-  canvas.width = EXPORT_GROOTTE
-  canvas.height = EXPORT_GROOTTE
+  canvas.width = EXPORT_SIZE
+  canvas.height = EXPORT_SIZE
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas niet beschikbaar')
+  if (!ctx) throw new Error('Canvas not available')
 
-  ctx.fillStyle = PROFIEL_FOTO_ACHTERGROND
-  ctx.fillRect(0, 0, EXPORT_GROOTTE, EXPORT_GROOTTE)
+  ctx.fillStyle = PROFILE_PHOTO_BACKGROUND
+  ctx.fillRect(0, 0, EXPORT_SIZE, EXPORT_SIZE)
 
-  const scale = Math.max(EXPORT_GROOTTE / img.width, EXPORT_GROOTTE / img.height)
+  const scale = Math.max(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height)
   const w = img.width * scale
   const h = img.height * scale
-  const x = (EXPORT_GROOTTE - w) / 2
-  const y = (EXPORT_GROOTTE - h) / 2
+  const x = (EXPORT_SIZE - w) / 2
+  const y = (EXPORT_SIZE - h) / 2
   ctx.drawImage(img, x, y, w, h)
 
   return canvas.toDataURL('image/jpeg', 0.88)
 }
 
-/** Weergave-info voor ProfileAvatar: preset, eigen foto of initiaal. */
-export function resolveProfielFoto(profile) {
-  const foto = profile?.profielFoto
-  if (isCustomProfielFoto(foto)) {
-    return { mode: 'custom', src: foto }
+/** Display info for ProfileAvatar: preset, custom photo or initial. */
+export function resolveProfilePhoto(profile) {
+  const photo = profile?.profilePhoto
+  if (isCustomProfilePhoto(photo)) {
+    return { mode: 'custom', src: photo }
   }
-  const preset = getAvatarPreset(foto)
+  const preset = getAvatarPreset(photo)
   if (preset) {
     return { mode: 'preset', preset }
   }
   return {
     mode: 'initial',
-    letter: (profile?.naam || '?')[0]?.toUpperCase() || '?',
-    kleur: profile?.kleur || '#7c3aed',
+    letter: (profile?.name || '?')[0]?.toUpperCase() || '?',
+    color: profile?.color || '#7c3aed',
   }
 }

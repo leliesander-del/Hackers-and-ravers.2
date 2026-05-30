@@ -1,36 +1,35 @@
-// Gesimuleerde winkel-databank. Geeft de voorraad van een winkel terug in de
-// vorm zoals een echte ERP-/kassasysteem-API dat zou doen (een lijst rijen met
-// een SKU en de magazijn-/rekkenvoorraad). inventorySync gebruikt dit als bron
-// wanneer een connectie als "demo-databron" is gemarkeerd, zodat de volledige
-// synchronisatie-flow werkt zonder dat er een externe server draait.
+// Simulated store database. Returns a store's stock in the shape a real
+// ERP/POS-system API would (a list of rows with a SKU and the warehouse/shelf
+// stock). inventorySync uses this as the source when a connection is marked as
+// a "demo data source", so the full sync flow works without an external server.
 //
-// De waarden komen uit products.js — de bron van waarheid — zodat een sync de
-// live (gedrifte) voorraad terugzet naar wat de winkeldatabank zegt.
+// The values come from products.js — the source of truth — so a sync resets the
+// live (drifted) stock to what the store database says.
 
 import { products } from '../data/products.js'
 
-// Bouwt de API-payload voor één winkel.
+// Builds the API payload for a single store.
 export function mockStoreDatabaseResponse(storeId) {
-  const voorraad = products
+  const inventory = products
     .filter((p) => p.storeId === storeId)
     .map((p) => ({
       sku: p.id,
-      naam: p.naam,
-      magazijn: p.magazijnVoorraad ?? 0,
-      rekken: p.rekkenVoorraad ?? 0,
+      name: p.name,
+      warehouse: p.warehouseStock ?? 0,
+      shelves: p.shelfStock ?? 0,
     }))
 
   return {
     store: storeId,
-    bron: 'demo-databank',
-    opgehaaldOp: new Date().toISOString(),
-    aantal: voorraad.length,
-    voorraad,
+    source: 'demo-database',
+    fetchedAt: new Date().toISOString(),
+    count: inventory.length,
+    inventory,
   }
 }
 
-// Simuleert een netwerk-call met een kleine vertraging, zodat de UI een echte
-// laad-toestand kan tonen.
+// Simulates a network call with a small delay so the UI can show a real loading
+// state.
 export function fetchMockStoreDatabase(storeId) {
   return new Promise((resolve) => {
     setTimeout(() => resolve(mockStoreDatabaseResponse(storeId)), 400)

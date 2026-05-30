@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Designtokens — één bron van waarheid voor de hele app.
-   Het merk-accent is violet; groen/amber/rood blijven enkel status-kleuren.
-   Gebruik in JSX via Tailwind-utilities, bv. bg-brand-600, text-brand-700,
+   Design tokens — one source of truth for the whole app.
+   The brand accent is violet; green/amber/red remain status colors only.
+   Use in JSX via Tailwind utilities, e.g. bg-brand-600, text-brand-700,
    ring-brand-300, bg-surface, text-ink.
 --------------------------------------------------------------------------- */
 @theme {
-  /* Merk-accent (violet-schaal) */
+  /* Brand accent (violet scale) */
   --color-brand-50: #f5f3ff;
   --color-brand-100: #ede9fe;
   --color-brand-200: #ddd6fe;
@@ -19,18 +19,18 @@
   --color-brand-800: #5b21b6;
   --color-brand-900: #4c1d95;
 
-  /* Oppervlakken & tekst */
+  /* Surfaces & text */
   --color-surface: #f7f5fd;
   --color-surface-card: #ffffff;
   --color-ink: #1e293b;
   --color-ink-soft: #64748b;
 
-  /* Status-kleuren (semantisch, niet als merk gebruiken) */
+  /* Status colors (semantic, don't use as brand) */
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #f43f5e;
 
-  /* Radius-afspraak: kaarten 2xl, knoppen/inputs xl, pills full */
+  /* Radius convention: cards 2xl, buttons/inputs xl, pills full */
   --radius-card: 1rem;
   --radius-control: 0.75rem;
 }
@@ -51,12 +51,12 @@ body,
 }
 
 body {
-  /* Zachte verticale gradient als rustige achtergrond */
+  /* Soft vertical gradient as a calm background */
   background: linear-gradient(180deg, #f3f0fc 0%, #f6f4fb 40%, #eef0f7 100%);
   background-attachment: fixed;
 }
 
-/* Nettere mobiele interactie */
+/* Cleaner mobile interaction */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -65,14 +65,14 @@ button {
   cursor: pointer;
 }
 
-/* Zichtbare maar subtiele focus voor toetsenbordgebruik */
+/* Visible but subtle focus for keyboard use */
 :focus-visible {
   outline: 2px solid var(--color-brand-600);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Verberg scrollbars bij horizontale rijen (bv. de wallet-kaarten) */
+/* Hide scrollbars on horizontal rows (e.g. the wallet cards) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -81,22 +81,22 @@ button {
   scrollbar-width: none;
 }
 
-/* Volledig scherm voor winkelbeheer-editor (desktop) */
-.beheer-layout {
+/* Full screen for the store-management editor (desktop) */
+.manage-layout {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
 }
 
-/* Toegankelijke tap-target-helper: minimaal 44x44px (Apple HIG / WCAG 2.5.5). */
+/* Accessible tap-target helper: minimum 44x44px (Apple HIG / WCAG 2.5.5). */
 .tap-target {
   min-height: 44px;
   min-width: 44px;
 }
 
-/* Respecteer de motie-voorkeur van de gebruiker (prefers-reduced-motion).
-   Belangrijk voor wie gevoelig is voor beweging — schakelt niet-essentiële
-   animaties en transities uit. */
+/* Respect the user's motion preference (prefers-reduced-motion).
+   Important for those sensitive to motion — disables non-essential
+   animations and transitions. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -4,16 +4,23 @@ import { getProduct, products } from '../data/products.js'
 import { stores } from '../data/stores.js'
 import { getManager } from '../data/managers.js'
 import { buildInitialInventory, enrichProduct } from '../lib/inventory.js'
-import { isGekwalificeerdeBediende } from '../lib/staffAccess.js'
-import { kiesBesteProduct, labelVoorTerm } from '../lib/assistent.js'
+import { isQualifiedStaff } from '../lib/staffAccess.js'
+import { pickBestProduct, labelForTerm } from '../lib/assistant.js'
 import { loadConnections } from '../lib/connectionsStorage.js'
-import { haalVoorraadOp, bouwVoorraadPatch } from '../lib/inventorySync.js'
+import { fetchStock, buildStockPatch } from '../lib/inventorySync.js'
+import {
+  clearSession,
+  createSession,
+  getSession,
+  isManagerSession,
+  isStaffSession,
+} from '../lib/security.js'
 
-// Een mandje-item is winkel-onafhankelijk: ofwel een ingrediënt-term
-// (kind: 'ingredient'), ofwel een concreet product dat je in een winkel
-// aanklikte (kind: 'product'). Pas bij winkelkeuze wordt het opgelost.
-function normaliseerCartItem(entry) {
-  if (typeof entry === 'string') return { key: entry, kind: 'product' } // oude opslag
+// A cart item is store-independent: either an ingredient term
+// (kind: 'ingredient'), or a concrete product you tapped in a store
+// (kind: 'product'). It is only resolved once a store is chosen.
+function normalizeCartItem(entry) {
+  if (typeof entry === 'string') return { key: entry, kind: 'product' } // legacy storage
   if (entry && entry.key && (entry.kind === 'ingredient' || entry.kind === 'product')) {
     return { key: entry.key, kind: entry.kind }
   }
@@ -22,16 +29,17 @@ function normaliseerCartItem(entry) {
 
 const StoreContext = createContext(null)
 
-const PROFIEL_KEY = 'storenav.profielId'
-const DYNAMISCH_PROFIEL_KEY = 'storenav.profiel'
-export const ACCOUNTS_KEY = 'storenav.accounts'
+const DYNAMIC_PROFILE_KEY = 'storenav.dynamicProfile'
+const ACCOUNTS_KEY = 'storenav.accounts'
 const CART_KEY = 'storenav.cart'
-const AFGEVINKT_KEY = 'storenav.afgevinkt'
-const MANAGER_KEY = 'storenav.managerId'
-const EDITS_KEY = 'storenav.profielEdits'
+const CHECKED_OFF_KEY = 'storenav.checkedOff'
+const EDITS_KEY = 'storenav.profileEdits'
+// Legacy keys — cleared on startup; auth now uses sessionStorage sessions.
+const LEGACY_PROFILE_KEY = 'storenav.profileId'
+const LEGACY_MANAGER_KEY = 'storenav.managerId'
 const INVENTORY_KEY = 'storenav.inventory'
 const INVENTORY_SEED_KEY = 'storenav.inventorySeed'
-const INVENTORY_SEED_VERSION = '3'
+const INVENTORY_SEED_VERSION = '4'
 const STAFF_LOG_KEY = 'storenav.staffLog'
 
 export function getAccounts() {
@@ -45,7 +53,50 @@ export function saveAccount(email, data) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
 }
 
-// Voegt de door de gebruiker bewerkte velden samen met het basisprofiel.
+function clearLegacyAuthKeys() {
+  localStorage.removeItem(LEGACY_PROFILE_KEY)
+  localStorage.removeItem(LEGACY_MANAGER_KEY)
+  localStorage.removeItem(DYNAMIC_PROFILE_KEY)
+}
+
+function loadAuthFromSession() {
+  clearLegacyAuthKeys()
+  const session = getSession()
+  if (!session) {
+    return { profileId: null, dynamicProfile: null, managerId: null }
+  }
+
+  if (session.type === 'manager') {
+    return { profileId: null, dynamicProfile: null, managerId: session.subject }
+  }
+
+  if (session.type === 'staff') {
+    return { profileId: session.subject, dynamicProfile: null, managerId: null }
+  }
+
+  if (session.type === 'customer-account') {
+    try {
+      const dynamicProfile = JSON.parse(sessionStorage.getItem(DYNAMIC_PROFILE_KEY)) || null
+      if (dynamicProfile && (dynamicProfile.id === session.subject || dynamicProfile.person?.email === session.subject)) {
+        return { profileId: null, dynamicProfile, managerId: null }
+      }
+    } catch {
+      /* corrupt profile data */
+    }
+    clearSession()
+    sessionStorage.removeItem(DYNAMIC_PROFILE_KEY)
+    return { profileId: null, dynamicProfile: null, managerId: null }
+  }
+
+  if (session.type === 'customer-demo') {
+    return { profileId: session.subject, dynamicProfile: null, managerId: null }
+  }
+
+  clearSession()
+  return { profileId: null, dynamicProfile: null, managerId: null }
+}
+
+// Merges the fields edited by the user with the base profile.
 function mergeProfile(base, edit) {
   if (!base || !edit) return base
   return applyProfilePatch(base, edit)
@@ -56,13 +107,13 @@ function applyProfilePatch(base, patch) {
   return {
     ...base,
     ...patch,
-    voorkeuren:
-      patch.voorkeuren !== undefined
-        ? base.voorkeuren
-          ? { ...base.voorkeuren, ...patch.voorkeuren }
-          : patch.voorkeuren
-        : base.voorkeuren,
-    persoon: patch.persoon ? { ...(base.persoon || {}), ...patch.persoon } : base.persoon,
+    preferences:
+      patch.preferences !== undefined
+        ? base.preferences
+          ? { ...base.preferences, ...patch.preferences }
+          : patch.preferences
+        : base.preferences,
+    person: patch.person ? { ...(base.person || {}), ...patch.person } : base.person,
   }
 }
 
@@ -72,7 +123,7 @@ function loadInventory() {
     const saved = JSON.parse(localStorage.getItem(INVENTORY_KEY))
     if (seed === INVENTORY_SEED_VERSION && saved && typeof saved === 'object') return saved
   } catch {
-    /* negeer corrupte data */
+    /* ignore corrupt data */
   }
   const inv = buildInitialInventory(products)
   localStorage.setItem(INVENTORY_SEED_KEY, INVENTORY_SEED_VERSION)
@@ -89,26 +140,24 @@ function loadStaffLog() {
 }
 
 export function StoreProvider({ children }) {
-  const [profielId, setProfielId] = useState(() => localStorage.getItem(PROFIEL_KEY) || null)
-  const [dynamischProfiel, setDynamischProfiel] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(DYNAMISCH_PROFIEL_KEY)) || null }
-    catch { return null }
-  })
+  const initialAuth = loadAuthFromSession()
+  const [profileId, setProfileId] = useState(initialAuth.profileId)
+  const [dynamicProfile, setDynamicProfile] = useState(initialAuth.dynamicProfile)
   const [cartItems, setCartItems] = useState(() => {
     try {
-      return (JSON.parse(localStorage.getItem(CART_KEY)) || []).map(normaliseerCartItem).filter(Boolean)
+      return (JSON.parse(localStorage.getItem(CART_KEY)) || []).map(normalizeCartItem).filter(Boolean)
     } catch {
       return []
     }
   })
-  const [afgevinkt, setAfgevinkt] = useState(() => {
+  const [checkedOff, setCheckedOff] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(AFGEVINKT_KEY)) || []
+      return JSON.parse(localStorage.getItem(CHECKED_OFF_KEY)) || []
     } catch {
       return []
     }
   })
-  const [managerId, setManagerId] = useState(() => localStorage.getItem(MANAGER_KEY) || null)
+  const [managerId, setManagerId] = useState(initialAuth.managerId)
   const [edits, setEdits] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(EDITS_KEY)) || {}
@@ -119,35 +168,25 @@ export function StoreProvider({ children }) {
   const [inventory, setInventory] = useState(loadInventory)
   const [staffLog, setStaffLog] = useState(loadStaffLog)
 
-  // Altijd de laatste inventaris bij de hand, zonder de sync-callback bij elke
-  // voorraadwijziging opnieuw te maken.
+  // Always keep the latest inventory at hand without rebuilding the sync callback
+  // on every stock change.
   const inventoryRef = useRef(inventory)
   useEffect(() => {
     inventoryRef.current = inventory
   }, [inventory])
 
   useEffect(() => {
-    if (profielId) localStorage.setItem(PROFIEL_KEY, profielId)
-    else localStorage.removeItem(PROFIEL_KEY)
-  }, [profielId])
-
-  useEffect(() => {
-    if (dynamischProfiel) localStorage.setItem(DYNAMISCH_PROFIEL_KEY, JSON.stringify(dynamischProfiel))
-    else localStorage.removeItem(DYNAMISCH_PROFIEL_KEY)
-  }, [dynamischProfiel])
+    if (dynamicProfile) sessionStorage.setItem(DYNAMIC_PROFILE_KEY, JSON.stringify(dynamicProfile))
+    else sessionStorage.removeItem(DYNAMIC_PROFILE_KEY)
+  }, [dynamicProfile])
 
   useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(cartItems))
   }, [cartItems])
 
   useEffect(() => {
-    localStorage.setItem(AFGEVINKT_KEY, JSON.stringify(afgevinkt))
-  }, [afgevinkt])
-
-  useEffect(() => {
-    if (managerId) localStorage.setItem(MANAGER_KEY, managerId)
-    else localStorage.removeItem(MANAGER_KEY)
-  }, [managerId])
+    localStorage.setItem(CHECKED_OFF_KEY, JSON.stringify(checkedOff))
+  }, [checkedOff])
 
   useEffect(() => {
     localStorage.setItem(EDITS_KEY, JSON.stringify(edits))
@@ -162,13 +201,16 @@ export function StoreProvider({ children }) {
   }, [staffLog])
 
   const activeProfile = useMemo(
-    () => dynamischProfiel || mergeProfile(getProfile(profielId), edits[profielId]),
-    [dynamischProfiel, profielId, edits],
+    () => dynamicProfile || mergeProfile(getProfile(profileId), edits[profileId]),
+    [dynamicProfile, profileId, edits],
   )
   const activeManager = useMemo(() => getManager(managerId), [managerId])
-  const gekwalificeerdPersoneel = useMemo(() => isGekwalificeerdeBediende(activeProfile), [activeProfile])
+  const qualifiedStaff = useMemo(
+    () => isQualifiedStaff(activeProfile) && isStaffSession(),
+    [activeProfile],
+  )
 
-  const getStock = useCallback((productId) => inventory[productId] ?? { magazijn: 0, rekken: 0 }, [inventory])
+  const getStock = useCallback((productId) => inventory[productId] ?? { warehouse: 0, shelves: 0 }, [inventory])
 
   const getProductLive = useCallback((id) => enrichProduct(getProduct(id), getStock(id)), [getStock])
 
@@ -179,274 +221,284 @@ export function StoreProvider({ children }) {
 
   const allProductsLive = useMemo(() => products.map((p) => enrichProduct(p, getStock(p.id))), [getStock])
 
-  // De zichtbare (winkel-onafhankelijke) lijst: elk item met een leesbaar label.
+  // The visible (store-independent) list: each item with a readable label.
   const cart = useMemo(
     () =>
       cartItems.map((it) => ({
         key: it.key,
         kind: it.kind,
-        label: it.kind === 'ingredient' ? labelVoorTerm(it.key) : getProduct(it.key)?.naam || it.key,
+        label: it.kind === 'ingredient' ? labelForTerm(it.key) : getProduct(it.key)?.name || it.key,
       })),
     [cartItems],
   )
 
-  // Los de lijst op tegen één winkel: per item het best passende live product
-  // uit díe winkel (of null als de winkel het niet voert). Dit is het moment
-  // waarop winkels aan de lijst gekoppeld worden.
-  const resolveCartVoorWinkel = useCallback(
+  // Resolve the list against one store: per item the best matching live product
+  // from that store (or null if the store doesn't carry it). This is the moment
+  // stores get linked to the list.
+  const resolveCartForStore = useCallback(
     (storeId) => {
       const pool = productsByStoreLive(storeId)
       const byId = new Map(pool.map((p) => [p.id, p]))
       return cartItems.map((item) => {
         const product =
-          item.kind === 'product' ? byId.get(item.key) || null : kiesBesteProduct(pool, item.key, activeProfile)
+          item.kind === 'product' ? byId.get(item.key) || null : pickBestProduct(pool, item.key, activeProfile)
         return { item, product }
       })
     },
     [productsByStoreLive, activeProfile, cartItems],
   )
 
-  // Welke winkels kunnen (een deel van) de lijst leveren, met dekking en prijs.
-  const winkelsVoorLijst = useMemo(() => {
+  // Which stores can supply (part of) the list, with coverage and price.
+  const storesForList = useMemo(() => {
     if (!cartItems.length) return []
     return stores
       .map((store) => {
-        const resolved = resolveCartVoorWinkel(store.id)
-        const gevonden = resolved.filter((r) => r.product)
-        // Dedup op product-id: één product telt één keer mee voor de prijs.
-        const perId = new Map(gevonden.map((r) => [r.product.id, r.product.prijs]))
-        const totaalPrijs = [...perId.values()].reduce((som, p) => som + p, 0)
-        return { store, aantal: perId.size, totaal: cartItems.length, totaalPrijs }
+        const resolved = resolveCartForStore(store.id)
+        const found = resolved.filter((r) => r.product)
+        // Dedup on product id: a product counts once for the price.
+        const perId = new Map(found.map((r) => [r.product.id, r.product.price]))
+        const totalPrice = [...perId.values()].reduce((sum, p) => sum + p, 0)
+        return { store, count: perId.size, total: cartItems.length, totalPrice }
       })
-      .filter((w) => w.aantal > 0)
-      .sort((a, b) => b.aantal - a.aantal || a.totaalPrijs - b.totaalPrijs)
-  }, [cartItems, resolveCartVoorWinkel])
+      .filter((w) => w.count > 0)
+      .sort((a, b) => b.count - a.count || a.totalPrice - b.totalPrice)
+  }, [cartItems, resolveCartForStore])
 
-  const logStaffActie = useCallback((tekst) => {
+  const logStaffAction = useCallback((text) => {
     setStaffLog((log) =>
-      [{ id: Date.now(), tekst, tijd: new Date().toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) }, ...log].slice(0, 50),
+      [{ id: Date.now(), text, time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }, ...log].slice(0, 50),
     )
   }, [])
 
-  // Trekt de actuele voorraad uit de databank van een winkel via een
-  // geconfigureerde API-connectie en past die toe op het live inventaris.
-  // Zonder connectionId wordt de eerste actieve connectie van de winkel gebruikt.
-  const syncVoorraadVanConnectie = useCallback(
+  // Pulls the current stock from a store's database via a configured API
+  // connection and applies it to the live inventory. Without a connectionId the
+  // store's first active connection is used.
+  const syncStockFromConnection = useCallback(
     async (storeId, connectionId = null) => {
-      const actieve = loadConnections(storeId).filter((c) => c.actief)
-      const connectie = connectionId ? actieve.find((c) => c.id === connectionId) : actieve[0]
-      if (!connectie) return { ok: false, fout: 'Geen actieve connectie gevonden.' }
+      const active = loadConnections(storeId).filter((c) => c.active)
+      const connection = connectionId ? active.find((c) => c.id === connectionId) : active[0]
+      if (!connection) return { ok: false, error: 'No active connection found.' }
 
       try {
-        const rijen = await haalVoorraadOp(connectie, storeId)
-        const winkelProducten = products.filter((p) => p.storeId === storeId)
-        const { patch, herkend, gewijzigd } = bouwVoorraadPatch(rijen, winkelProducten, inventoryRef.current)
-        if (herkend === 0) {
-          return { ok: false, fout: 'Geen herkenbare producten in de API-respons.' }
+        const rows = await fetchStock(connection, storeId)
+        const storeProducts = products.filter((p) => p.storeId === storeId)
+        const { patch, recognized, changed } = buildStockPatch(rows, storeProducts, inventoryRef.current)
+        if (recognized === 0) {
+          return { ok: false, error: 'No recognizable products in the API response.' }
         }
         setInventory((inv) => ({ ...inv, ...patch }))
-        logStaffActie(
-          `Voorraad gesynchroniseerd via "${connectie.naam}" — ${herkend} producten (${gewijzigd} aangepast)`,
+        logStaffAction(
+          `Stock synced via "${connection.name}" — ${recognized} products (${changed} updated)`,
         )
-        return { ok: true, herkend, gewijzigd, totaal: winkelProducten.length }
+        return { ok: true, recognized, changed, total: storeProducts.length }
       } catch (e) {
-        return { ok: false, fout: e.message || 'Synchronisatie mislukt.' }
+        return { ok: false, error: e.message || 'Synchronization failed.' }
       }
     },
-    [logStaffActie],
+    [logStaffAction],
   )
 
-  const verplaatsNaarRekken = useCallback(
-    (productId, aantal = 1) => {
+  const moveToShelves = useCallback(
+    (productId, quantity = 1) => {
       const stock = getStock(productId)
       const product = getProduct(productId)
-      if (!product || aantal < 1) return { ok: false, fout: 'Ongeldig product of aantal.' }
-      if (stock.magazijn < aantal) {
-        return { ok: false, fout: `Niet genoeg in magazijn (nog ${stock.magazijn}).` }
+      if (!product || quantity < 1) return { ok: false, error: 'Invalid product or quantity.' }
+      if (stock.warehouse < quantity) {
+        return { ok: false, error: `Not enough in the warehouse (${stock.warehouse} left).` }
       }
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: { magazijn: stock.magazijn - aantal, rekken: stock.rekken + aantal },
+        [productId]: { warehouse: stock.warehouse - quantity, shelves: stock.shelves + quantity },
       }))
-      logStaffActie(`${aantal}× ${product.naam} → rekken (magazijn −${aantal})`)
+      logStaffAction(`${quantity}× ${product.name} → shelves (warehouse −${quantity})`)
       return { ok: true }
     },
-    [getStock, logStaffActie],
+    [getStock, logStaffAction],
   )
 
-  const verkoopVanRekken = useCallback(
-    (productId, aantal = 1) => {
+  const sellFromShelves = useCallback(
+    (productId, quantity = 1) => {
       const stock = getStock(productId)
       const product = getProduct(productId)
-      if (!product || aantal < 1) return { ok: false, fout: 'Ongeldig product of aantal.' }
-      if (stock.rekken < aantal) {
-        return { ok: false, fout: `Niet genoeg op rekken (nog ${stock.rekken}).` }
+      if (!product || quantity < 1) return { ok: false, error: 'Invalid product or quantity.' }
+      if (stock.shelves < quantity) {
+        return { ok: false, error: `Not enough on the shelves (${stock.shelves} left).` }
       }
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: { magazijn: stock.magazijn, rekken: stock.rekken - aantal },
+        [productId]: { warehouse: stock.warehouse, shelves: stock.shelves - quantity },
       }))
-      logStaffActie(`${aantal}× ${product.naam} verkocht (rekken −${aantal})`)
+      logStaffAction(`${quantity}× ${product.name} sold (shelves −${quantity})`)
       return { ok: true }
     },
-    [getStock, logStaffActie],
+    [getStock, logStaffAction],
   )
 
-  // Afrekenen gebeurt in één gekozen winkel: los de lijst op tegen die winkel
-  // en boek de gevonden producten af van de rekken.
-  const betaalMandje = useCallback(
+  // Checkout happens in one chosen store: resolve the list against that store
+  // and deduct the found products from the shelves.
+  const checkoutCart = useCallback(
     (storeId) => {
-      const resolved = resolveCartVoorWinkel(storeId)
-      const teVerkopen = [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
-      const fouten = []
-      for (const id of teVerkopen) {
-        const result = verkoopVanRekken(id, 1)
+      const resolved = resolveCartForStore(storeId)
+      const toSell = [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
+      const errors = []
+      for (const id of toSell) {
+        const result = sellFromShelves(id, 1)
         if (!result.ok) {
           const p = getProduct(id)
-          fouten.push(p ? `${p.naam}: ${result.fout}` : result.fout)
+          errors.push(p ? `${p.name}: ${result.error}` : result.error)
         }
       }
-      if (fouten.length === 0) {
+      if (errors.length === 0) {
         setCartItems([])
-        setAfgevinkt([])
+        setCheckedOff([])
         return { ok: true }
       }
-      return { ok: false, fout: fouten.join(' · ') }
+      return { ok: false, error: errors.join(' · ') }
     },
-    [resolveCartVoorWinkel, verkoopVanRekken],
+    [resolveCartForStore, sellFromShelves],
   )
 
   const value = useMemo(
     () => ({
       activeProfile,
-      isIngelogd: !!activeProfile,
-      // Echte gebruiker met een eigen account (via signup/login), géén demo-profiel.
-      // Zo'n gebruiker mag niet zomaar tussen de demo-profielen wisselen.
-      isEigenAccount: !!dynamischProfiel,
-      isGekwalificeerdeBediende: gekwalificeerdPersoneel,
-      login: (arg) => {
+      isLoggedIn: !!activeProfile,
+      // Real user with their own account (via signup/login), not a demo profile.
+      // Such a user may not freely switch between the demo profiles.
+      isOwnAccount: !!dynamicProfile,
+      isQualifiedStaff: qualifiedStaff,
+      login: (arg, sessionType = null) => {
         if (typeof arg === 'string') {
-          setDynamischProfiel(null)
-          setProfielId(arg)
+          setDynamicProfile(null)
+          setProfileId(arg)
+          createSession(sessionType || 'customer-demo', arg)
         } else if (arg && typeof arg === 'object') {
-          setProfielId(null)
-          setDynamischProfiel(arg)
+          setProfileId(null)
+          setDynamicProfile(arg)
+          const subject = (arg.person?.email || arg.id || '').toLowerCase()
+          createSession('customer-account', subject)
         }
       },
       logout: () => {
-        setDynamischProfiel(null)
-        setProfielId(null)
+        clearSession()
+        setDynamicProfile(null)
+        setProfileId(null)
       },
       cart,
       cartItems,
       cartCount: cartItems.length,
-      // Aantal concrete producten in het mandje (zonder de ingrediënt-termen).
+      // Number of concrete products in the cart (excluding ingredient terms).
       productCount: cartItems.filter((it) => it.kind === 'product').length,
-      resolveCartVoorWinkel,
-      winkelsVoorLijst,
-      // Concreet product (in een winkel aangeklikt) toevoegen/checken/verwijderen.
+      resolveCartForStore,
+      storesForList,
+      // Add/check/remove a concrete product (tapped in a store).
       inCart: (id) => cartItems.some((it) => it.kind === 'product' && it.key === id),
       addToCart: (id) =>
         setCartItems((cur) =>
           cur.some((it) => it.kind === 'product' && it.key === id) ? cur : [...cur, { key: id, kind: 'product' }],
         ),
-      // Ingrediënt-termen vanuit de assistent/vragenlijst toevoegen. Elke term
-      // wordt meteen omgezet naar het best passende concrete product, zodat hij
-      // ook in het mandje belandt. Geen match in het assortiment? Dan blijft de
-      // term als ingrediënt op de lijst staan (niets gaat verloren).
-      addIngredients: (termen) =>
+      // Add ingredient terms from the assistant/questionnaire. Each term is
+      // immediately turned into the best matching concrete product so it also
+      // lands in the cart. No match in the assortment? Then the term stays on
+      // the list as an ingredient (nothing gets lost).
+      addIngredients: (terms) =>
         setCartItems((cur) => {
-          const aanwezigeProducten = new Set(
+          const existingProducts = new Set(
             cur.filter((it) => it.kind === 'product').map((it) => it.key),
           )
-          const aanwezigeIngredienten = new Set(
+          const existingIngredients = new Set(
             cur.filter((it) => it.kind === 'ingredient').map((it) => it.key),
           )
-          const toevoegen = []
-          for (const term of termen || []) {
+          const toAdd = []
+          for (const term of terms || []) {
             if (!term) continue
-            const product = kiesBesteProduct(allProductsLive, term, activeProfile)
+            const product = pickBestProduct(allProductsLive, term, activeProfile)
             if (product) {
-              if (!aanwezigeProducten.has(product.id)) {
-                toevoegen.push({ key: product.id, kind: 'product' })
-                aanwezigeProducten.add(product.id)
+              if (!existingProducts.has(product.id)) {
+                toAdd.push({ key: product.id, kind: 'product' })
+                existingProducts.add(product.id)
               }
-            } else if (!aanwezigeIngredienten.has(term)) {
-              toevoegen.push({ key: term, kind: 'ingredient' })
-              aanwezigeIngredienten.add(term)
+            } else if (!existingIngredients.has(term)) {
+              toAdd.push({ key: term, kind: 'ingredient' })
+              existingIngredients.add(term)
             }
           }
-          return toevoegen.length ? [...cur, ...toevoegen] : cur
+          return toAdd.length ? [...cur, ...toAdd] : cur
         }),
       removeFromCart: (key) => {
         setCartItems((items) => items.filter((it) => it.key !== key))
-        setAfgevinkt((a) => a.filter((x) => x !== key))
+        setCheckedOff((a) => a.filter((x) => x !== key))
       },
       clearCart: () => {
         setCartItems([])
-        setAfgevinkt([])
+        setCheckedOff([])
       },
-      isAfgevinkt: (key) => afgevinkt.includes(key),
-      toggleAfgevinkt: (key) =>
-        setAfgevinkt((a) => (a.includes(key) ? a.filter((x) => x !== key) : [...a, key])),
+      isCheckedOff: (key) => checkedOff.includes(key),
+      toggleCheckedOff: (key) =>
+        setCheckedOff((a) => (a.includes(key) ? a.filter((x) => x !== key) : [...a, key])),
       activeManager,
-      isManagerIngelogd: !!activeManager,
-      managerLogin: (id) => setManagerId(id),
-      managerLogout: () => setManagerId(null),
+      isManagerLoggedIn: !!activeManager && isManagerSession(),
+      managerLogin: (id) => {
+        setManagerId(id)
+        createSession('manager', id)
+      },
+      managerLogout: () => {
+        clearSession()
+        setManagerId(null)
+      },
       updateProfile: (patch) => {
-        if (dynamischProfiel) {
-          setDynamischProfiel((p) => {
+        if (dynamicProfile) {
+          setDynamicProfile((p) => {
             const next = applyProfilePatch(p, patch)
-            const email = (next.persoon?.email || next.id || '').toLowerCase()
+            const email = (next.person?.email || next.id || '').toLowerCase()
             if (email) {
               const accounts = getAccounts()
               if (accounts[email]) {
-                saveAccount(email, { ...accounts[email], profiel: next })
+                saveAccount(email, { ...accounts[email], profile: next })
               }
             }
             return next
           })
           return
         }
-        if (!profielId) return
+        if (!profileId) return
         setEdits((e) => {
-          const huidig = e[profielId] || {}
-          return { ...e, [profielId]: applyProfilePatch(huidig, patch) }
+          const current = e[profileId] || {}
+          return { ...e, [profileId]: applyProfilePatch(current, patch) }
         })
       },
-      betaalMandje,
+      checkoutCart,
       inventory,
       getStock,
       getProductLive,
       productsByStoreLive,
       allProductsLive,
-      verplaatsNaarRekken,
-      verkoopVanRekken,
-      syncVoorraadVanConnectie,
+      moveToShelves,
+      sellFromShelves,
+      syncStockFromConnection,
       staffLog,
     }),
     [
       activeProfile,
-      dynamischProfiel,
+      dynamicProfile,
       activeManager,
-      gekwalificeerdPersoneel,
+      qualifiedStaff,
       cart,
       cartItems,
-      resolveCartVoorWinkel,
-      winkelsVoorLijst,
-      afgevinkt,
-      profielId,
+      resolveCartForStore,
+      storesForList,
+      checkedOff,
+      profileId,
       inventory,
       getStock,
       getProductLive,
       productsByStoreLive,
       allProductsLive,
-      verplaatsNaarRekken,
-      verkoopVanRekken,
-      betaalMandje,
-      syncVoorraadVanConnectie,
+      moveToShelves,
+      sellFromShelves,
+      checkoutCart,
+      syncStockFromConnection,
       staffLog,
     ],
   )
@@ -457,6 +509,6 @@ export function StoreProvider({ children }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStore() {
   const ctx = useContext(StoreContext)
-  if (!ctx) throw new Error('useStore moet binnen <StoreProvider> gebruikt worden')
+  if (!ctx) throw new Error('useStore must be used within <StoreProvider>')
   return ctx
 }

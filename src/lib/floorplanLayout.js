@@ -1,11 +1,11 @@
-/** Raster en layout voor de interactieve demo-plattegrond. */
+/** Grid and layout for the interactive demo floor plan. */
 
 export const FULL = { x: 0, y: 0, w: 100, h: 104 }
 export const MIN_W = 26
 export const DEFAULT_START = { x: 50, y: 88 }
 export const ENTRANCE_CORRIDOR_Y = 85
-export const EXIT = { x: 50, y: 14, label: 'Uitgang' }
-export const KASSA = { x: 75, y: 18, label: 'Kassa' }
+export const EXIT = { x: 50, y: 14, label: 'Exit' }
+export const KASSA = { x: 75, y: 18, label: 'Checkout' }
 
 export const AISLE_HALF = 2
 export const RACK_W = 7
@@ -21,51 +21,51 @@ export function clampView(v) {
   return { x, y, w, h }
 }
 
-export function kort(naam, max) {
-  return naam.length > max ? `${naam.slice(0, max - 1)}…` : naam
+export function truncate(name, max) {
+  return name.length > max ? `${name.slice(0, max - 1)}…` : name
 }
 
 export function buildLayout(products) {
-  const gangen = new Map()
+  const aisles = new Map()
   for (const p of products) {
-    if (!p.rekkenlocatie) continue
-    const key = p.rekkenlocatie.label
-    if (!gangen.has(key)) {
-      gangen.set(key, { label: key, cx: p.rekkenlocatie.x, cy: p.rekkenlocatie.y, items: [] })
+    if (!p.shelfLocation) continue
+    const key = p.shelfLocation.label
+    if (!aisles.has(key)) {
+      aisles.set(key, { label: key, cx: p.shelfLocation.x, cy: p.shelfLocation.y, items: [] })
     }
-    gangen.get(key).items.push(p)
+    aisles.get(key).items.push(p)
   }
 
   const racks = []
   const headers = []
-  for (const g of gangen.values()) {
-    const links = g.items.filter((_, i) => i % 2 === 0)
-    const rechts = g.items.filter((_, i) => i % 2 === 1)
+  for (const g of aisles.values()) {
+    const left = g.items.filter((_, i) => i % 2 === 0)
+    const right = g.items.filter((_, i) => i % 2 === 1)
 
-    const plaats = (lijst, side) => {
-      const top = g.cy - (lijst.length * RACK_H) / 2
-      lijst.forEach((p, j) => {
+    const place = (list, side) => {
+      const top = g.cy - (list.length * RACK_H) / 2
+      list.forEach((p, j) => {
         racks.push({
           productId: p.id,
-          naam: p.naam,
-          categorie: p.categorie,
+          name: p.name,
+          category: p.category,
           label: g.label,
           rowY: g.cy,
           side,
-          gangX: g.cx,
+          aisleX: g.cx,
           cx: g.cx + side * SIDE_OFF,
           cy: top + RACK_H / 2 + j * RACK_H,
         })
       })
     }
-    plaats(links, -1)
-    plaats(rechts, 1)
+    place(left, -1)
+    place(right, 1)
 
-    const maxRijen = Math.max(links.length, rechts.length)
+    const maxRows = Math.max(left.length, right.length)
     headers.push({
       label: g.label,
       cx: g.cx,
-      gangTop: g.cy - (maxRijen * RACK_H) / 2,
+      aisleTop: g.cy - (maxRows * RACK_H) / 2,
     })
   }
   return { racks, headers }
@@ -75,7 +75,7 @@ export function rackEdgeX(rack) {
   return rack.cx - rack.side * (RACK_W / 2)
 }
 
-/** SVG-coördinaten uit een klik op het canvas. */
+/** SVG coordinates from a click on the canvas. */
 export function clientToSvgCoords(svg, clientX, clientY) {
   const pt = svg.createSVGPoint()
   pt.x = clientX

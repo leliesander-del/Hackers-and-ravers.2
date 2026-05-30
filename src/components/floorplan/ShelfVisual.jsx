@@ -6,7 +6,7 @@ function truncateLabel(label, max = 18) {
   return label.length > max ? `${label.slice(0, max - 1)}…` : label
 }
 
-/** Route-markering: zelfde rek-stijl, andere rand/kleur. */
+/** Route marker: same shelf style, different border/color. */
 export function rackStateColors(rackState, baseStyle) {
   if (rackState === 'visited') {
     return { fill: '#86efac', stroke: '#16a34a', strokeWidth: 0.6, ring: '#16a34a' }
@@ -26,11 +26,11 @@ export function rackStateColors(rackState, baseStyle) {
 }
 
 /**
- * Egaal vierkant rek — één vlakke kleur, label in het midden.
- * Voorkant voor routes = lokaal y = +h/2 (zie shelfFront.js).
+ * Solid square shelf — one flat color, label in the center.
+ * Front for routes = local y = +h/2 (see shelfFront.js).
  */
 export default function ShelfVisual({ el, w, h, selected, rackState, label: labelOverride }) {
-  const isTemp = el?.type === 'tijdelijk-rek'
+  const isTemp = el?.type === 'temp-shelf'
   const style = getElementStyle(el)
   const colors = rackStateColors(rackState, style)
   const borderWidth = selected ? 0.7 : rackState ? colors.strokeWidth : isTemp ? 0.35 : 0.5

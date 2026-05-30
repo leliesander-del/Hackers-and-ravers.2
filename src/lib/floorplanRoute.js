@@ -3,7 +3,7 @@ import { demoRackFrontApproach } from './shelfFront.js'
 
 const AISLE_BAND = 4.5
 
-/** Horizontale doorgangen alleen in vrije zones — nooit door rekblokken. */
+/** Horizontal passages only in free zones — never through shelf blocks. */
 function buildCorridorRowYs(racks) {
   const corridorYs = new Set([ENTRANCE_CORRIDOR_Y, EXIT.y])
 
@@ -21,15 +21,15 @@ function buildCorridorRowYs(racks) {
 }
 
 /**
- * Winkel als raster: verticale gangen (aisleXs) × horizontale doorgangen (rowYs).
- * rowYs liggen tussen rekrijen, niet midden in rekken.
+ * Store as a grid: vertical aisles (aisleXs) × horizontal passages (rowYs).
+ * rowYs sit between shelf rows, not in the middle of shelves.
  */
 export function buildStoreNetwork(products, racks = []) {
   const xs = new Set()
 
   for (const p of products) {
-    if (!p.rekkenlocatie) continue
-    xs.add(p.rekkenlocatie.x)
+    if (!p.shelfLocation) continue
+    xs.add(p.shelfLocation.x)
   }
 
   const aisleXs = [...xs].sort((a, b) => a - b)
@@ -53,7 +53,7 @@ function pushPt(pts, x, y) {
   }
 }
 
-/** Kies doorgang voor horizontaal stuk: voorkeur ingang/uitgang-hoofdgang. */
+/** Pick passage for a horizontal segment: prefer the entrance/exit main aisle. */
 function corridorBetween(y1, y2, rowYs) {
   const lo = Math.min(y1, y2)
   const hi = Math.max(y1, y2)
@@ -66,7 +66,7 @@ function corridorBetween(y1, y2, rowYs) {
   return nearest(rowYs, mid)
 }
 
-/** Van willekeurig punt naar dichtstbijzijnde kruising (gang × doorgang). */
+/** From an arbitrary point to the nearest intersection (aisle × passage). */
 function toIntersection(pts, px, py, network) {
   const ix = nearest(network.aisleXs, px)
   const iy = nearest(network.rowYs, py)
@@ -76,14 +76,14 @@ function toIntersection(pts, px, py, network) {
   return { x: ix, y: iy }
 }
 
-/** Tussen twee kruisingen: alleen langs gangen, horizontaal via doorgangen. */
+/** Between two intersections: only along aisles, horizontally via passages. */
 function betweenIntersections(pts, a, b, network) {
   pushPt(pts, a.x, a.y)
 
   if (Math.abs(a.x - b.x) < 0.05 && Math.abs(a.y - b.y) < 0.05) return b
 
   if (Math.abs(a.x - b.x) < 0.05) {
-    // Zelfde verticale gang — alleen verticaal lopen (tussen rekken links/rechts)
+    // Same vertical aisle — only move vertically (between shelves left/right)
     pushPt(pts, b.x, b.y)
     return b
   }
@@ -99,7 +99,7 @@ function distViaNetwork(px, py, stop, network) {
   const ix = nearest(network.aisleXs, px)
   const iy = nearest(network.rowYs, py)
   const ty = corridorBetween(iy, nearest(network.rowYs, stop.rowY ?? stop.cy), network.rowYs)
-  return Math.abs(px - ix) + Math.abs(py - iy) + Math.abs(ix - stop.gangX) + Math.abs(iy - ty)
+  return Math.abs(px - ix) + Math.abs(py - iy) + Math.abs(ix - stop.aisleX) + Math.abs(iy - ty)
 }
 
 export function collectRackStops(products, routeProductIds) {
@@ -109,27 +109,27 @@ export function collectRackStops(products, routeProductIds) {
   const byRack = new Map()
 
   for (const p of products) {
-    if (!idSet.has(p.id) || !p.rekkenlocatie) continue
-    const rackId = p.rekkenlocatie.label
+    if (!idSet.has(p.id) || !p.shelfLocation) continue
+    const rackId = p.shelfLocation.label
     if (!byRack.has(rackId)) {
       byRack.set(rackId, {
         rackId,
         label: rackId,
-        gangX: p.rekkenlocatie.x,
-        cy: p.rekkenlocatie.y,
-        rowY: p.rekkenlocatie.y,
-        categorieën: new Set(),
+        aisleX: p.shelfLocation.x,
+        cy: p.shelfLocation.y,
+        rowY: p.shelfLocation.y,
+        categories: new Set(),
         products: [],
       })
     }
     const stop = byRack.get(rackId)
-    stop.categorieën.add(p.categorie)
+    stop.categories.add(p.category)
     stop.products.push(p)
   }
 
   return [...byRack.values()].map((s) => ({
     ...s,
-    categorieën: [...s.categorieën],
+    categories: [...s.categories],
   }))
 }
 
@@ -153,17 +153,17 @@ export function optimizeStopOrder(start, stops, network) {
     }
     const next = remaining.splice(best, 1)[0]
     ordered.push(next)
-    px = next.gangX
+    px = next.aisleX
     py = corridorBetween(py, next.rowY ?? next.cy, network.rowYs)
   }
 
   return ordered
 }
 
-/** Loop naar rek: gang → langs gangpad → korte zijsprong naar rek-rand → terug naar gang. */
+/** Walk to shelf: aisle → along the aisle path → short side step to the shelf edge → back to aisle. */
 function visitStop(pts, cur, stop, network, racks) {
   const corridorY = corridorBetween(cur.y, stop.rowY ?? stop.cy, network.rowYs)
-  const atAisle = { x: stop.gangX, y: corridorY }
+  const atAisle = { x: stop.aisleX, y: corridorY }
   cur = betweenIntersections(pts, cur, atAisle, network)
 
   const slots = rackSlotsForStop(stop, racks)
@@ -175,22 +175,22 @@ function visitStop(pts, cur, stop, network, racks) {
   for (const rack of [...byCy.values()].sort((a, b) => a.cy - b.cy)) {
     const front = demoRackFrontApproach(rack)
 
-    // Langs gangpad (verticaal), dan korte horizontale stap naar voorkant — nooit door zijkant.
+    // Along the aisle path (vertical), then a short horizontal step to the front — never through the side.
     if (Math.abs(cur.y - front.y) > 0.05) {
-      pushPt(pts, stop.gangX, front.y)
-      cur = { x: stop.gangX, y: front.y }
+      pushPt(pts, stop.aisleX, front.y)
+      cur = { x: stop.aisleX, y: front.y }
     }
     if (Math.abs(cur.x - front.x) > 0.05) {
       pushPt(pts, front.x, front.y)
       cur = { x: front.x, y: front.y }
     }
-    pushPt(pts, stop.gangX, front.y)
-    cur = { x: stop.gangX, y: front.y }
+    pushPt(pts, stop.aisleX, front.y)
+    cur = { x: stop.aisleX, y: front.y }
   }
 
   if (Math.abs(cur.y - corridorY) > 0.05) {
-    pushPt(pts, stop.gangX, corridorY)
-    cur = { x: stop.gangX, y: corridorY }
+    pushPt(pts, stop.aisleX, corridorY)
+    cur = { x: stop.aisleX, y: corridorY }
   }
 
   return cur
@@ -242,7 +242,7 @@ export function buildRoutePolyline(start, orderedStops, network, racks, checkout
   return pointsToPath(pts)
 }
 
-/** Herberekent het routepad vanaf huidige positie, zonder afgevinkte rekken. */
+/** Recompute the route path from the current position, excluding checked-off shelves. */
 export function computeRemainingShoppingPath(fromPos, remainingStops, network, racks, { includeCheckout = false } = {}) {
   const ordered = remainingStops.length ? optimizeStopOrder(fromPos, remainingStops, network) : []
   return buildRoutePolyline(fromPos, ordered, network, racks, includeCheckout ? KASSA : null, includeCheckout ? EXIT : null, {
