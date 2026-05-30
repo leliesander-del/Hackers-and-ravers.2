@@ -26,7 +26,7 @@ export const stores = [
     cashback: 3,
     kleur: '#e3001b',
     emoji: '📺',
-    heeftPlattegrond: false,
+    heeftPlattegrond: true,
   },
   {
     id: 'decathlon',
@@ -38,7 +38,7 @@ export const stores = [
     cashback: 1.5,
     kleur: '#1559b2',
     emoji: '⚽',
-    heeftPlattegrond: false,
+    heeftPlattegrond: true,
   },
   {
     id: 'hema',
@@ -50,7 +50,7 @@ export const stores = [
     cashback: 2.5,
     kleur: '#008bcb',
     emoji: '🧸',
-    heeftPlattegrond: false,
+    heeftPlattegrond: true,
   },
   {
     id: 'delhaize',
@@ -62,7 +62,7 @@ export const stores = [
     cashback: 2,
     kleur: '#d11f2e',
     emoji: '🛒',
-    heeftPlattegrond: false,
+    heeftPlattegrond: true,
   },
 ]
 
