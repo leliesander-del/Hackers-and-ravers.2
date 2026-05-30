@@ -12,6 +12,7 @@ import ProductPage from './pages/ProductPage.jsx'
 import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
 import StaffPage from './pages/StaffPage.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
 
 // De klant-shell met onderbalk. Wie niet ingelogd is gaat naar /login;
 // personeel hoort hier niet thuis en wordt naar het personeelsgedeelte gestuurd.
@@ -39,6 +40,7 @@ export default function App() {
       <Route path="/personeel/login" element={<StaffLoginPage />} />
       <Route element={<StaffShell />}>
         <Route path="/personeel" element={<StaffPage />} />
+        <Route path="/personeel/dashboard" element={<DashboardPage />} />
       </Route>
 
       {/* Winkelbeheer (plattegrond) */}

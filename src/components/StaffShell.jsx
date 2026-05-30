@@ -1,5 +1,10 @@
-import { Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
+
+const PERSONEEL_TABS = [
+  { to: '/personeel', label: 'Voorraad', end: true },
+  { to: '/personeel/dashboard', label: 'Dashboard', end: true },
+]
 
 // Volledig gescheiden layout voor winkelpersoneel. Geen klant-onderbalk,
 // een eigen (groene) personeelskop. Klanten komen hier nooit binnen.
@@ -33,6 +38,24 @@ export default function StaffShell() {
           Uitloggen
         </button>
       </header>
+      <nav className="flex gap-1 border-b border-slate-200 bg-white px-4">
+        {PERSONEEL_TABS.map((t) => (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.end}
+            className={({ isActive }) =>
+              `relative py-2.5 text-sm font-medium transition ${
+                isActive
+                  ? 'text-emerald-700 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-emerald-600'
+                  : 'text-slate-400 hover:text-slate-600'
+              } px-3`
+            }
+          >
+            {t.label}
+          </NavLink>
+        ))}
+      </nav>
       <Outlet />
     </div>
   )
