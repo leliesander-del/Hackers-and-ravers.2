@@ -70,7 +70,7 @@ export default function ProductPage() {
         {product.opVoorraad && store.heeftPlattegrond && (
           <div>
             <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
-            <Floorplan products={productsByStoreLive(id)} highlight={product.schaplocatie} />
+            <Floorplan products={productsByStoreLive(id)} highlightId={product.id} />
           </div>
         )}
 

@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext.jsx'
 
 const tabs = [
   { to: '/', label: 'Home', icon: 'M3 11.5 12 4l9 7.5M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9' },
+  { to: '/kaart', label: 'Winkels', icon: 'M4 4h16l1 5a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0L4 4ZM5 11v9h14v-9' },
   { to: '/lijst', label: 'Boodschappen', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
   { to: '/wallet', label: 'Wallet', icon: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm14 4h.01M3 9h18' },
   { to: '/personeel', label: 'Personeel', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11h-6' },
