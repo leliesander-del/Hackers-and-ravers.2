@@ -157,7 +157,7 @@ Van zekerheid naar pronk — zorg dat stap 1–6 onverwoestbaar werken vóór de
 
 | Naam | Rol |
 | ---- | --- |
-| _naam_ | _rol_ |
+| Sander | MAFKLAPPER |
 
 ## 📝 Licentie
 
