@@ -27,7 +27,7 @@ function Veld({ label, value, onChange, type = 'text', placeholder }) {
 }
 
 export default function MorePage() {
-  const { activeProfile, updateProfile, isEigenAccount, logout } = useStore()
+  const { activeProfile, updateProfile, logout } = useStore()
   const navigate = useNavigate()
   const [nieuwMerk, setNieuwMerk] = useState('')
 
@@ -175,15 +175,14 @@ export default function MorePage() {
           </>
         )}
 
-
         <button
           onClick={() => {
-            if (isEigenAccount) logout()
+            logout()
             navigate('/login')
           }}
-          className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200 active:scale-[0.98]"
+          className="w-full rounded-full bg-brand-100 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-200 active:scale-[0.98]"
         >
-          {isEigenAccount ? 'Uitloggen' : 'Naar inlogscherm'}
+          Log out
         </button>
       </div>
     </div>

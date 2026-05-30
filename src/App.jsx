@@ -61,7 +61,7 @@ export default function App() {
         <Route index element={<ListPage />} />
         <Route path="lijst" element={<ListPage />} />
         <Route path="mandje" element={<MandjePage />} />
-        <Route path="meer" element={<MorePage />} />
+        <Route path="profiel" element={<MorePage />} />
         <Route path="store/:id" element={<StorePage />} />
         <Route path="store/:id/product/:pid" element={<ProductPage />} />
       </Route>
