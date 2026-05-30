@@ -227,7 +227,6 @@ export default function Floorplan({ products, highlightId, routeIds }) {
               y={r.cy - RACK_H / 2}
               width={RACK_W}
               height={RACK_H}
-              rx="0.6"
               fill={actief ? '#ddd6fe' : '#e2e8f0'}
               stroke={actief ? '#7c3aed' : '#cbd5e1'}
               strokeWidth={actief ? 0.6 : 0.3}
