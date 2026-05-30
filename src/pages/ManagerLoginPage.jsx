@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
-import { stores } from '../data/stores.js'
+import { stores, getStore } from '../data/stores.js'
 import { findManagerByCredentials } from '../data/managers.js'
+import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function ManagerLoginPage() {
   const { managerLogin } = useStore()
@@ -10,6 +11,7 @@ export default function ManagerLoginPage() {
   const [storeId, setStoreId] = useState(stores[0]?.id || '')
   const [wachtwoord, setWachtwoord] = useState('')
   const [fout, setFout] = useState('')
+  const geselecteerdeWinkel = getStore(storeId)
 
   function inloggen(e) {
     e.preventDefault()
@@ -27,8 +29,14 @@ export default function ManagerLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-violet-600 to-violet-500 px-6 py-12">
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
         <div className="mb-6">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-2xl">
-            🏪
+          <div className="mb-3 inline-flex">
+            {geselecteerdeWinkel ? (
+              <StoreLogo store={geselecteerdeWinkel} sizeClass="h-12 w-12" emojiClass="text-2xl" />
+            ) : (
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-2xl">
+                🏪
+              </span>
+            )}
           </div>
           <h1 className="text-2xl font-bold text-slate-800">Winkelbeheer</h1>
           <p className="mt-1 text-sm text-slate-500">

@@ -19,17 +19,13 @@ export default function ListPage() {
   const { cart, winkelsVoorLijst, removeFromCart, clearCart, addIngredients, isAfgevinkt, toggleAfgevinkt } =
     useStore()
   const [tab, setTab] = useState('lijst')
-  const [melding, setMelding] = useState(null)
+  // Wanneer de klant vanuit de lijst "Stel je lijst samen" kiest, openen we de
+  // vragenlijst meteen binnen het spar-tabblad ("Sparren").
+  const [sparrenVragenlijst, setSparrenVragenlijst] = useState(false)
 
-  function naVragenlijst(termen) {
-    addIngredients(termen)
-    setTab('lijst')
-    setMelding(
-      termen.length
-        ? `✓ ${termen.length} ${termen.length === 1 ? 'ingrediënt' : 'ingrediënten'} toegevoegd aan je lijst`
-        : 'Geen ingrediënten gevonden voor deze keuzes.',
-    )
-    setTimeout(() => setMelding(null), 4000)
+  function startVragenlijst() {
+    setSparrenVragenlijst(true)
+    setTab('assistent')
   }
 
   return (
@@ -40,7 +36,6 @@ export default function ListPage() {
       <div className="mb-5 flex gap-1 rounded-full bg-slate-100 p-1">
         {[
           { id: 'lijst', label: 'Lijst' },
-          { id: 'vragenlijst', label: 'Vragenlijst' },
           { id: 'assistent', label: '✨ Sparren' },
         ].map((t) => (
           <button
@@ -55,12 +50,6 @@ export default function ListPage() {
         ))}
       </div>
 
-      {melding && (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-          {melding}
-        </div>
-      )}
-
       {tab === 'lijst' && (
         <LijstTab
           cart={cart}
@@ -69,12 +58,16 @@ export default function ListPage() {
           clearCart={clearCart}
           isAfgevinkt={isAfgevinkt}
           toggleAfgevinkt={toggleAfgevinkt}
-          naarVragenlijst={() => setTab('vragenlijst')}
+          naarVragenlijst={startVragenlijst}
         />
       )}
-      {tab === 'vragenlijst' && <VragenlijstTab onKlaar={naVragenlijst} />}
       {tab === 'assistent' && (
-        <AssistentTab addIngredients={addIngredients} naarLijst={() => setTab('lijst')} />
+        <AssistentTab
+          addIngredients={addIngredients}
+          naarLijst={() => setTab('lijst')}
+          startVragenlijst={sparrenVragenlijst}
+          onVragenlijstGestart={() => setSparrenVragenlijst(false)}
+        />
       )}
     </div>
   )
@@ -392,12 +385,39 @@ function VragenlijstTab({ onKlaar }) {
 
 // Chat + voice-first assistent. Je typt of spreekt wat je wil eten/koken; de
 // assistent zet de bijbehorende ingrediënten automatisch op je lijst.
-function AssistentTab({ addIngredients, naarLijst }) {
+function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlijstGestart }) {
   const [berichten, setBerichten] = useState(() => [{ rol: 'ai', tekst: BEGROETING }])
   const [invoer, setInvoer] = useState('')
   const [voorlezen, setVoorlezen] = useState(false)
   const [aantalToegevoegd, setAantalToegevoegd] = useState(0)
+  // De vragenlijst leeft nu binnen Sparren: een begeleide manier om de lijst te
+  // vullen, naast vrij typen of inspreken.
+  const [toonVragenlijst, setToonVragenlijst] = useState(() => Boolean(startVragenlijst))
   const scrollRef = useRef(null)
+
+  // Geopend vanuit de lijst-knop? Meld terug zodat het maar één keer auto-opent.
+  useEffect(() => {
+    if (startVragenlijst) onVragenlijstGestart?.()
+  }, [startVragenlijst, onVragenlijstGestart])
+
+  // Resultaat van de vragenlijst belandt als bevestiging in het gesprek.
+  function vragenlijstKlaar(termen) {
+    if (termen.length) {
+      addIngredients(termen)
+      setAantalToegevoegd((n) => n + termen.length)
+    }
+    setBerichten((b) => [
+      ...b,
+      { rol: 'gebruiker', tekst: 'Ik heb de vragenlijst ingevuld.' },
+      {
+        rol: 'ai',
+        tekst: termen.length
+          ? `Top! Ik heb ${termen.length} ${termen.length === 1 ? 'ingrediënt' : 'ingrediënten'} op je lijst gezet. Wil je er nog iets bij?`
+          : 'Er kwamen geen ingrediënten uit die keuzes. Vertel me gerust waar je zin in hebt.',
+      },
+    ])
+    setToonVragenlijst(false)
+  }
 
   // Eén plek waar elk bericht (getypt of ingesproken) doorheen gaat.
   function stuur(rauweTekst) {
@@ -433,6 +453,21 @@ function AssistentTab({ addIngredients, naarLijst }) {
 
   const laatsteAi = [...berichten].reverse().find((m) => m.rol === 'ai')
 
+  // Begeleide vragenlijst neemt het scherm over zolang ze open staat.
+  if (toonVragenlijst) {
+    return (
+      <div>
+        <button
+          onClick={() => setToonVragenlijst(false)}
+          className="mb-4 text-sm font-medium text-slate-400 transition hover:text-slate-600"
+        >
+          ← Terug naar sparren
+        </button>
+        <VragenlijstTab onKlaar={vragenlijstKlaar} />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 13rem)' }}>
       {/* Gesprek */}
@@ -445,6 +480,20 @@ function AssistentTab({ addIngredients, naarLijst }) {
           <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-violet-100 px-4 py-2.5 text-sm italic text-violet-500">
             {tussentijds || 'Aan het luisteren…'}
           </div>
+        )}
+
+        {/* Begeleide vragenlijst als alternatief voor vrij typen/inspreken */}
+        {berichten.length === 1 && (
+          <button
+            onClick={() => setToonVragenlijst(true)}
+            className="flex w-full items-center gap-3 rounded-2xl bg-violet-50 p-3 text-left ring-1 ring-violet-200 transition hover:bg-violet-100 active:scale-[0.98]"
+          >
+            <span className="text-xl">📝</span>
+            <span className="flex-1 text-sm font-semibold text-violet-700">
+              Liever begeleid? Stel je lijst samen met een paar vragen
+            </span>
+            <span className="text-violet-400">→</span>
+          </button>
         )}
 
         {/* Voorbeelden onder de begroeting */}

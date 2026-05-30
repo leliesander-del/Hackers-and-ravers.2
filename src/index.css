@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
 
 :root {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -52,8 +51,4 @@ button {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-}
-
-.leaflet-container {
-  font-family: inherit;
 }

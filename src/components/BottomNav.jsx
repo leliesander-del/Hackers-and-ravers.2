@@ -4,11 +4,17 @@ import { useStore } from '../context/StoreContext.jsx'
 // Minimale klant-navigatie: de boodschappenlijst is het centrale scherm.
 const tabs = [
   { to: '/', label: 'Lijst', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
+  {
+    to: '/mandje',
+    label: 'Mandje',
+    badge: true,
+    icon: 'M8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z M19 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H5.1',
+  },
   { to: '/meer', label: 'Profiel', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
 ]
 
 export default function BottomNav() {
-  const { cartCount } = useStore()
+  const { productCount } = useStore()
   const zichtbareTabs = tabs
 
   return (
@@ -36,9 +42,9 @@ export default function BottomNav() {
                     <path d={t.icon} />
                   </svg>
                 </span>
-                {t.label === 'Lijst' && cartCount > 0 && (
+                {t.badge && productCount > 0 && (
                   <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-                    {cartCount}
+                    {productCount}
                   </span>
                 )}
                 {t.label}

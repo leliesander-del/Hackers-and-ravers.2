@@ -1,6 +1,7 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
+import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function BeheerHomePage() {
   const { activeManager, isManagerIngelogd, managerLogout } = useStore()
@@ -19,7 +20,7 @@ export default function BeheerHomePage() {
       <div className="mx-auto w-full max-w-md">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{store.emoji}</span>
+            <StoreLogo store={store} sizeClass="h-11 w-11" emojiClass="text-xl" />
             <div>
               <h1 className="text-xl font-bold text-white">Winkelbeheer</h1>
               <p className="text-sm text-violet-100">{store.naam}</p>

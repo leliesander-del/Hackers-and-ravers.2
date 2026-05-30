@@ -286,6 +286,8 @@ export function StoreProvider({ children }) {
       cart,
       cartItems,
       cartCount: cartItems.length,
+      // Aantal concrete producten in het mandje (zonder de ingrediënt-termen).
+      productCount: cartItems.filter((it) => it.kind === 'product').length,
       resolveCartVoorWinkel,
       winkelsVoorLijst,
       // Concreet product (in een winkel aangeklikt) toevoegen/checken/verwijderen.
@@ -294,12 +296,33 @@ export function StoreProvider({ children }) {
         setCartItems((cur) =>
           cur.some((it) => it.kind === 'product' && it.key === id) ? cur : [...cur, { key: id, kind: 'product' }],
         ),
-      // Ingrediënt-termen vanuit de assistent/vragenlijst toevoegen.
+      // Ingrediënt-termen vanuit de assistent/vragenlijst toevoegen. Elke term
+      // wordt meteen omgezet naar het best passende concrete product, zodat hij
+      // ook in het mandje belandt. Geen match in het assortiment? Dan blijft de
+      // term als ingrediënt op de lijst staan (niets gaat verloren).
       addIngredients: (termen) =>
         setCartItems((cur) => {
-          const aanwezig = new Set(cur.filter((it) => it.kind === 'ingredient').map((it) => it.key))
-          const nieuw = (termen || []).filter((t) => t && !aanwezig.has(t)).map((t) => ({ key: t, kind: 'ingredient' }))
-          return nieuw.length ? [...cur, ...nieuw] : cur
+          const aanwezigeProducten = new Set(
+            cur.filter((it) => it.kind === 'product').map((it) => it.key),
+          )
+          const aanwezigeIngredienten = new Set(
+            cur.filter((it) => it.kind === 'ingredient').map((it) => it.key),
+          )
+          const toevoegen = []
+          for (const term of termen || []) {
+            if (!term) continue
+            const product = kiesBesteProduct(allProductsLive, term, activeProfile)
+            if (product) {
+              if (!aanwezigeProducten.has(product.id)) {
+                toevoegen.push({ key: product.id, kind: 'product' })
+                aanwezigeProducten.add(product.id)
+              }
+            } else if (!aanwezigeIngredienten.has(term)) {
+              toevoegen.push({ key: term, kind: 'ingredient' })
+              aanwezigeIngredienten.add(term)
+            }
+          }
+          return toevoegen.length ? [...cur, ...toevoegen] : cur
         }),
       removeFromCart: (key) => {
         setCartItems((items) => items.filter((it) => it.key !== key))

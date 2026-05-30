@@ -1,7 +1,5 @@
-// Winkels rond Gent. De gesimuleerde gebruiker staat op de Korenmarkt (centrum).
+// Winkels rond Gent.
 // `afdeling` koppelt aan de voorkeuren van een profiel voor de personalisatie.
-
-export const userLocation = { lat: 51.0538, lng: 3.7220, label: 'Korenmarkt, Gent' }
 
 export const stores = [
   {

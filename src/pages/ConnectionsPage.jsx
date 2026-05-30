@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
+import StoreLogo from '../components/StoreLogo.jsx'
 import {
   loadConnections,
   saveConnection,
@@ -99,6 +100,7 @@ export default function ConnectionsPage() {
             <Link to="/beheer" className="text-slate-400 hover:text-slate-700">
               ←
             </Link>
+            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
             <div>
               <h1 className="text-lg font-bold text-slate-800">Connecties</h1>
               <p className="text-sm text-slate-500">{store.naam}</p>

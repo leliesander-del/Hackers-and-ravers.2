@@ -22,7 +22,7 @@ const catLabel = (c) => CAT_LABEL[c] || c.charAt(0).toUpperCase() + c.slice(1)
 
 export default function StorePage() {
   const { id } = useParams()
-  const { activeProfile, cartCount, productsByStoreLive, resolveCartVoorWinkel } = useStore()
+  const { activeProfile, productCount, productsByStoreLive, resolveCartVoorWinkel } = useStore()
   const [zoek, setZoek] = useState('')
   const [categorie, setCategorie] = useState(null)
   const [toonMap, setToonMap] = useState(false)
@@ -71,9 +71,9 @@ export default function StorePage() {
         right={
           <Link to="/mandje" className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
             🛍️
-            {cartCount > 0 && (
+            {productCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
-                {cartCount}
+                {productCount}
               </span>
             )}
           </Link>
