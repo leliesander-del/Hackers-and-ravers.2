@@ -5,6 +5,7 @@ export const MIN_W = 26
 export const DEFAULT_START = { x: 50, y: 88 }
 export const ENTRANCE_CORRIDOR_Y = 85
 export const EXIT = { x: 50, y: 14, label: 'Uitgang' }
+export const KASSA = { x: 75, y: 18, label: 'Kassa' }
 
 export const AISLE_HALF = 2
 export const RACK_W = 7

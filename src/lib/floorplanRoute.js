@@ -1,4 +1,4 @@
-import { ENTRANCE_CORRIDOR_Y, EXIT, RACK_H } from './floorplanLayout.js'
+import { ENTRANCE_CORRIDOR_Y, EXIT, KASSA, RACK_H } from './floorplanLayout.js'
 import { demoRackFrontApproach } from './shelfFront.js'
 
 const AISLE_BAND = 4.5
@@ -196,11 +196,19 @@ function visitStop(pts, cur, stop, network, racks) {
   return cur
 }
 
-export function buildRoutePolyline(start, orderedStops, network, racks, end = EXIT) {
+export function buildRoutePolyline(start, orderedStops, network, racks, checkout, end = EXIT) {
   const pts = []
 
   if (!orderedStops.length) {
     let cur = toIntersection(pts, start.x, start.y, network)
+    if (checkout) {
+      cur = betweenIntersections(
+        pts,
+        cur,
+        { x: nearest(network.aisleXs, checkout.x), y: nearest(network.rowYs, checkout.y) },
+        network,
+      )
+    }
     const endRow = nearest(network.rowYs, end.y)
     cur = betweenIntersections(pts, cur, { x: nearest(network.aisleXs, end.x), y: endRow }, network)
     pushPt(pts, end.x, end.y)
@@ -211,6 +219,15 @@ export function buildRoutePolyline(start, orderedStops, network, racks, end = EX
 
   for (const stop of orderedStops) {
     cur = visitStop(pts, cur, stop, network, racks)
+  }
+
+  if (checkout) {
+    cur = betweenIntersections(
+      pts,
+      cur,
+      { x: nearest(network.aisleXs, checkout.x), y: nearest(network.rowYs, checkout.y) },
+      network,
+    )
   }
 
   const endIx = nearest(network.aisleXs, end.x)
@@ -231,13 +248,13 @@ export function computeShoppingRoute(products, routeProductIds, startPos, racks 
   const stops = collectRackStops(products, routeProductIds)
 
   if (!stops.length) {
-    return { stops: [], ordered: [], pathD: null, end: EXIT, network }
+    return { stops: [], ordered: [], pathD: null, kassa: KASSA, end: EXIT, network }
   }
 
   const ordered = optimizeStopOrder(startPos, stops, network)
-  const pathD = buildRoutePolyline(startPos, ordered, network, racks, EXIT)
+  const pathD = buildRoutePolyline(startPos, ordered, network, racks, KASSA, EXIT)
 
-  return { stops, ordered, pathD, end: EXIT, network }
+  return { stops, ordered, pathD, kassa: KASSA, end: EXIT, network }
 }
 
 export function rackSlotsForStop(stop, racks) {

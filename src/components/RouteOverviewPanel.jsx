@@ -4,6 +4,7 @@ export default function RouteOverviewPanel({
   orderedStops,
   currentIndex,
   visitedIds,
+  kassaLabel,
   endLabel,
   onSelectStop,
   onMarkVisited,
@@ -31,7 +32,8 @@ export default function RouteOverviewPanel({
       <div className="border-b border-slate-100 px-3 py-2">
         <h3 className="text-xs font-bold text-slate-800">Jouw route</h3>
         <p className="mt-0.5 text-[10px] text-slate-500">
-          {done}/{total} rekken · {endLabel}
+          {done}/{total} rekken
+          {kassaLabel ? ` · ${kassaLabel}` : ''} · {endLabel}
         </p>
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
           <div className="h-full rounded-full bg-violet-600 transition-all duration-300" style={{ width: `${pct}%` }} />
@@ -81,6 +83,11 @@ export default function RouteOverviewPanel({
             </li>
           )
         })}
+        {kassaLabel && (
+          <li className="rounded-lg border border-dashed border-violet-200 bg-violet-50 px-2 py-1.5 text-[10px] font-medium text-violet-800">
+            🛒 {kassaLabel}
+          </li>
+        )}
         <li className="rounded-lg border border-dashed border-red-200 bg-red-50 px-2 py-1.5 text-[10px] font-medium text-red-700">
           🚪 {endLabel}
         </li>

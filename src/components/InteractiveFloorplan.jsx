@@ -5,6 +5,7 @@ import {
   clientToSvgCoords,
   EXIT,
   FULL,
+  KASSA,
   kort,
   MIN_W,
 } from '../lib/floorplanLayout.js'
@@ -42,6 +43,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
   const orderedStops = route?.ordered ?? []
   const routeD = route?.pathD ?? null
   const endLabel = route?.end?.label ?? EXIT.label
+  const kassaLabel = route?.kassa?.label ?? KASSA.label
 
   const highlightRack = useMemo(() => {
     if (!singleHighlight) return null
@@ -186,7 +188,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
     <div className="flex flex-col gap-3">
       {wachtOpKlik && (
         <p className="rounded-xl bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-700">
-          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna loopt de route langs je producten naar de uitgang.
+          Tik op de kaart (niet op een rek) om je startpunt te kiezen. Daarna langs je producten, kassa en uitgang.
         </p>
       )}
 
@@ -375,6 +377,7 @@ export default function InteractiveFloorplan({ products, highlightId, routeIds }
           orderedStops={routeActive ? orderedStops : previewStops}
           currentIndex={currentIndex}
           visitedIds={visitedIds}
+          kassaLabel={kassaLabel}
           endLabel={endLabel}
           onSelectStop={setCurrentIndex}
           onMarkVisited={markVisited}
