@@ -1,0 +1,294 @@
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+
+// Interactieve 2D-plattegrond.
+// - Elke "gang" heeft een looppad in het midden met aaneengesloten vierkante rekken
+//   links en rechts ervan; ├®├®n vierkant per product in die gang.
+// - Boven elke gang staat een lijstje met welke producten er precies in zitten.
+// - Bij inzoomen verschijnen de productnamen naast de rekken (meer detail).
+// - Een blauw bolletje ("me") toont waar jij staat; een gestippelde route loopt
+//   langs de gangen naar het gemarkeerde rek (highlightId = product-id).
+// - In-/uitzoomen met de knoppen of slepen om te pannen.
+
+const FULL = { x: 0, y: 0, w: 100, h: 104 }
+const MIN_W = 26
+const PERSON = { x: 50, y: 93 }
+const LOOP_AISLE_Y = 85 // horizontale hoofdgang onderaan
+
+// Rek-afmetingen (vierkant) en plaatsing t.o.v. het looppad.
+const AISLE_HALF = 2 // halve breedte van het looppad
+const SQ = 3.2 // zijde van een vierkant rek
+const SIDE_OFF = AISLE_HALF + SQ / 2 // afstand looppad-midden -> rek-midden
+
+function clampView(v) {
+  let { x, y, w, h } = v
+  w = Math.min(w, FULL.w)
+  h = Math.min(h, FULL.h)
+  x = Math.min(Math.max(x, 0), FULL.w - w)
+  y = Math.min(Math.max(y, 0), FULL.h - h)
+  return { x, y, w, h }
+}
+
+function kort(naam, max) {
+  return naam.length > max ? naam.slice(0, max - 1) + 'ÔÇª' : naam
+}
+
+// Bouwt de vierkante rekken + de header-lijsten op basis van de schaplocaties.
+function buildLayout(products) {
+  const gangen = new Map()
+  for (const p of products) {
+    if (!p.schaplocatie) continue
+    const key = p.schaplocatie.label
+    if (!gangen.has(key)) {
+      gangen.set(key, { label: key, cx: p.schaplocatie.x, cy: p.schaplocatie.y, items: [] })
+    }
+    gangen.get(key).items.push(p)
+  }
+
+  const racks = []
+  const headers = []
+  for (const g of gangen.values()) {
+    const links = g.items.filter((_, i) => i % 2 === 0)
+    const rechts = g.items.filter((_, i) => i % 2 === 1)
+
+    const plaats = (lijst, side) => {
+      const top = g.cy - (lijst.length * SQ) / 2
+      lijst.forEach((p, j) => {
+        racks.push({
+          productId: p.id,
+          naam: p.naam,
+          label: g.label,
+          side,
+          gangX: g.cx,
+          cx: g.cx + side * SIDE_OFF,
+          cy: top + SQ / 2 + j * SQ,
+        })
+      })
+    }
+    plaats(links, -1)
+    plaats(rechts, 1)
+
+    const maxRijen = Math.max(links.length, rechts.length)
+    headers.push({
+      label: g.label,
+      cx: g.cx,
+      gangTop: g.cy - (maxRijen * SQ) / 2,
+      namen: g.items.map((p) => p.naam),
+    })
+  }
+  return { racks, headers }
+}
+
+// Orthogonale route: van de persoon omhoog naar de hoofdgang, horizontaal naar het
+// juiste looppad, omhoog langs de gang en een korte stap naar het rek.
+function buildRoute(rack) {
+  const tx = rack.gangX
+  const innerEdgeX = rack.cx - rack.side * (SQ / 2)
+  const pts = [
+    [PERSON.x, PERSON.y],
+    [PERSON.x, LOOP_AISLE_Y],
+    [tx, LOOP_AISLE_Y],
+    [tx, rack.cy],
+    [innerEdgeX, rack.cy],
+  ]
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ')
+}
+
+export default function InteractiveFloorplan({ products, highlightId, highlight }) {
+  const { racks, headers } = useMemo(() => buildLayout(products), [products])
+
+  const doelRek = useMemo(() => {
+    if (highlightId) return racks.find((r) => r.productId === highlightId) || null
+    if (highlight) return racks.find((r) => r.label === highlight.label) || null
+    return null
+  }, [racks, highlightId, highlight])
+
+  const routeD = useMemo(() => (doelRek ? buildRoute(doelRek) : null), [doelRek])
+
+  const [vb, setVb] = useState(FULL)
+  const svgRef = useRef(null)
+  const sleep = useRef(null)
+
+  useEffect(() => {
+    setVb(FULL)
+  }, [doelRek])
+
+  function zoomBy(factor) {
+    setVb((v) => {
+      const cx = v.x + v.w / 2
+      const cy = v.y + v.h / 2
+      const w = Math.min(Math.max(v.w * factor, MIN_W), FULL.w)
+      const h = (w * FULL.h) / FULL.w
+      return clampView({ x: cx - w / 2, y: cy - h / 2, w, h })
+    })
+  }
+
+  function zoomNaarRek() {
+    if (!doelRek) return
+    const w = 30
+    const h = (w * FULL.h) / FULL.w
+    setVb(clampView({ x: doelRek.cx - w / 2, y: doelRek.cy - h / 2, w, h }))
+  }
+
+  function onPointerDown(e) {
+    sleep.current = { px: e.clientX, py: e.clientY, vb }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+  function onPointerMove(e) {
+    if (!sleep.current || !svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    const sx = sleep.current.vb.w / rect.width
+    const sy = sleep.current.vb.h / rect.height
+    const nx = sleep.current.vb.x - (e.clientX - sleep.current.px) * sx
+    const ny = sleep.current.vb.y - (e.clientY - sleep.current.py) * sy
+    setVb(clampView({ ...sleep.current.vb, x: nx, y: ny }))
+  }
+  function onPointerUp() {
+    sleep.current = null
+  }
+
+  const ingezoomd = vb.w < FULL.w - 0.5
+  const LH = 1.6 // regelhoogte van de header-lijst
+
+  return (
+    <div className="relative">
+      <svg
+        ref={svgRef}
+        viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+        className="w-full cursor-grab touch-none rounded-2xl bg-white shadow-sm active:cursor-grabbing"
+        role="img"
+        aria-label="Plattegrond van de winkel"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+      >
+        <rect x="2" y="2" width="96" height="100" rx="4" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.6" />
+
+        {/* Header boven elke gang: welke producten zitten erin */}
+        {headers.map((h) => {
+          const startY = h.gangTop - 1.2 - h.namen.length * LH
+          return (
+            <g key={h.label}>
+              <text x={h.cx} y={startY} textAnchor="middle" fontSize="1.9" fontWeight="700" fill="#64748b">
+                {h.label}
+              </text>
+              {h.namen.map((n, k) => (
+                <text key={n} x={h.cx} y={startY + (k + 1) * LH} textAnchor="middle" fontSize="1.5" fill="#94a3b8">
+                  {kort(n, 16)}
+                </text>
+              ))}
+            </g>
+          )
+        })}
+
+        {/* Looppaden (lichte lijn in het midden van elke gang) */}
+        {headers.map((h) => (
+          <line
+            key={`pad-${h.label}`}
+            x1={h.cx}
+            y1={h.gangTop}
+            x2={h.cx}
+            y2={h.gangTop + (racks.filter((r) => r.label === h.label).length / 2 + 0.5) * SQ}
+            stroke="#eef2f7"
+            strokeWidth={AISLE_HALF * 2}
+            strokeLinecap="round"
+          />
+        ))}
+
+        {/* Vierkante rekken, aaneengesloten links/rechts van het looppad */}
+        {racks.map((r) => {
+          const actief = doelRek && r.productId === doelRek.productId
+          return (
+            <rect
+              key={r.productId}
+              x={r.cx - SQ / 2}
+              y={r.cy - SQ / 2}
+              width={SQ}
+              height={SQ}
+              fill={actief ? '#ddd6fe' : '#e2e8f0'}
+              stroke={actief ? '#7c3aed' : '#cbd5e1'}
+              strokeWidth={actief ? 0.6 : 0.3}
+            />
+          )
+        })}
+
+        {/* Detail bij inzoomen: productnaam naast elk rek (buitenkant) */}
+        {ingezoomd &&
+          racks.map((r) => (
+            <text
+              key={`lbl-${r.productId}`}
+              x={r.cx + r.side * (SQ / 2 + 0.6)}
+              y={r.cy + 0.5}
+              textAnchor={r.side === -1 ? 'end' : 'start'}
+              fontSize="1.5"
+              fill={doelRek && r.productId === doelRek.productId ? '#6d28d9' : '#64748b'}
+              fontWeight={doelRek && r.productId === doelRek.productId ? '700' : '400'}
+            >
+              {kort(r.naam, 18)}
+            </text>
+          ))}
+
+        {/* Route + bewegend stipje */}
+        {routeD && (
+          <>
+            <path d={routeD} fill="none" stroke="#7c3aed" strokeWidth="1" strokeDasharray="2 2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle r="1.3" fill="#7c3aed">
+              <animateMotion path={routeD} dur="3s" repeatCount="indefinite" />
+            </circle>
+          </>
+        )}
+
+        {/* Pulserende markering op het doelrek */}
+        {doelRek && (
+          <circle cx={doelRek.cx} cy={doelRek.cy} r="2.2" fill="none" stroke="#7c3aed" strokeWidth="0.6">
+            <animate attributeName="r" values="2.2;3.2;2.2" dur="1.2s" repeatCount="indefinite" />
+          </circle>
+        )}
+
+        {/* Jij ÔÇö blauw bolletje met label */}
+        <circle cx={PERSON.x} cy={PERSON.y} r="2.4" fill="#2563eb" stroke="#fff" strokeWidth="0.6" />
+        <text x={PERSON.x} y={PERSON.y + 6} textAnchor="middle" fontSize="3.4" fill="#2563eb" fontWeight="600">
+          me
+        </text>
+      </svg>
+
+      {/* Zoom-bediening */}
+      <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+        <button
+          onClick={() => zoomBy(0.7)}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md"
+          aria-label="Inzoomen"
+        >
+          +
+        </button>
+        <button
+          onClick={() => zoomBy(1 / 0.7)}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-700 shadow-md"
+          aria-label="Uitzoomen"
+        >
+          ÔêÆ
+        </button>
+        {doelRek && (
+          <button
+            onClick={zoomNaarRek}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm shadow-md"
+            aria-label="Zoom naar het rek"
+            title="Zoom naar het rek"
+          >
+            ­ƒÄ»
+          </button>
+        )}
+        {ingezoomd && (
+          <button
+            onClick={() => setVb(FULL)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-md"
+            aria-label="Volledig overzicht"
+            title="Volledig overzicht"
+          >
+            Ôñó
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}

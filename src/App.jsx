@@ -10,6 +10,8 @@ import MorePage from './pages/MorePage.jsx'
 import StorePage from './pages/StorePage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import CartPage from './pages/CartPage.jsx'
+import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
+import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
 
 // Het "telefoon"-frame met onderbalk. Wie nog geen profiel koos, gaat naar /login.
 function AppShell() {
@@ -28,6 +30,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/beheer/login" element={<ManagerLoginPage />} />
+      <Route path="/beheer/plattegrond" element={<FloorplanEditorPage />} />
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="kaart" element={<MapPage />} />

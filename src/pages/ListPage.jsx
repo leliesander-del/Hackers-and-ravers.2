@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getProduct } from '../data/products.js'
 import { getStore } from '../data/stores.js'
+import { hasFloorplan } from '../lib/floorplanStorage.js'
 import PageHeader from '../components/PageHeader.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
 
@@ -44,7 +45,7 @@ export default function ListPage() {
                     <StoreLogo store={store} sizeClass="h-7 w-7" emojiClass="text-sm" />
                     {store.naam}
                   </h2>
-                  {store.heeftPlattegrond && (
+                  {(store.heeftPlattegrond || hasFloorplan(store.id)) && (
                     <Link to={`/store/${storeId}`} className="text-xs font-medium text-violet-600">
                       Toon route →
                     </Link>

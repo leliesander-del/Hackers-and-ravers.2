@@ -7,6 +7,7 @@ import { rankAlternatives } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import Floorplan from '../components/Floorplan.jsx'
 import AlternativeCard from '../components/AlternativeCard.jsx'
+import { useFloorplan } from '../lib/useFloorplan.js'
 
 export default function ProductPage() {
   const { id, pid } = useParams()
@@ -14,6 +15,7 @@ export default function ProductPage() {
 
   const store = getStore(id)
   const product = getProduct(pid)
+  const { hasPlan } = useFloorplan(id)
 
   const alternatieven = useMemo(
     () => (product && !product.opVoorraad ? rankAlternatives(product, alleProducten, activeProfile) : []),
@@ -68,10 +70,15 @@ export default function ProductPage() {
         </div>
 
         {/* Op voorraad -> route op plattegrond */}
-        {product.opVoorraad && store.heeftPlattegrond && (
+        {product.opVoorraad && (store.heeftPlattegrond || hasPlan) && (
           <div>
             <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
-            <Floorplan products={productsByStore(id)} highlightId={product.id} />
+            <Floorplan
+              storeId={store.id}
+              products={productsByStore(id)}
+              highlightId={product.id}
+              highlight={product.schaplocatie}
+            />
           </div>
         )}
 
