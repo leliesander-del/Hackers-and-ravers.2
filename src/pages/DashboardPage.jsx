@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { getPersoneelWinkelId } from '../lib/staffAccess.js'
+import { useStaffAantal } from '../lib/staffAantal.js'
 import { groepeerVoorraadPerRekken } from '../lib/staffStock.js'
 import PageHeader from '../components/PageHeader.jsx'
 import StockBadge from '../components/staff/StockBadge.jsx'
@@ -36,7 +37,6 @@ export default function DashboardPage() {
   const winkel = winkelId ? getStore(winkelId) : null
 
   const [geselecteerdId, setGeselecteerdId] = useState(null)
-  const [aantalTekst, setAantalTekst] = useState('1')
   const [melding, setMelding] = useState(null)
 
   const winkelProducten = useMemo(
@@ -44,45 +44,14 @@ export default function DashboardPage() {
     [productsByStoreLive, winkelId],
   )
 
-  const { uit, legeRekken, rekkenGeenMagazijn, rekkenBijnaOp, veel } = useMemo(
+  const { uit, legeRekken, rekkenBijnaOp, veel } = useMemo(
     () => groepeerVoorraadPerRekken(winkelProducten),
     [winkelProducten],
   )
 
   const geselecteerd = geselecteerdId ? getProductLive(geselecteerdId) : null
-
-  function parseAantal(tekst = aantalTekst) {
-    const n = parseInt(tekst, 10)
-    return Number.isFinite(n) && n >= 1 ? n : 1
-  }
-
-  function resetAantal() {
-    setAantalTekst('1')
-  }
-
-  function wijzigAantal(delta) {
-    setAantalTekst(String(Math.max(1, parseAantal() + delta)))
-  }
-
-  function blokkeerOngeldigeAantalToets(e) {
-    if (['e', 'E', '-', '+', '.', ','].includes(e.key)) e.preventDefault()
-  }
-
-  function aantalInputProps(actie) {
-    return {
-      aantalTekst,
-      onAantalChange: (e) => {
-        const v = e.target.value
-        if (v === '' || /^\d+$/.test(v)) setAantalTekst(v)
-      },
-      onAantalBlur: () => setAantalTekst(String(parseAantal())),
-      onAantalKeyDown: (e) => {
-        blokkeerOngeldigeAantalToets(e)
-        if (e.key === 'Enter') actie()
-      },
-      onWijzigAantal: wijzigAantal,
-    }
-  }
+  const maxMagazijn = geselecteerd?.magazijnVoorraad ?? 0
+  const { parseAantal, resetAantal, aantalInputProps } = useStaffAantal(maxMagazijn)
 
   function toonMelding(tekst, type = 'info') {
     setMelding({ tekst, type })
@@ -108,6 +77,7 @@ export default function DashboardPage() {
 
   function actiePaneelVoorProduct(product) {
     const aantal = parseAantal()
+    const max = product.magazijnVoorraad ?? 0
     return (
       <StaffProductActiePaneel
         product={product}
@@ -115,10 +85,11 @@ export default function DashboardPage() {
         modus="bijvullen"
         inputId={`rek-aantal-${product.id}`}
         {...aantalInputProps(verplaatsNaarRekkenActie)}
+        maxAantal={max}
         toonDoelRekken
         actieLabel={`${aantal} stuks magazijn → rekken`}
         onActie={verplaatsNaarRekkenActie}
-        actieDisabled={product.magazijnVoorraad === 0}
+        actieDisabled={max === 0}
         onSluiten={() => setGeselecteerdId(null)}
       />
     )
@@ -159,11 +130,11 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-2xl bg-rose-50 p-3 ring-1 ring-rose-100">
-            <p className="text-2xl font-bold text-rose-600">{rekkenGeenMagazijn.length}</p>
+            <p className="text-2xl font-bold text-rose-600">{uit.length}</p>
             <p className="text-[10px] font-medium text-rose-700">Uit voorraad</p>
           </div>
           <div className="rounded-2xl bg-orange-50 p-3 ring-1 ring-orange-100">
-            <p className="text-2xl font-bold text-orange-600">{uit.length + legeRekken.length}</p>
+            <p className="text-2xl font-bold text-orange-600">{legeRekken.length}</p>
             <p className="text-[10px] font-medium text-orange-800">Rekken leeg</p>
           </div>
           <div className="rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-100">
@@ -181,41 +152,26 @@ export default function DashboardPage() {
           gekozen product.
         </p>
 
-        <CollapsibleSection
-          titel="Uit voorraad"
-          aantal={rekkenGeenMagazijn.length}
-          kleur="rose"
-          standaardOpen={rekkenGeenMagazijn.length > 0}
-        >
-          <p className="px-1 text-[11px] font-medium text-slate-500">Op rekken, magazijn uit voorraad</p>
-          {rekkenGeenMagazijn.length ? (
-            rekkenGeenMagazijn.map(renderProductMetActies)
+        <CollapsibleSection titel="Uit voorraad" aantal={uit.length} kleur="rose" standaardOpen={uit.length > 0}>
+          <p className="px-1 text-[11px] font-medium text-slate-500">Rekken en magazijn leeg</p>
+          {uit.length ? (
+            uit.map(renderProductMetActies)
           ) : (
-            <p className="py-2 text-center text-xs text-slate-400">Alles op rekken heeft nog magazijnvoorraad.</p>
+            <p className="py-2 text-center text-xs text-slate-400">Geen producten die overal uit voorraad zijn.</p>
           )}
         </CollapsibleSection>
 
         <CollapsibleSection
           titel="Rekken leeg"
-          aantal={uit.length + legeRekken.length}
+          aantal={legeRekken.length}
           kleur="orange"
-          standaardOpen={uit.length + legeRekken.length > 0}
+          standaardOpen={legeRekken.length > 0}
         >
-          {legeRekken.length > 0 && (
-            <>
-              <p className="px-1 text-[11px] font-medium text-slate-500">Magazijn heeft nog voorraad</p>
-              {legeRekken.map(renderProductMetActies)}
-            </>
-          )}
-          {legeRekken.length > 0 && uit.length > 0 && <hr className="border-slate-100" />}
-          {uit.length > 0 && (
-            <>
-              <p className="px-1 text-[11px] font-medium text-slate-500">Overal uit voorraad</p>
-              {uit.map(renderProductMetActies)}
-            </>
-          )}
-          {uit.length + legeRekken.length === 0 && (
-            <p className="py-2 text-center text-xs text-slate-400">Geen lege rekken.</p>
+          <p className="px-1 text-[11px] font-medium text-slate-500">Magazijn heeft nog voorraad</p>
+          {legeRekken.length ? (
+            legeRekken.map(renderProductMetActies)
+          ) : (
+            <p className="py-2 text-center text-xs text-slate-400">Geen lege rekken met magazijnvoorraad.</p>
           )}
         </CollapsibleSection>
 

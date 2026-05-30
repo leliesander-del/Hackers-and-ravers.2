@@ -4,6 +4,8 @@ import { getStore } from '../data/stores.js'
 import { getPersoneelWinkelId } from '../lib/staffAccess.js'
 import { parseProductQr } from '../lib/inventory.js'
 import { fuzzyZoekProducten } from '../lib/fuzzySearch.js'
+import { useStaffAantal } from '../lib/staffAantal.js'
+import { filterOpRekken, ligtOpRekken } from '../lib/staffStock.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import StockBadge from '../components/staff/StockBadge.jsx'
@@ -17,51 +19,19 @@ export default function StaffVerkoopPage() {
   const [qrInput, setQrInput] = useState('')
   const [zoek, setZoek] = useState('')
   const [geselecteerdId, setGeselecteerdId] = useState(null)
-  const [aantalTekst, setAantalTekst] = useState('1')
   const [melding, setMelding] = useState(null)
 
   const geselecteerd = geselecteerdId ? getProductLive(geselecteerdId) : null
+  const maxRekken = geselecteerd?.rekkenVoorraad ?? 0
+  const { parseAantal, resetAantal, aantalInputProps } = useStaffAantal(maxRekken)
 
   const gefilterdeProducten = useMemo(() => {
     if (!winkelId) return []
-    const lijst = productsByStoreLive(winkelId)
-    return fuzzyZoekProducten(lijst, zoek)
+    const opRekken = filterOpRekken(productsByStoreLive(winkelId))
+    return fuzzyZoekProducten(opRekken, zoek)
   }, [productsByStoreLive, winkelId, zoek])
 
   const verkoopLog = useMemo(() => staffLog.filter((item) => item.tekst.includes('verkocht')), [staffLog])
-
-  function parseAantal(tekst = aantalTekst) {
-    const n = parseInt(tekst, 10)
-    return Number.isFinite(n) && n >= 1 ? n : 1
-  }
-
-  function resetAantal() {
-    setAantalTekst('1')
-  }
-
-  function wijzigAantal(delta) {
-    setAantalTekst(String(Math.max(1, parseAantal() + delta)))
-  }
-
-  function blokkeerOngeldigeAantalToets(e) {
-    if (['e', 'E', '-', '+', '.', ','].includes(e.key)) e.preventDefault()
-  }
-
-  function aantalInputProps(actie) {
-    return {
-      aantalTekst,
-      onAantalChange: (e) => {
-        const v = e.target.value
-        if (v === '' || /^\d+$/.test(v)) setAantalTekst(v)
-      },
-      onAantalBlur: () => setAantalTekst(String(parseAantal())),
-      onAantalKeyDown: (e) => {
-        blokkeerOngeldigeAantalToets(e)
-        if (e.key === 'Enter') actie()
-      },
-      onWijzigAantal: wijzigAantal,
-    }
-  }
 
   function toonMelding(tekst, type = 'info') {
     setMelding({ tekst, type })
@@ -89,6 +59,10 @@ export default function StaffVerkoopPage() {
       toonMelding('Dit product hoort bij een andere winkel.', 'fout')
       return
     }
+    if (!ligtOpRekken(product)) {
+      toonMelding('Dit product ligt niet meer op de rekken.', 'fout')
+      return
+    }
     kiesProduct(id)
     toonMelding(`${product.naam} geselecteerd`, 'ok')
   }
@@ -113,6 +87,7 @@ export default function StaffVerkoopPage() {
 
   function actiePaneel(product, inputPrefix) {
     const aantal = parseAantal()
+    const max = product.rekkenVoorraad ?? 0
     return (
       <StaffProductActiePaneel
         product={product}
@@ -120,9 +95,10 @@ export default function StaffVerkoopPage() {
         modus="verwijderen"
         inputId={`${inputPrefix}-aantal-${product.id}`}
         {...aantalInputProps(registreerVerkoop)}
+        maxAantal={max}
         actieLabel={`${aantal} stuks verkocht (uit rekken)`}
         onActie={registreerVerkoop}
-        actieDisabled={product.rekkenVoorraad === 0 || aantal > product.rekkenVoorraad}
+        actieDisabled={max === 0}
         onSluiten={() => setGeselecteerdId(null)}
       />
     )
@@ -156,8 +132,8 @@ export default function StaffVerkoopPage() {
         )}
 
         <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-600">
-          Registreer verkopen bij <strong>{winkel.naam}</strong>: tik op een product en boek de verkoop af van de
-          rekken. Alleen op dit kassascherm kun je voorraad van de rekken halen.
+          Registreer verkopen bij <strong>{winkel.naam}</strong>: alleen producten op de rekken zijn zichtbaar. Boek
+          verkopen af van de rekkenvoorraad.
         </p>
 
         <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
@@ -181,7 +157,7 @@ export default function StaffVerkoopPage() {
           </div>
         </section>
 
-        {geselecteerd && !geselecteerdInLijst && actiePaneel(geselecteerd, 'kassa-qr')}
+        {geselecteerd && !geselecteerdInLijst && ligtOpRekken(geselecteerd) && actiePaneel(geselecteerd, 'kassa-qr')}
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-slate-500">Producten</h2>
@@ -221,7 +197,9 @@ export default function StaffVerkoopPage() {
               })
             ) : (
               <p className="rounded-xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
-                Geen producten gevonden voor &quot;{zoek}&quot;.
+                {zoek.trim()
+                  ? `Geen producten op de rekken voor "${zoek}".`
+                  : 'Geen producten op de rekken — vraag de rekkenvuller om bij te vullen.'}
               </p>
             )}
           </div>

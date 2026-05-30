@@ -31,12 +31,17 @@ export default function StaffProductActiePaneel({
   actieLabel,
   onActie,
   actieDisabled = false,
+  maxAantal,
   toonDoelRekken = false,
   onSluiten,
 }) {
   const paneelRef = useRef(null)
   const theme = THEMES[variant] ?? THEMES.emerald
   const knopKlasse = modus === 'bijvullen' ? theme.bijvullen : theme.verwijderen
+  const huidigAantal = parseInt(aantalTekst, 10) || 1
+  const heeftMax = maxAantal != null && maxAantal > 0
+  const bijMinimum = huidigAantal <= 1
+  const bijMaximum = heeftMax && huidigAantal >= maxAantal
 
   useEffect(() => {
     paneelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -72,7 +77,8 @@ export default function StaffProductActiePaneel({
           <button
             type="button"
             onClick={() => onWijzigAantal(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-600 shadow-sm"
+            disabled={bijMinimum || maxAantal === 0}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-600 shadow-sm disabled:opacity-40"
           >
             −
           </button>
@@ -84,12 +90,14 @@ export default function StaffProductActiePaneel({
             onChange={onAantalChange}
             onBlur={onAantalBlur}
             onKeyDown={onAantalKeyDown}
-            className="w-16 rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm font-bold shadow-sm"
+            disabled={maxAantal === 0}
+            className="w-16 rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm font-bold shadow-sm disabled:bg-slate-100 disabled:text-slate-400"
           />
           <button
             type="button"
             onClick={() => onWijzigAantal(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-600 shadow-sm"
+            disabled={bijMaximum || maxAantal === 0}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-slate-600 shadow-sm disabled:opacity-40"
           >
             +
           </button>

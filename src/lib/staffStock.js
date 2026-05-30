@@ -1,5 +1,14 @@
 // Voorraadclassificatie voor het rekkenvuller-scherm.
 
+/** Product staat fysiek op de rekken (kassa toont alleen deze). */
+export function ligtOpRekken(product) {
+  return (product.rekkenVoorraad ?? 0) > 0
+}
+
+export function filterOpRekken(producten) {
+  return producten.filter(ligtOpRekken)
+}
+
 export function doelRekkenVoorraad(product) {
   if (product.doelRekkenVoorraad != null) return product.doelRekkenVoorraad
   if (product.rekkenVoorraad > 0) return product.rekkenVoorraad
@@ -14,7 +23,6 @@ export function classificeerRekkenVoorraad(product) {
 
   if (rekken === 0 && magazijn === 0) return 'uit'
   if (rekken === 0 && magazijn > 0) return 'legeRekken'
-  if (rekken > 0 && magazijn === 0) return 'rekkenGeenMagazijn'
   if (rekken > 0 && rekken <= halveDrempel) return 'rekkenBijnaOp'
   return 'veel'
 }
@@ -22,7 +30,6 @@ export function classificeerRekkenVoorraad(product) {
 export function groepeerVoorraadPerRekken(producten) {
   const uit = []
   const legeRekken = []
-  const rekkenGeenMagazijn = []
   const rekkenBijnaOp = []
   const veel = []
 
@@ -30,7 +37,6 @@ export function groepeerVoorraadPerRekken(producten) {
     const status = classificeerRekkenVoorraad(p)
     if (status === 'uit') uit.push(p)
     else if (status === 'legeRekken') legeRekken.push(p)
-    else if (status === 'rekkenGeenMagazijn') rekkenGeenMagazijn.push(p)
     else if (status === 'rekkenBijnaOp') rekkenBijnaOp.push(p)
     else veel.push(p)
   }
@@ -40,9 +46,8 @@ export function groepeerVoorraadPerRekken(producten) {
 
   uit.sort(sortNaam)
   legeRekken.sort(sortNaam)
-  rekkenGeenMagazijn.sort(sortRekkenLaag)
   rekkenBijnaOp.sort(sortRekkenLaag)
   veel.sort((a, b) => b.rekkenVoorraad - a.rekkenVoorraad)
 
-  return { uit, legeRekken, rekkenGeenMagazijn, rekkenBijnaOp, veel }
+  return { uit, legeRekken, rekkenBijnaOp, veel }
 }
