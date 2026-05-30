@@ -34,7 +34,7 @@ export default function StaffLoginPage() {
         </span>
       }
       title="Personeel"
-      subtitle="Voorraadbeheer · magazijn ↔ rekken"
+      subtitle="Rekkenvuller of kassamedewerker"
       footer={
         <Link to="/login" className="underline underline-offset-2 transition hover:text-brand-600">
           ← Terug naar klantenlogin
