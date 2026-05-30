@@ -196,7 +196,7 @@ function visitStop(pts, cur, stop, network, racks) {
   return cur
 }
 
-export function buildRoutePolyline(start, orderedStops, network, racks, checkout, end = EXIT) {
+export function buildRoutePolyline(start, orderedStops, network, racks, checkout, end = EXIT, { includeEnd = true } = {}) {
   const pts = []
 
   if (!orderedStops.length) {
@@ -209,9 +209,11 @@ export function buildRoutePolyline(start, orderedStops, network, racks, checkout
         network,
       )
     }
-    const endRow = nearest(network.rowYs, end.y)
-    cur = betweenIntersections(pts, cur, { x: nearest(network.aisleXs, end.x), y: endRow }, network)
-    pushPt(pts, end.x, end.y)
+    if (includeEnd && end) {
+      const endRow = nearest(network.rowYs, end.y)
+      cur = betweenIntersections(pts, cur, { x: nearest(network.aisleXs, end.x), y: endRow }, network)
+      pushPt(pts, end.x, end.y)
+    }
     return pointsToPath(pts)
   }
 
@@ -230,12 +232,22 @@ export function buildRoutePolyline(start, orderedStops, network, racks, checkout
     )
   }
 
-  const endIx = nearest(network.aisleXs, end.x)
-  const endRow = nearest(network.rowYs, end.y)
-  betweenIntersections(pts, cur, { x: endIx, y: endRow }, network)
-  pushPt(pts, end.x, end.y)
+  if (includeEnd && end) {
+    const endIx = nearest(network.aisleXs, end.x)
+    const endRow = nearest(network.rowYs, end.y)
+    betweenIntersections(pts, cur, { x: endIx, y: endRow }, network)
+    pushPt(pts, end.x, end.y)
+  }
 
   return pointsToPath(pts)
+}
+
+/** Herberekent het routepad vanaf huidige positie, zonder afgevinkte rekken. */
+export function computeRemainingShoppingPath(fromPos, remainingStops, network, racks, { includeCheckout = false } = {}) {
+  const ordered = remainingStops.length ? optimizeStopOrder(fromPos, remainingStops, network) : []
+  return buildRoutePolyline(fromPos, ordered, network, racks, includeCheckout ? KASSA : null, includeCheckout ? EXIT : null, {
+    includeEnd: includeCheckout,
+  })
 }
 
 function pointsToPath(pts) {
