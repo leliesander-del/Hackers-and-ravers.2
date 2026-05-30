@@ -1,16 +1,37 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import PageHeader from '../components/PageHeader.jsx'
 
 export default function CartPage() {
-  const { cart, cartTotaal, removeFromCart, clearCart } = useStore()
+  const { cart, cartTotaal, removeFromCart, clearCart, betaalMandje } = useStore()
+  const [betaalStatus, setBetaalStatus] = useState(null)
+
+  function handleBetaal() {
+    const result = betaalMandje()
+    if (result.ok) {
+      setBetaalStatus({ type: 'ok', tekst: 'Betaling gelukt! Voorraad op schap is bijgewerkt.' })
+    } else {
+      setBetaalStatus({ type: 'fout', tekst: result.fout })
+    }
+  }
 
   return (
     <div>
       <PageHeader title="Mijn mandje" subtitle={`${cart.length} ${cart.length === 1 ? 'product' : 'producten'}`} back />
 
       <div className="space-y-4 px-4 py-4">
+        {betaalStatus && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm ${
+              betaalStatus.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'
+            }`}
+          >
+            {betaalStatus.tekst}
+          </div>
+        )}
+
         {cart.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
             <p className="text-4xl">🛍️</p>
@@ -47,6 +68,13 @@ export default function CartPage() {
               <span className="text-slate-500">Totaal</span>
               <span className="text-xl font-bold text-slate-800">€ {cartTotaal.toFixed(2)}</span>
             </div>
+
+            <button
+              onClick={handleBetaal}
+              className="w-full rounded-full bg-violet-600 py-3.5 text-sm font-semibold text-white shadow-md"
+            >
+              Betaal € {cartTotaal.toFixed(2)}
+            </button>
 
             <button
               onClick={clearCart}

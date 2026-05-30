@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import { getProduct, products as alleProducten, productsByStore } from '../data/products.js'
 import { rankAlternatives } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import Floorplan from '../components/Floorplan.jsx'
@@ -10,14 +9,14 @@ import AlternativeCard from '../components/AlternativeCard.jsx'
 
 export default function ProductPage() {
   const { id, pid } = useParams()
-  const { activeProfile, inCart, addToCart, removeFromCart } = useStore()
+  const { activeProfile, inCart, addToCart, removeFromCart, getProductLive, productsByStoreLive, allProductsLive } = useStore()
 
   const store = getStore(id)
-  const product = getProduct(pid)
+  const product = getProductLive(pid)
 
   const alternatieven = useMemo(
-    () => (product && !product.opVoorraad ? rankAlternatives(product, alleProducten, activeProfile) : []),
-    [product, activeProfile],
+    () => (product && !product.opVoorraad ? rankAlternatives(product, allProductsLive, activeProfile) : []),
+    [product, activeProfile, allProductsLive],
   )
 
   if (!store || !product) return <Navigate to={`/store/${id}`} replace />
@@ -71,7 +70,7 @@ export default function ProductPage() {
         {product.opVoorraad && store.heeftPlattegrond && (
           <div>
             <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
-            <Floorplan products={productsByStore(id)} highlight={product.schaplocatie} />
+            <Floorplan products={productsByStoreLive(id)} highlight={product.schaplocatie} />
           </div>
         )}
 

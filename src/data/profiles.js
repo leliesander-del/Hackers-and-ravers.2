@@ -38,6 +38,18 @@ export const profiles = [
     cashbackTier: 'Standaard',
   },
   {
+    id: 'bediende',
+    naam: 'Lisa',
+    type: 'bediende',
+    omschrijving: 'Winkelbediende · voorraad',
+    kleur: '#059669',
+    voorkeuren: null,
+    boodschappenlijst: [],
+    loyaltyPunten: 0,
+    cashbackSaldo: 0,
+    cashbackTier: 'Personeel',
+  },
+  {
     id: 'gast',
     naam: 'Gast',
     type: 'gast',

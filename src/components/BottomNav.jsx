@@ -5,6 +5,7 @@ const tabs = [
   { to: '/', label: 'Home', icon: 'M3 11.5 12 4l9 7.5M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9' },
   { to: '/lijst', label: 'Boodschappen', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
   { to: '/wallet', label: 'Wallet', icon: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm14 4h.01M3 9h18' },
+  { to: '/personeel', label: 'Personeel', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11h-6' },
   { to: '/meer', label: 'Meer', icon: 'M5 12h.01M12 12h.01M19 12h.01' },
 ]
 
@@ -20,7 +21,7 @@ export default function BottomNav() {
             to={t.to}
             end={t.to === '/'}
             className={({ isActive }) =>
-              `relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1 text-[11px] font-medium transition ${
+              `relative flex flex-1 flex-col items-center gap-0.5 rounded-lg py-1 text-[10px] font-medium transition ${
                 isActive ? 'text-violet-600' : 'text-slate-400'
               }`
             }
