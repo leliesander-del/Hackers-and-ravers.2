@@ -1,16 +1,16 @@
-// Winkels rond Brugge. De gesimuleerde gebruiker staat op de Markt (centrum).
+// Winkels rond Gent. De gesimuleerde gebruiker staat op de Korenmarkt (centrum).
 // `afdeling` koppelt aan de voorkeuren van een profiel voor de personalisatie.
 
-export const userLocation = { lat: 51.2093, lng: 3.2247, label: 'Markt, Brugge' }
+export const userLocation = { lat: 51.0538, lng: 3.7220, label: 'Korenmarkt, Gent' }
 
 export const stores = [
   {
     id: 'ah-xl',
-    naam: 'AH XL Brugge',
+    naam: 'AH XL Gent',
     afdeling: 'boodschappen',
     type: 'Supermarkt',
-    lat: 51.201,
-    lng: 3.218,
+    lat: 51.0495,
+    lng: 3.7305,
     cashback: 2,
     kleur: '#0aa0e0',
     emoji: '🛒',
@@ -18,11 +18,11 @@ export const stores = [
   },
   {
     id: 'mediamarkt',
-    naam: 'MediaMarkt',
+    naam: 'MediaMarkt Gent',
     afdeling: 'elektronica',
     type: 'Elektronica',
-    lat: 51.1955,
-    lng: 3.236,
+    lat: 51.0588,
+    lng: 3.7485,
     cashback: 3,
     kleur: '#e3001b',
     emoji: '📺',
@@ -30,11 +30,11 @@ export const stores = [
   },
   {
     id: 'decathlon',
-    naam: 'Decathlon',
+    naam: 'Decathlon Gent',
     afdeling: 'sport',
     type: 'Sport',
-    lat: 51.22,
-    lng: 3.24,
+    lat: 51.0285,
+    lng: 3.7510,
     cashback: 1.5,
     kleur: '#1559b2',
     emoji: '⚽',
@@ -42,11 +42,11 @@ export const stores = [
   },
   {
     id: 'hema',
-    naam: 'HEMA',
+    naam: 'HEMA Veldstraat',
     afdeling: 'speelgoed',
     type: 'Warenhuis',
-    lat: 51.2089,
-    lng: 3.2255,
+    lat: 51.0511,
+    lng: 3.7235,
     cashback: 2.5,
     kleur: '#008bcb',
     emoji: '🧸',
@@ -54,11 +54,11 @@ export const stores = [
   },
   {
     id: 'delhaize',
-    naam: 'Delhaize Sint-Kruis',
+    naam: 'Delhaize Sint-Pieters',
     afdeling: 'boodschappen',
     type: 'Supermarkt',
-    lat: 51.215,
-    lng: 3.26,
+    lat: 51.0365,
+    lng: 3.7105,
     cashback: 2,
     kleur: '#d11f2e',
     emoji: '🛒',

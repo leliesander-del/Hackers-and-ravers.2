@@ -19,13 +19,13 @@ function pin(emoji, kleur) {
   })
 }
 
-export default function MapView({ stores, userLocation, onSelectStore }) {
+export default function MapView({ stores, userLocation, onSelectStore, height = 220 }) {
   return (
     <MapContainer
       center={[userLocation.lat, userLocation.lng]}
       zoom={13}
       scrollWheelZoom={false}
-      style={{ height: 220, width: '100%' }}
+      style={{ height, width: '100%' }}
     >
       <TileLayer
         attribution='&copy; OpenStreetMap'

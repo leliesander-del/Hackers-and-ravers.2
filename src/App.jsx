@@ -3,6 +3,7 @@ import { useStore } from './context/StoreContext.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import HomePage from './pages/HomePage.jsx'
+import MapPage from './pages/MapPage.jsx'
 import ListPage from './pages/ListPage.jsx'
 import WalletPage from './pages/WalletPage.jsx'
 import MorePage from './pages/MorePage.jsx'
@@ -29,6 +30,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
+        <Route path="kaart" element={<MapPage />} />
         <Route path="lijst" element={<ListPage />} />
         <Route path="wallet" element={<WalletPage />} />
         <Route path="meer" element={<MorePage />} />
