@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import PageHeader from '../components/PageHeader.jsx'
-import ProfileSwitcher from '../components/ProfileSwitcher.jsx'
 
 const AFDELINGEN = ['boodschappen', 'elektronica', 'sport', 'speelgoed']
 const DIEETEN = ['glutenvrij', 'lactosevrij', 'vegetarisch', 'veganistisch', 'notenvrij']
@@ -176,15 +175,6 @@ export default function MorePage() {
           </>
         )}
 
-        {/* Wissel profiel — alleen beschikbaar voor de demo-profielen, niet voor
-            een echt ingelogd account. Wie met een eigen account is ingelogd,
-            wisselt via uitloggen en opnieuw inloggen. */}
-        {!isEigenAccount && (
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-slate-500">Wissel profiel</h2>
-            <ProfileSwitcher />
-          </section>
-        )}
 
         <button
           onClick={() => {
