@@ -13,8 +13,8 @@ const tabs = [
 const personeelTab = { to: '/personeel', label: 'Personeel', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11h-6' }
 
 export default function BottomNav() {
-  const { cartCount, activeProfile } = useStore()
-  const zichtbareTabs = activeProfile?.type === 'bediende' ? [...tabs, personeelTab] : tabs
+  const { cartCount, isGekwalificeerdeBediende } = useStore()
+  const zichtbareTabs = isGekwalificeerdeBediende ? [...tabs, personeelTab] : tabs
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200/70 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
