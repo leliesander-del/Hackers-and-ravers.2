@@ -1,11 +1,13 @@
-// Hulpfuncties voor het magazijn/schap-voorraadmodel.
+// Hulpfuncties voor het magazijn/rekken-voorraadmodel.
+
+import { doelRekkenVoorraad } from './staffStock.js'
 
 export function buildInitialInventory(products) {
   const inv = {}
   for (const p of products) {
     inv[p.id] = {
       magazijn: p.magazijnVoorraad ?? 0,
-      schap: p.schapVoorraad ?? 0,
+      rekken: p.rekkenVoorraad ?? 0,
     }
   }
   return inv
@@ -14,19 +16,22 @@ export function buildInitialInventory(products) {
 export function enrichProduct(product, stock) {
   if (!product) return null
   const magazijn = stock?.magazijn ?? product.magazijnVoorraad ?? 0
-  const schap = stock?.schap ?? product.schapVoorraad ?? 0
-  const opSchap = schap > 0
+  const rekken = stock?.rekken ?? product.rekkenVoorraad ?? 0
+  const opRekken = rekken > 0
   const inMagazijn = magazijn > 0
-  let voorraadStatus = 'schap'
-  if (!opSchap && inMagazijn) voorraadStatus = 'magazijn'
-  if (!opSchap && !inMagazijn) voorraadStatus = 'op'
+  let voorraadStatus = 'rekken'
+  if (!opRekken && inMagazijn) voorraadStatus = 'magazijn'
+  if (!opRekken && !inMagazijn) voorraadStatus = 'op'
+
+  const doelRekken = doelRekkenVoorraad(product)
 
   return {
     ...product,
     magazijnVoorraad: magazijn,
-    schapVoorraad: schap,
-    opVoorraad: opSchap,
-    opSchap,
+    rekkenVoorraad: rekken,
+    doelRekkenVoorraad: doelRekken,
+    opVoorraad: opRekken,
+    opRekken,
     inMagazijn,
     voorraadStatus,
   }

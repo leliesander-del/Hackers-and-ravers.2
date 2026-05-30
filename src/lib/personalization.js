@@ -52,7 +52,7 @@ export function rankProducts(products, profile) {
 }
 
 // =========================================================================
-// Alternatieven (bij een leeg schap)
+// Alternatieven (bij lege rekken)
 // =========================================================================
 export function rankAlternatives(product, allProducts, profile) {
   const lid = !!profile?.voorkeuren
@@ -106,7 +106,7 @@ function normalizeTekst(tekst) {
     .replace(/\p{Diacritic}/gu, '')
 }
 
-// Zelfde product (naam + merk) bij andere winkels die wél op schap liggen.
+// Zelfde product (naam + merk) bij andere winkels die wél op rekken liggen.
 export function findZelfdeProductAndereWinkels(product, allProducts) {
   const naam = normalizeTekst(product.naam)
   const merk = normalizeTekst(product.merk)

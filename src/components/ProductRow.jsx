@@ -29,7 +29,7 @@ export default function ProductRow({ product }) {
             )}
           </span>
           <span className="block text-xs text-slate-500">
-            {product.merk} · € {product.prijs.toFixed(2)} · {product.schaplocatie?.label}
+            {product.merk} · € {product.prijs.toFixed(2)} · {product.rekkenlocatie?.label}
           </span>
           {product._waarschuwing && (
             <span className="mt-0.5 block text-[11px] text-amber-600">⚠ {product._waarschuwing}</span>

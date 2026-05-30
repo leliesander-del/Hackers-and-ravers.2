@@ -4,21 +4,28 @@ import { useStore } from '../context/StoreContext.jsx'
 import { stores, afstandTotGebruiker } from '../data/stores.js'
 import StoreLogo from '../components/StoreLogo.jsx'
 import {
-  BEGROETING,
-  THEMAS,
-  VOORBEELDEN,
-  gerechtenVoorThemas,
+  KOK_BEGROETING,
+  KOK_VRAGEN,
+  kokReactie,
+  herkenKeuzes,
+  rangschikRecepten,
   ingredientenVoorGerechten,
   verwerkBericht,
 } from '../lib/assistent.js'
 import { useSpraak } from '../lib/useSpraak.js'
 
-// Het centrale scherm van de app: je boodschappenlijst, met daarnaast een
-// vragenlijst die de lijst voor je samenstelt. De lijst is winkel-onafhankelijk;
-// `winkelsVoorLijst` (uit de context) berekent pas bij het tonen welke winkels
-// de lijst kunnen leveren — de echte koppeling gebeurt bij "Start route".
+// Kleine hulp: "a, b en c".
+function lijstZin(items) {
+  const arr = (items || []).filter(Boolean)
+  if (arr.length === 0) return ''
+  if (arr.length === 1) return arr[0]
+  return `${arr.slice(0, -1).join(', ')} en ${arr[arr.length - 1]}`
+}
+
+// De home: bovenaan een keuze tussen de winkels (op afstand), daarnaast de kok —
+// een gesprek dat je voorkeuren uitvraagt en je lijst samenstelt. De lijst zelf
+// (ingrediënten + producten) leeft op de Mandje-pagina.
 export default function ListPage() {
-  const { addIngredients } = useStore()
   const navigate = useNavigate()
   const [tab, setTab] = useState('winkels')
 
@@ -30,7 +37,7 @@ export default function ListPage() {
       <div className="mb-5 flex gap-1 rounded-full bg-slate-100 p-1">
         {[
           { id: 'winkels', label: 'Winkels' },
-          { id: 'assistent', label: '✨ Sparren' },
+          { id: 'kok', label: '✨ Kok' },
         ].map((t) => (
           <button
             key={t.id}
@@ -45,9 +52,7 @@ export default function ListPage() {
       </div>
 
       {tab === 'winkels' && <WinkelsTab />}
-      {tab === 'assistent' && (
-        <AssistentTab addIngredients={addIngredients} naarLijst={() => navigate('/mandje')} />
-      )}
+      {tab === 'kok' && <KokTab naarLijst={() => navigate('/mandje')} />}
     </div>
   )
 }
@@ -87,178 +92,138 @@ function WinkelsTab() {
   )
 }
 
-// Twee brede stappen: eerst een sfeer/thema kiezen, dan concrete gerechten.
-// Uit de gekozen gerechten halen we de ingrediënten en zetten die op de lijst.
-function VragenlijstTab({ onKlaar }) {
-  const [stap, setStap] = useState(0) // 0 = thema's, 1 = gerechten
-  const [themas, setThemas] = useState([])
-  const [gerechten, setGerechten] = useState([])
+// De kok: één gesprek dat de vroegere vragenlijst én het sparren samenbrengt.
+// De kok vraagt stap voor stap door (tijd → personen → keuken → moment →
+// ingrediënten → vermijden), stelt dan passende echte recepten voor en zet de
+// ingrediënten op je lijst. Je kan altijd zelf vrij typen of inspreken; de kok
+// herkent gerechten/ingrediënten én blijft doorvragen.
+function KokTab({ naarLijst }) {
+  const { activeProfile, addIngredients } = useStore()
 
-  const voorgesteld = useMemo(() => gerechtenVoorThemas(themas), [themas])
-
-  function toggle(lijst, set, item) {
-    set(lijst.includes(item) ? lijst.filter((x) => x !== item) : [...lijst, item])
-  }
-
-  function rondAf() {
-    const gekozenRecepten = voorgesteld.filter((r) => gerechten.includes(r.naam))
-    const { termen } = ingredientenVoorGerechten(gekozenRecepten)
-    onKlaar(termen)
-    setStap(0)
-    setThemas([])
-    setGerechten([])
-  }
-
-  return (
-    <div>
-      {/* Voortgangsbalk (2 stappen) */}
-      <div className="mb-5 flex gap-1.5">
-        {[0, 1].map((i) => (
-          <div
-            key={i}
-            className={`h-1.5 flex-1 rounded-full transition-colors ${i <= stap ? 'bg-violet-600' : 'bg-slate-200'}`}
-          />
-        ))}
-      </div>
-
-      <p className="mb-1 text-xs font-medium text-violet-500">Stap {stap + 1} van 2</p>
-
-      {stap === 0 ? (
-        <>
-          <h2 className="mb-1 text-lg font-bold text-slate-800">Waar heb je deze week zin in?</h2>
-          <p className="mb-4 text-sm text-slate-400">Kies één of meer sferen — we stellen er gerechten bij voor.</p>
-
-          <div className="grid grid-cols-2 gap-2">
-            {THEMAS.map((t) => {
-              const aan = themas.includes(t.id)
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => toggle(themas, setThemas, t.id)}
-                  className={`flex items-center gap-2.5 rounded-2xl p-4 text-left shadow-sm ring-1 transition active:scale-[0.98] ${
-                    aan ? 'bg-violet-600 text-white ring-violet-600' : 'bg-white text-slate-800 ring-slate-100 hover:ring-violet-300'
-                  }`}
-                >
-                  <span className="text-2xl">{t.emoji}</span>
-                  <span className="flex-1 text-sm font-medium">{t.label}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <button
-            onClick={() => setStap(1)}
-            className="mt-5 w-full rounded-full bg-violet-600 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 active:scale-[0.98]"
-          >
-            {themas.length ? 'Toon gerechten →' : 'Toon alle gerechten →'}
-          </button>
-        </>
-      ) : (
-        <>
-          <h2 className="mb-1 text-lg font-bold text-slate-800">Welke gerechten wil je maken?</h2>
-          <p className="mb-4 text-sm text-slate-400">
-            Tik de gerechten aan — we voegen automatisch de juiste ingrediënten toe.
-          </p>
-
-          <div className="space-y-2">
-            {voorgesteld.map((r) => {
-              const aan = gerechten.includes(r.naam)
-              return (
-                <button
-                  key={r.naam}
-                  onClick={() => toggle(gerechten, setGerechten, r.naam)}
-                  className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left shadow-sm ring-1 transition active:scale-[0.98] ${
-                    aan ? 'bg-violet-50 ring-violet-400' : 'bg-white ring-slate-100 hover:ring-violet-300'
-                  }`}
-                >
-                  <span className="text-2xl">{r.emoji}</span>
-                  <span className="flex-1 font-medium capitalize text-slate-800">{r.naam}</span>
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${
-                      aan ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300 text-transparent'
-                    }`}
-                  >
-                    ✓
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          <button
-            onClick={rondAf}
-            disabled={!gerechten.length}
-            className="mt-5 w-full rounded-full bg-violet-600 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-40"
-          >
-            {gerechten.length ? `Voeg ingrediënten toe (${gerechten.length})` : 'Kies eerst een gerecht'}
-          </button>
-
-          <button
-            onClick={() => setStap(0)}
-            className="mt-4 text-sm font-medium text-slate-400 transition hover:text-slate-600"
-          >
-            ← Andere sfeer
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
-
-// Chat + voice-first assistent. Je typt of spreekt wat je wil eten/koken; de
-// assistent zet de bijbehorende ingrediënten automatisch op je lijst.
-function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlijstGestart }) {
-  const [berichten, setBerichten] = useState(() => [{ rol: 'ai', tekst: BEGROETING }])
+  const [berichten, setBerichten] = useState(() => [
+    { rol: 'ai', tekst: KOK_BEGROETING },
+    { rol: 'ai', tekst: KOK_VRAGEN[0].vraag },
+  ])
+  const [antwoorden, setAntwoorden] = useState({})
+  const [vraagIndex, setVraagIndex] = useState(0)
+  const [fase, setFase] = useState('vragen') // 'vragen' | 'gerechten' | 'klaar'
+  const [pendingMulti, setPendingMulti] = useState([])
+  const [voorgesteld, setVoorgesteld] = useState([])
+  const [gekozenGerechten, setGekozenGerechten] = useState([])
+  const [aantalToegevoegd, setAantalToegevoegd] = useState(0)
   const [invoer, setInvoer] = useState('')
   const [voorlezen, setVoorlezen] = useState(false)
-  const [aantalToegevoegd, setAantalToegevoegd] = useState(0)
-  // De vragenlijst leeft nu binnen Sparren: een begeleide manier om de lijst te
-  // vullen, naast vrij typen of inspreken.
-  const [toonVragenlijst, setToonVragenlijst] = useState(() => Boolean(startVragenlijst))
   const scrollRef = useRef(null)
 
-  // Geopend vanuit de lijst-knop? Meld terug zodat het maar één keer auto-opent.
-  useEffect(() => {
-    if (startVragenlijst) onVragenlijstGestart?.()
-  }, [startVragenlijst, onVragenlijstGestart])
+  const huidigeVraag = fase === 'vragen' ? KOK_VRAGEN[vraagIndex] : null
 
-  // Resultaat van de vragenlijst belandt als bevestiging in het gesprek.
-  function vragenlijstKlaar(termen) {
+  // Sla een antwoord op, reageer als een kok en ga door naar de volgende vraag
+  // of (na de laatste vraag) naar de gerechtenvoorstellen. Pusht zelf géén
+  // gebruikersbubbel — de aanroeper doet dat (chip-keuze of vrije tekst).
+  function verwerkAntwoord(vraag, ids) {
+    const labels = ids.map((id) => vraag.opties.find((o) => o.id === id)?.label).filter(Boolean)
+    const nieuw = { ...antwoorden, [vraag.key]: vraag.multi ? ids : ids[0] || '' }
+    setAntwoorden(nieuw)
+    setPendingMulti([])
+
+    const reactie = kokReactie(vraag.key, labels)
+    setBerichten((b) => [...b, { rol: 'ai', tekst: reactie }])
+
+    const volgende = vraagIndex + 1
+    if (volgende < KOK_VRAGEN.length) {
+      setVraagIndex(volgende)
+      setBerichten((b) => [...b, { rol: 'ai', tekst: KOK_VRAGEN[volgende].vraag }])
+      if (voorlezen) spreek(`${reactie} ${KOK_VRAGEN[volgende].vraag}`)
+    } else {
+      toonGerechten(nieuw)
+      if (voorlezen) spreek(reactie)
+    }
+  }
+
+  // Stel concrete recepten voor op basis van de antwoorden + dieet/prijs uit het
+  // profiel, via dezelfde rangschik-functie als de aanmeldvragenlijst.
+  function toonGerechten(antw) {
+    const lijst = rangschikRecepten({
+      ...antw,
+      dieet: activeProfile?.voorkeuren?.dieet || [],
+      prijsklasse: activeProfile?.voorkeuren?.prijsklasse || '',
+    }).slice(0, 6)
+    setVoorgesteld(lijst)
+    setVraagIndex(KOK_VRAGEN.length)
+    setFase('gerechten')
+    const tekst = lijst.length
+      ? 'Op basis van je antwoorden zou ik dit aanraden. Tik aan wat je lekker lijkt, dan zet ik de ingrediënten op je lijst:'
+      : 'Hmm, met deze combinatie vind ik niets passends. Begin gerust opnieuw en versoepel een keuze.'
+    setBerichten((b) => [...b, { rol: 'ai', tekst }])
+  }
+
+  function toggleGerecht(naam) {
+    setGekozenGerechten((prev) => (prev.includes(naam) ? prev.filter((x) => x !== naam) : [...prev, naam]))
+  }
+
+  function bevestigGerechten() {
+    const gekozen = voorgesteld.filter((r) => gekozenGerechten.includes(r.naam))
+    if (!gekozen.length) return
+    const { termen } = ingredientenVoorGerechten(gekozen)
     if (termen.length) {
       addIngredients(termen)
       setAantalToegevoegd((n) => n + termen.length)
     }
-    setBerichten((b) => [
-      ...b,
-      { rol: 'gebruiker', tekst: 'Ik heb de vragenlijst ingevuld.' },
-      {
-        rol: 'ai',
-        tekst: termen.length
-          ? `Top! Ik heb ${termen.length} ${termen.length === 1 ? 'ingrediënt' : 'ingrediënten'} op je lijst gezet. Wil je er nog iets bij?`
-          : 'Er kwamen geen ingrediënten uit die keuzes. Vertel me gerust waar je zin in hebt.',
-      },
-    ])
-    setToonVragenlijst(false)
+    const namen = gekozen.map((r) => r.naam)
+    const tekst = `Top! Voor ${lijstZin(namen)} zette ik ${termen.length} ${
+      termen.length === 1 ? 'ingrediënt' : 'ingrediënten'
+    } op je lijst. Smakelijk! 🍳`
+    setBerichten((b) => [...b, { rol: 'gebruiker', tekst: lijstZin(namen) }, { rol: 'ai', tekst }])
+    setFase('klaar')
+    if (voorlezen) spreek(tekst)
   }
 
-  // Eén plek waar elk bericht (getypt of ingesproken) doorheen gaat.
+  function herbegin() {
+    setAntwoorden({})
+    setPendingMulti([])
+    setVoorgesteld([])
+    setGekozenGerechten([])
+    setVraagIndex(0)
+    setFase('vragen')
+    setBerichten([{ rol: 'ai', tekst: KOK_VRAGEN[0].vraag }])
+  }
+
+  // Eén plek waar elk vrij bericht (getypt of ingesproken) doorheen gaat.
   function stuur(rauweTekst) {
     const tekst = (rauweTekst ?? '').trim()
     if (!tekst) return
     setInvoer('')
+    setBerichten((b) => [...b, { rol: 'gebruiker', tekst }])
 
-    const resultaat = verwerkBericht(tekst)
-    if (resultaat.items.length) {
-      addIngredients(resultaat.items.map((i) => i.key))
-      setAantalToegevoegd((n) => n + resultaat.items.length)
+    if (fase === 'vragen' && huidigeVraag) {
+      // 1. Past het antwoord op de huidige vraag? ("snel", "iets met kip")
+      const herkend = herkenKeuzes(huidigeVraag.opties, tekst)
+      if (herkend.length) {
+        verwerkAntwoord(huidigeVraag, herkend.map((o) => o.id))
+        return
+      }
+      // 2. Noemt de klant spontaan een gerecht/ingrediënt? Voeg toe en vraag verder.
+      const res = verwerkBericht(tekst)
+      if (res.items.length) {
+        addIngredients(res.items.map((i) => i.key))
+        setAantalToegevoegd((n) => n + res.items.length)
+        setBerichten((b) => [...b, { rol: 'ai', tekst: `${res.antwoord} ${huidigeVraag.vraag}` }])
+        if (voorlezen) spreek(res.antwoord)
+        return
+      }
+      // 3. Niets herkend — vriendelijk de vraag herhalen.
+      setBerichten((b) => [...b, { rol: 'ai', tekst: `Dat snap ik even niet. ${huidigeVraag.vraag}` }])
+      return
     }
 
-    setBerichten((b) => [
-      ...b,
-      { rol: 'gebruiker', tekst },
-      { rol: 'ai', tekst: resultaat.antwoord, items: resultaat.items, suggesties: resultaat.suggesties },
-    ])
-    if (voorlezen) spreek(resultaat.antwoord)
+    // Fase 'gerechten'/'klaar': vrij toevoegen via de assistent-herkenning.
+    const res = verwerkBericht(tekst)
+    if (res.items.length) {
+      addIngredients(res.items.map((i) => i.key))
+      setAantalToegevoegd((n) => n + res.items.length)
+    }
+    setBerichten((b) => [...b, { rol: 'ai', tekst: res.antwoord }])
+    if (voorlezen) spreek(res.antwoord)
   }
 
   const { ondersteund, luistert, tussentijds, startLuisteren, stopLuisteren, spreek, stopSpreken } = useSpraak({
@@ -273,23 +238,6 @@ function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlij
   // Zet de stem stil als je het tabblad verlaat.
   useEffect(() => () => stopSpreken(), [stopSpreken])
 
-  const laatsteAi = [...berichten].reverse().find((m) => m.rol === 'ai')
-
-  // Begeleide vragenlijst neemt het scherm over zolang ze open staat.
-  if (toonVragenlijst) {
-    return (
-      <div>
-        <button
-          onClick={() => setToonVragenlijst(false)}
-          className="mb-4 text-sm font-medium text-slate-400 transition hover:text-slate-600"
-        >
-          ← Terug naar sparren
-        </button>
-        <VragenlijstTab onKlaar={vragenlijstKlaar} />
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 13rem)' }}>
       {/* Gesprek */}
@@ -303,53 +251,86 @@ function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlij
             {tussentijds || 'Aan het luisteren…'}
           </div>
         )}
-
-        {/* Begeleide vragenlijst als alternatief voor vrij typen/inspreken */}
-        {berichten.length === 1 && (
-          <button
-            onClick={() => setToonVragenlijst(true)}
-            className="flex w-full items-center gap-3 rounded-2xl bg-violet-50 p-3 text-left ring-1 ring-violet-200 transition hover:bg-violet-100 active:scale-[0.98]"
-          >
-            <span className="text-xl">📝</span>
-            <span className="flex-1 text-sm font-semibold text-violet-700">
-              Liever begeleid? Stel je lijst samen met een paar vragen
-            </span>
-            <span className="text-violet-400">→</span>
-          </button>
-        )}
-
-        {/* Voorbeelden onder de begroeting */}
-        {berichten.length === 1 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {VOORBEELDEN.map((v) => (
-              <button
-                key={v}
-                onClick={() => stuur(v)}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:ring-violet-300 active:scale-95"
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Snelle vervolg-suggesties van de assistent */}
-        {laatsteAi?.suggesties?.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {laatsteAi.suggesties.map((s) => (
-              <button
-                key={s}
-                onClick={() => stuur(s)}
-                className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-200 transition hover:bg-violet-100 active:scale-95"
-              >
-                + {s}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {aantalToegevoegd > 0 && (
+      {/* Interactief paneel: quick-replies bij de huidige vraag, of de
+          gerechtenkeuze, of de afrondingsknoppen. */}
+      {fase === 'vragen' && huidigeVraag && (
+        <QuickReplies
+          vraag={huidigeVraag}
+          pending={pendingMulti}
+          onKies={(id) => {
+            setBerichten((b) => [...b, { rol: 'gebruiker', tekst: huidigeVraag.opties.find((o) => o.id === id)?.label }])
+            verwerkAntwoord(huidigeVraag, [id])
+          }}
+          onToggle={(id) =>
+            setPendingMulti((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+          }
+          onKlaar={() => {
+            const labels = pendingMulti.map((id) => huidigeVraag.opties.find((o) => o.id === id)?.label)
+            setBerichten((b) => [...b, { rol: 'gebruiker', tekst: labels.length ? lijstZin(labels) : 'Geen voorkeur' }])
+            verwerkAntwoord(huidigeVraag, pendingMulti)
+          }}
+        />
+      )}
+
+      {fase === 'gerechten' && (
+        <div className="mb-2 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {voorgesteld.map((r) => {
+              const aan = gekozenGerechten.includes(r.naam)
+              return (
+                <button
+                  key={r.naam}
+                  onClick={() => toggleGerecht(r.naam)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize ring-1 transition active:scale-95 ${
+                    aan
+                      ? 'bg-violet-600 text-white ring-violet-600'
+                      : 'bg-white text-slate-600 ring-slate-200 hover:ring-violet-300'
+                  }`}
+                >
+                  {r.emoji} {r.naam} · {r.tijd}m
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={bevestigGerechten}
+              disabled={!gekozenGerechten.length}
+              className="flex-1 rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-40"
+            >
+              {gekozenGerechten.length ? `Zet op mijn lijst (${gekozenGerechten.length})` : 'Kies een gerecht'}
+            </button>
+            <button
+              onClick={herbegin}
+              className="rounded-full bg-slate-100 px-4 text-sm font-medium text-slate-500 transition hover:bg-slate-200 active:scale-95"
+            >
+              Opnieuw
+            </button>
+          </div>
+        </div>
+      )}
+
+      {fase === 'klaar' && (
+        <div className="mb-2 flex gap-2">
+          <button
+            onClick={naarLijst}
+            className="flex-1 rounded-full bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-[0.98]"
+          >
+            ✓ {aantalToegevoegd} toegevoegd · bekijk je lijst →
+          </button>
+          <button
+            onClick={herbegin}
+            className="rounded-full bg-slate-100 px-4 text-sm font-medium text-slate-500 transition hover:bg-slate-200 active:scale-95"
+          >
+            Nog een gerecht
+          </button>
+        </div>
+      )}
+
+      {/* "Bekijk lijst"-snelkoppeling zodra er iets is toegevoegd tijdens het gesprek */}
+      {fase !== 'klaar' && aantalToegevoegd > 0 && (
         <button
           onClick={naarLijst}
           className="mb-2 w-full rounded-full bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-[0.98]"
@@ -370,7 +351,7 @@ function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlij
           <input
             value={invoer}
             onChange={(e) => setInvoer(e.target.value)}
-            placeholder="Typ wat je wil eten of nodig hebt…"
+            placeholder="Typ je antwoord of wat je wil eten…"
             className="flex-1 bg-transparent px-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
           />
           <button
@@ -417,6 +398,41 @@ function AssistentTab({ addIngredients, naarLijst, startVragenlijst, onVragenlij
   )
 }
 
+// Quick-reply-chips voor de huidige kok-vraag. Bij één keuze antwoordt een tik
+// meteen; bij meerdere keuzes verzamel je eerst en bevestig je met "Klaar".
+function QuickReplies({ vraag, pending, onKies, onToggle, onKlaar }) {
+  return (
+    <div className="mb-2 space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {vraag.opties.map((o) => {
+          const aan = vraag.multi && pending.includes(o.id)
+          return (
+            <button
+              key={o.id}
+              onClick={() => (vraag.multi ? onToggle(o.id) : onKies(o.id))}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition active:scale-95 ${
+                aan
+                  ? 'bg-violet-600 text-white ring-violet-600'
+                  : 'bg-white text-slate-600 ring-slate-200 hover:ring-violet-300'
+              }`}
+            >
+              {o.emoji} {o.label}
+            </button>
+          )
+        })}
+      </div>
+      {vraag.multi && (
+        <button
+          onClick={onKlaar}
+          className="w-full rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
+        >
+          {pending.length ? `Klaar (${pending.length})` : vraag.overslaan ? 'Sla over' : 'Geen voorkeur'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Bericht({ bericht }) {
   if (bericht.rol === 'gebruiker') {
     return (
@@ -431,16 +447,6 @@ function Bericht({ bericht }) {
         <span className="mr-1.5">✨</span>
         {bericht.tekst}
       </div>
-      {bericht.items?.length > 0 && (
-        <ul className="ml-1 space-y-1">
-          {bericht.items.map((it) => (
-            <li key={it.key} className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="text-emerald-500">＋</span>
-              {it.label}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

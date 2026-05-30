@@ -1,102 +1,200 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
+import { getPersoneelWinkelId } from '../lib/staffAccess.js'
+import { useStaffAantal } from '../lib/staffAantal.js'
+import { groepeerVoorraadPerRekken } from '../lib/staffStock.js'
 import PageHeader from '../components/PageHeader.jsx'
+import StockBadge from '../components/staff/StockBadge.jsx'
+import CollapsibleSection from '../components/staff/CollapsibleSection.jsx'
+import StaffProductActiePaneel from '../components/staff/StaffProductActiePaneel.jsx'
 
-// Een product telt als "bijna op" zolang de totale voorraad hier of lager zit.
-const BIJNA_OP_DREMPEL = 5
-
-function StockBadge({ magazijn, schap }) {
+function ProductRij({ product, actief, onClick }) {
+  const doel = product.doelRekkenVoorraad
   return (
-    <div className="flex shrink-0 gap-1.5 text-[11px]">
-      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">Mag. {magazijn}</span>
-      <span className={`rounded-full px-2 py-0.5 ${schap > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
-        Schap {schap}
-      </span>
-    </div>
-  )
-}
-
-function ProductRij({ product }) {
-  const store = getStore(product.storeId)
-  return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+    <button
+      type="button"
+      onClick={() => onClick(product.id)}
+      className={`flex w-full items-center gap-3 rounded-xl p-3 text-left ring-1 transition ${
+        actief ? 'bg-emerald-100 ring-emerald-400' : 'bg-slate-50 ring-slate-100 hover:bg-emerald-50'
+      }`}
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-slate-800">{product.naam}</p>
         <p className="truncate text-xs text-slate-500">
-          {product.merk} · {store?.naam} · {product.schaplocatie?.label}
+          {product.merk} · {product.rekkenlocatie?.label} · doel {doel} op rekken
         </p>
       </div>
-      <StockBadge magazijn={product.magazijnVoorraad} schap={product.schapVoorraad} />
-    </div>
+      <StockBadge magazijn={product.magazijnVoorraad} rekken={product.rekkenVoorraad} compact />
+    </button>
   )
 }
 
 export default function DashboardPage() {
-  const { allProductsLive } = useStore()
+  const { activeProfile, productsByStoreLive, getProductLive, verplaatsNaarRekken } = useStore()
 
-  const { uit, bijna } = useMemo(() => {
-    const uit = []
-    const bijna = []
-    for (const p of allProductsLive) {
-      const totaal = p.magazijnVoorraad + p.schapVoorraad
-      if (totaal === 0) uit.push(p)
-      else if (totaal <= BIJNA_OP_DREMPEL) bijna.push(p)
+  const winkelId = getPersoneelWinkelId(activeProfile)
+  const winkel = winkelId ? getStore(winkelId) : null
+
+  const [geselecteerdId, setGeselecteerdId] = useState(null)
+  const [melding, setMelding] = useState(null)
+
+  const winkelProducten = useMemo(
+    () => (winkelId ? productsByStoreLive(winkelId) : []),
+    [productsByStoreLive, winkelId],
+  )
+
+  const { uit, legeRekken, rekkenBijnaOp, veel } = useMemo(
+    () => groepeerVoorraadPerRekken(winkelProducten),
+    [winkelProducten],
+  )
+
+  const geselecteerd = geselecteerdId ? getProductLive(geselecteerdId) : null
+  const maxMagazijn = geselecteerd?.magazijnVoorraad ?? 0
+  const { parseAantal, resetAantal, aantalInputProps } = useStaffAantal(maxMagazijn)
+
+  function toonMelding(tekst, type = 'info') {
+    setMelding({ tekst, type })
+    setTimeout(() => setMelding(null), 3500)
+  }
+
+  function kiesProduct(id) {
+    setGeselecteerdId((huidig) => (huidig === id ? null : id))
+    resetAantal()
+  }
+
+  function verplaatsNaarRekkenActie() {
+    if (!geselecteerdId) return
+    const result = verplaatsNaarRekken(geselecteerdId, parseAantal())
+    if (result.ok) {
+      toonMelding('Naar rekken verplaatst!', 'ok')
+      resetAantal()
+      setGeselecteerdId(null)
+    } else {
+      toonMelding(result.fout, 'fout')
     }
-    const totaalVan = (p) => p.magazijnVoorraad + p.schapVoorraad
-    uit.sort((a, b) => a.naam.localeCompare(b.naam))
-    bijna.sort((a, b) => totaalVan(a) - totaalVan(b))
-    return { uit, bijna }
-  }, [allProductsLive])
+  }
+
+  function actiePaneelVoorProduct(product) {
+    const aantal = parseAantal()
+    const max = product.magazijnVoorraad ?? 0
+    return (
+      <StaffProductActiePaneel
+        product={product}
+        variant="emerald"
+        modus="bijvullen"
+        inputId={`rek-aantal-${product.id}`}
+        {...aantalInputProps(verplaatsNaarRekkenActie)}
+        maxAantal={max}
+        toonDoelRekken
+        actieLabel={`${aantal} stuks magazijn → rekken`}
+        onActie={verplaatsNaarRekkenActie}
+        actieDisabled={max === 0}
+        onSluiten={() => setGeselecteerdId(null)}
+      />
+    )
+  }
+
+  function renderProductMetActies(product) {
+    const actief = geselecteerdId === product.id
+    return (
+      <div key={product.id}>
+        <ProductRij product={product} actief={actief} onClick={kiesProduct} />
+        {actief && geselecteerd && actiePaneelVoorProduct(geselecteerd)}
+      </div>
+    )
+  }
+
+  if (!winkelId || !winkel) {
+    return (
+      <div className="px-4 py-8 text-center text-sm text-slate-500">
+        Geen winkel toegewezen aan dit personeelsaccount.
+      </div>
+    )
+  }
 
   return (
     <div>
-      <PageHeader title="Dashboard" subtitle="Voorraadbewaking voor personeel" />
+      <PageHeader title="Rekkenvuller" subtitle={winkel.naam} />
 
-      <div className="space-y-5 px-4 py-4">
-        {/* Samenvatting */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100">
-            <p className="text-3xl font-bold text-rose-600">{uit.length}</p>
-            <p className="text-xs font-medium text-rose-700">Uit voorraad</p>
+      <div className="space-y-4 px-4 py-4">
+        {melding && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm font-medium ${
+              melding.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'
+            }`}
+          >
+            {melding.tekst}
           </div>
-          <div className="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100">
-            <p className="text-3xl font-bold text-amber-600">{bijna.length}</p>
-            <p className="text-xs font-medium text-amber-700">Bijna op (≤ {BIJNA_OP_DREMPEL})</p>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-rose-50 p-3 ring-1 ring-rose-100">
+            <p className="text-2xl font-bold text-rose-600">{uit.length}</p>
+            <p className="text-[10px] font-medium text-rose-700">Uit voorraad</p>
+          </div>
+          <div className="rounded-2xl bg-orange-50 p-3 ring-1 ring-orange-100">
+            <p className="text-2xl font-bold text-orange-600">{legeRekken.length}</p>
+            <p className="text-[10px] font-medium text-orange-800">Rekken leeg</p>
+          </div>
+          <div className="rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-100">
+            <p className="text-2xl font-bold text-amber-600">{rekkenBijnaOp.length}</p>
+            <p className="text-[10px] font-medium text-amber-700">Rekken bijna op</p>
+          </div>
+          <div className="rounded-2xl bg-emerald-50 p-3 ring-1 ring-emerald-100">
+            <p className="text-2xl font-bold text-emerald-600">{veel.length}</p>
+            <p className="text-[10px] font-medium text-emerald-700">Veel op rekken</p>
           </div>
         </div>
 
-        {/* Uit voorraad */}
-        <section>
-          <h2 className="mb-2 text-sm font-semibold text-slate-500">Uit voorraad</h2>
-          {uit.length ? (
-            <div className="space-y-2">
-              {uit.map((p) => (
-                <ProductRij key={p.id} product={p} />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
-              Alles is nog op voorraad.
-            </p>
-          )}
-        </section>
+        <p className="text-xs text-slate-500">
+          Tik op een product om vanuit het magazijn bij te vullen op de rekken. De actie verschijnt direct onder het
+          gekozen product.
+        </p>
 
-        {/* Bijna op */}
-        <section>
-          <h2 className="mb-2 text-sm font-semibold text-slate-500">Bijna op</h2>
-          {bijna.length ? (
-            <div className="space-y-2">
-              {bijna.map((p) => (
-                <ProductRij key={p.id} product={p} />
-              ))}
-            </div>
+        <CollapsibleSection titel="Uit voorraad" aantal={uit.length} kleur="rose" standaardOpen={uit.length > 0}>
+          <p className="px-1 text-[11px] font-medium text-slate-500">Rekken en magazijn leeg</p>
+          {uit.length ? (
+            uit.map(renderProductMetActies)
           ) : (
-            <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
-              Geen producten die bijna op zijn.
-            </p>
+            <p className="py-2 text-center text-xs text-slate-400">Geen producten die overal uit voorraad zijn.</p>
           )}
-        </section>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          titel="Rekken leeg"
+          aantal={legeRekken.length}
+          kleur="orange"
+          standaardOpen={legeRekken.length > 0}
+        >
+          <p className="px-1 text-[11px] font-medium text-slate-500">Magazijn heeft nog voorraad</p>
+          {legeRekken.length ? (
+            legeRekken.map(renderProductMetActies)
+          ) : (
+            <p className="py-2 text-center text-xs text-slate-400">Geen lege rekken met magazijnvoorraad.</p>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          titel="Rekken bijna op"
+          aantal={rekkenBijnaOp.length}
+          kleur="amber"
+          standaardOpen={rekkenBijnaOp.length > 0}
+        >
+          {rekkenBijnaOp.length ? (
+            rekkenBijnaOp.map(renderProductMetActies)
+          ) : (
+            <p className="py-2 text-center text-xs text-slate-400">Alles op rekken boven de helft van het doel.</p>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection titel="Veel op rekken" aantal={veel.length} kleur="emerald">
+          {veel.length ? (
+            veel.map(renderProductMetActies)
+          ) : (
+            <p className="py-2 text-center text-xs text-slate-400">Geen producten met veel rekkenvoorraad.</p>
+          )}
+        </CollapsibleSection>
       </div>
     </div>
   )

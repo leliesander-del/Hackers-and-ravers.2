@@ -28,6 +28,8 @@ const AFGEVINKT_KEY = 'storenav.afgevinkt'
 const MANAGER_KEY = 'storenav.managerId'
 const EDITS_KEY = 'storenav.profielEdits'
 const INVENTORY_KEY = 'storenav.inventory'
+const INVENTORY_SEED_KEY = 'storenav.inventorySeed'
+const INVENTORY_SEED_VERSION = '3'
 const STAFF_LOG_KEY = 'storenav.staffLog'
 
 export function getAccounts() {
@@ -54,12 +56,16 @@ function mergeProfile(base, edit) {
 
 function loadInventory() {
   try {
+    const seed = localStorage.getItem(INVENTORY_SEED_KEY)
     const saved = JSON.parse(localStorage.getItem(INVENTORY_KEY))
-    if (saved && typeof saved === 'object') return saved
+    if (seed === INVENTORY_SEED_VERSION && saved && typeof saved === 'object') return saved
   } catch {
     /* negeer corrupte data */
   }
-  return buildInitialInventory(products)
+  const inv = buildInitialInventory(products)
+  localStorage.setItem(INVENTORY_SEED_KEY, INVENTORY_SEED_VERSION)
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inv))
+  return inv
 }
 
 function loadStaffLog() {
@@ -143,7 +149,7 @@ export function StoreProvider({ children }) {
   const activeManager = useMemo(() => getManager(managerId), [managerId])
   const gekwalificeerdPersoneel = useMemo(() => isGekwalificeerdeBediende(activeProfile), [activeProfile])
 
-  const getStock = useCallback((productId) => inventory[productId] ?? { magazijn: 0, schap: 0 }, [inventory])
+  const getStock = useCallback((productId) => inventory[productId] ?? { magazijn: 0, rekken: 0 }, [inventory])
 
   const getProductLive = useCallback((id) => enrichProduct(getProduct(id), getStock(id)), [getStock])
 
@@ -203,7 +209,7 @@ export function StoreProvider({ children }) {
     )
   }, [])
 
-  const verplaatsNaarSchap = useCallback(
+  const verplaatsNaarRekken = useCallback(
     (productId, aantal = 1) => {
       const stock = getStock(productId)
       const product = getProduct(productId)
@@ -214,42 +220,42 @@ export function StoreProvider({ children }) {
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: { magazijn: stock.magazijn - aantal, schap: stock.schap + aantal },
+        [productId]: { magazijn: stock.magazijn - aantal, rekken: stock.rekken + aantal },
       }))
-      logStaffActie(`${aantal}× ${product.naam} → schap (magazijn −${aantal})`)
+      logStaffActie(`${aantal}× ${product.naam} → rekken (magazijn −${aantal})`)
       return { ok: true }
     },
     [getStock, logStaffActie],
   )
 
-  const verkoopVanSchap = useCallback(
+  const verkoopVanRekken = useCallback(
     (productId, aantal = 1) => {
       const stock = getStock(productId)
       const product = getProduct(productId)
       if (!product || aantal < 1) return { ok: false, fout: 'Ongeldig product of aantal.' }
-      if (stock.schap < aantal) {
-        return { ok: false, fout: `Niet genoeg op schap (nog ${stock.schap}).` }
+      if (stock.rekken < aantal) {
+        return { ok: false, fout: `Niet genoeg op rekken (nog ${stock.rekken}).` }
       }
 
       setInventory((inv) => ({
         ...inv,
-        [productId]: { magazijn: stock.magazijn, schap: stock.schap - aantal },
+        [productId]: { magazijn: stock.magazijn, rekken: stock.rekken - aantal },
       }))
-      logStaffActie(`${aantal}× ${product.naam} verkocht (schap −${aantal})`)
+      logStaffActie(`${aantal}× ${product.naam} verkocht (rekken −${aantal})`)
       return { ok: true }
     },
     [getStock, logStaffActie],
   )
 
   // Afrekenen gebeurt in één gekozen winkel: los de lijst op tegen die winkel
-  // en boek de gevonden producten af van het schap.
+  // en boek de gevonden producten af van de rekken.
   const betaalMandje = useCallback(
     (storeId) => {
       const resolved = resolveCartVoorWinkel(storeId)
       const teVerkopen = [...new Set(resolved.filter((r) => r.product).map((r) => r.product.id))]
       const fouten = []
       for (const id of teVerkopen) {
-        const result = verkoopVanSchap(id, 1)
+        const result = verkoopVanRekken(id, 1)
         if (!result.ok) {
           const p = getProduct(id)
           fouten.push(p ? `${p.naam}: ${result.fout}` : result.fout)
@@ -262,7 +268,7 @@ export function StoreProvider({ children }) {
       }
       return { ok: false, fout: fouten.join(' · ') }
     },
-    [resolveCartVoorWinkel, verkoopVanSchap],
+    [resolveCartVoorWinkel, verkoopVanRekken],
   )
 
   const value = useMemo(
@@ -359,8 +365,8 @@ export function StoreProvider({ children }) {
       getProductLive,
       productsByStoreLive,
       allProductsLive,
-      verplaatsNaarSchap,
-      verkoopVanSchap,
+      verplaatsNaarRekken,
+      verkoopVanRekken,
       staffLog,
     }),
     [
@@ -378,8 +384,8 @@ export function StoreProvider({ children }) {
       getProductLive,
       productsByStoreLive,
       allProductsLive,
-      verplaatsNaarSchap,
-      verkoopVanSchap,
+      verplaatsNaarRekken,
+      verkoopVanRekken,
       betaalMandje,
       staffLog,
     ],

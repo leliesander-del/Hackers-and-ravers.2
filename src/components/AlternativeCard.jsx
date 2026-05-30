@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 
-// Eén alternatief bij een leeg schap, met uitleg waarom het wordt aanbevolen.
+// Eén alternatief bij lege rekken, met uitleg waarom het wordt aanbevolen.
 export default function AlternativeCard({ product, andereWinkel = false }) {
   const { inCart, addToCart, removeFromCart } = useStore()
   const zit = inCart(product.id)
@@ -17,7 +17,7 @@ export default function AlternativeCard({ product, andereWinkel = false }) {
         <p className="font-medium text-slate-800">{product.naam}</p>
         <p className="text-xs text-slate-500">
           {product.merk} · € {product.prijs.toFixed(2)}
-          {andereWinkel && store ? ` · ${store.naam}` : ` · ${product.schaplocatie?.label}`}
+          {andereWinkel && store ? ` · ${store.naam}` : ` · ${product.rekkenlocatie?.label}`}
         </p>
         <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
           {andereWinkel && store ? `Beschikbaar bij ${store.naam}` : product._reden}

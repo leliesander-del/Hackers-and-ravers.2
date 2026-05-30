@@ -9,11 +9,11 @@ import Floorplan from '../components/Floorplan.jsx'
 import { useFloorplan } from '../lib/useFloorplan.js'
 
 function VoorraadBadge({ status }) {
-  if (status === 'schap') {
+  if (status === 'rekken') {
     return <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">Op voorraad</span>
   }
   if (status === 'magazijn') {
-    return <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">Niet op schap</span>
+    return <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">Niet op rekken</span>
   }
   return <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-600">Niet op voorraad</span>
 }
@@ -41,7 +41,7 @@ export default function ProductPage() {
   if (!store || !product) return <Navigate to={`/store/${id}`} replace />
 
   const zit = inCart(product.id)
-  const opSchap = product.voorraadStatus === 'schap'
+  const opRekken = product.voorraadStatus === 'rekken'
   const inMagazijn = product.voorraadStatus === 'magazijn'
   return (
     <div>
@@ -52,14 +52,14 @@ export default function ProductPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-2xl font-bold text-slate-800">€ {product.prijs.toFixed(2)}</p>
-              <p className="text-sm text-slate-500">{product.schaplocatie?.label}</p>
+              <p className="text-sm text-slate-500">{product.rekkenlocatie?.label}</p>
             </div>
             <VoorraadBadge status={product.voorraadStatus} />
           </div>
 
           {inMagazijn && (
             <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Dit product ligt niet op het schap, maar er is nog voorraad in het magazijn. Vraag een medewerker om het
+              Dit product ligt niet op de rekken, maar er is nog voorraad in het magazijn. Vraag een medewerker om het
               voor je bij te halen.
             </div>
           )}
@@ -74,7 +74,7 @@ export default function ProductPage() {
             </div>
           )}
 
-          {opSchap && (
+          {opRekken && (
             <button
               onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
               className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition active:scale-[0.98] ${
@@ -86,19 +86,19 @@ export default function ProductPage() {
           )}
         </div>
 
-        {opSchap && hasPlan && (
+        {opRekken && hasPlan && (
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar het schap</h2>
+            <h2 className="mb-2 text-sm font-semibold text-slate-500">Route naar de rekken</h2>
             <Floorplan
               storeId={store.id}
               products={productsByStoreLive(id)}
               highlightId={product.id}
-              highlight={product.schaplocatie}
+              highlight={product.rekkenlocatie}
             />
           </div>
         )}
 
-        {opSchap && store.heeftPlattegrond && !hasPlan && (
+        {opRekken && store.heeftPlattegrond && !hasPlan && (
           <Link to="/mandje" className="block rounded-xl bg-violet-50 px-4 py-3 text-sm text-violet-700">
             🗺️ Voeg toe aan je mandje en bekijk daar de route langs al je producten →
           </Link>
@@ -107,7 +107,7 @@ export default function ProductPage() {
         {volledigOp && (
           <div className="space-y-4">
             <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
-              Dit product is op in deze winkel — zowel op schap als in het magazijn.
+              Dit product is op in deze winkel — zowel op rekken als in het magazijn.
             </div>
 
             {alternatieven.length > 0 && (
