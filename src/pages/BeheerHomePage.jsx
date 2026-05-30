@@ -1,94 +1,61 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import StoreLogo from '../components/StoreLogo.jsx'
+import BeheerHeader from '../components/BeheerHeader.jsx'
+
+const TEGELS = [
+  {
+    to: '/beheer/plattegrond',
+    emoji: '🗺️',
+    titel: 'Plattegrond bewerken',
+    tekst: 'Maak of pas de plattegrond van je winkel aan.',
+  },
+  {
+    to: '/beheer/catalogus',
+    emoji: '📦',
+    titel: 'Catalogus',
+    tekst: 'Bekijk producten met live voorraad van je winkel.',
+  },
+  {
+    to: '/beheer/connecties',
+    emoji: '🔌',
+    titel: 'Connecties',
+    tekst: "Koppel andere systemen via custom API's.",
+  },
+]
 
 export default function BeheerHomePage() {
-  const { activeManager, isManagerIngelogd, managerLogout } = useStore()
-  const navigate = useNavigate()
+  const { activeManager, isManagerIngelogd } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
   if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
 
-  function uitloggen() {
-    managerLogout()
-    navigate('/beheer/login')
-  }
-
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-violet-600 to-violet-500 px-6 py-12">
-      <div className="mx-auto w-full max-w-md">
-        <header className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <StoreLogo store={store} sizeClass="h-11 w-11" emojiClass="text-xl" />
-            <div>
-              <h1 className="text-xl font-bold text-white">Winkelbeheer</h1>
-              <p className="text-sm text-violet-100">{store.naam}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={uitloggen}
-            className="rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/25"
-          >
-            Uitloggen
-          </button>
-        </header>
+    <div className="min-h-screen bg-[#f6f4fc]">
+      <BeheerHeader store={store} titel="Winkelbeheer" subtitel={store.naam} />
 
-        <div className="rounded-3xl bg-white p-6 shadow-2xl">
-          <h2 className="mb-4 text-lg font-bold text-slate-800">Wat wil je doen?</h2>
+      <main className="mx-auto max-w-md px-6 py-8">
+        <h2 className="mb-4 text-lg font-bold text-slate-800">Wat wil je doen?</h2>
 
-          <div className="space-y-3">
+        <div className="space-y-3">
+          {TEGELS.map((t) => (
             <Link
-              to="/beheer/plattegrond"
-              className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-violet-50 p-4 transition hover:border-violet-300 hover:bg-violet-100"
+              key={t.to}
+              to={t.to}
+              className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-2xl">
-                🗺️
+                {t.emoji}
               </span>
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800">Plattegrond bewerken</p>
-                <p className="text-sm text-slate-500">
-                  Maak of pas de plattegrond van je winkel aan.
-                </p>
+                <p className="font-semibold text-slate-800">{t.titel}</p>
+                <p className="text-sm text-slate-500">{t.tekst}</p>
               </div>
               <span className="ml-auto text-violet-400">→</span>
             </Link>
-
-            <Link
-              to="/beheer/catalogus"
-              className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-violet-50 p-4 transition hover:border-violet-300 hover:bg-violet-100"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-2xl">
-                📦
-              </span>
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-800">Catalogus</p>
-                <p className="text-sm text-slate-500">
-                  Bekijk producten met live voorraad van je winkel.
-                </p>
-              </div>
-              <span className="ml-auto text-violet-400">→</span>
-            </Link>
-
-            <Link
-              to="/beheer/connecties"
-              className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-violet-50 p-4 transition hover:border-violet-300 hover:bg-violet-100"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-2xl">
-                🔌
-              </span>
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-800">Connecties</p>
-                <p className="text-sm text-slate-500">
-                  Koppel andere systemen via custom API's.
-                </p>
-              </div>
-              <span className="ml-auto text-violet-400">→</span>
-            </Link>
-          </div>
+          ))}
         </div>
-      </div>
+      </main>
     </div>
   )
 }

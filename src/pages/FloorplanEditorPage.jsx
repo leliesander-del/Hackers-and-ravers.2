@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { getFloorplanType } from '../data/floorplanTypes.js'
@@ -9,13 +9,11 @@ import ElementPalette from '../components/floorplan/ElementPalette.jsx'
 import EditorCanvas from '../components/floorplan/EditorCanvas.jsx'
 import EditorPropertiesPanel from '../components/floorplan/EditorPropertiesPanel.jsx'
 import FloorplanRenderer from '../components/floorplan/FloorplanRenderer.jsx'
-import BeheerNav from '../components/BeheerNav.jsx'
-import StoreLogo from '../components/StoreLogo.jsx'
+import BeheerHeader from '../components/BeheerHeader.jsx'
 import { productsByStore, categoriesForStore } from '../data/products.js'
 
 export default function FloorplanEditorPage() {
   const { activeManager, isManagerIngelogd, managerLogout } = useStore()
-  const navigate = useNavigate()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
   const [elements, setElements] = useState([])
@@ -104,64 +102,48 @@ export default function FloorplanEditorPage() {
     )
   }
 
-  function uitloggen() {
-    saveFloorplan(store.id, elements)
-    managerLogout()
-    navigate('/beheer/login')
-  }
-
   return (
     <div className="beheer-layout flex flex-col bg-[#f6f4fc]">
-      <header className="relative z-20 shrink-0 border-b border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold text-slate-800">Plattegrond bewerken</h1>
-              <p className="truncate text-sm text-slate-500">
-                {store.naam}
-                {opgeslagen && <span className="ml-2 text-emerald-600">· opgeslagen</span>}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <BeheerNav />
-            {selected && getFloorplanType(selected.type)?.rotatable && (
-              <button
-                type="button"
-                onClick={() => roteerElement(selected.id)}
-                className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
-              >
-                ↻ Draaien (90°)
-              </button>
-            )}
-            {selected && (
-              <button
-                type="button"
-                onClick={verwijder}
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
-              >
-                Verwijderen
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setToonVoorbeeld(true)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Voorbeeld
-            </button>
-            <button
-              type="button"
-              onClick={uitloggen}
-              className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
-            >
-              Uitloggen
-            </button>
-          </div>
-        </div>
-      </header>
+      <BeheerHeader
+        store={store}
+        titel="Plattegrond bewerken"
+        subtitel={
+          <>
+            {store.naam}
+            {opgeslagen && <span className="ml-2 text-emerald-600">· opgeslagen</span>}
+          </>
+        }
+        onUitloggen={() => {
+          saveFloorplan(store.id, elements)
+          managerLogout()
+        }}
+      >
+        {selected && getFloorplanType(selected.type)?.rotatable && (
+          <button
+            type="button"
+            onClick={() => roteerElement(selected.id)}
+            className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
+          >
+            ↻ Draaien (90°)
+          </button>
+        )}
+        {selected && (
+          <button
+            type="button"
+            onClick={verwijder}
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+          >
+            Verwijderen
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setToonVoorbeeld(true)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Voorbeeld
+        </button>
+      </BeheerHeader>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <ElementPalette />

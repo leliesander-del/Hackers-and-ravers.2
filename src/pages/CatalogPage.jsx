@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
 import { fuzzyZoekProducten } from '../lib/fuzzySearch.js'
-import BeheerNav from '../components/BeheerNav.jsx'
-import StoreLogo from '../components/StoreLogo.jsx'
+import BeheerHeader from '../components/BeheerHeader.jsx'
 
 // Een product telt als "bijna op" zodra de totale voorraad hier of lager zit.
 const BIJNA_OP_DREMPEL = 5
@@ -21,8 +20,7 @@ function statusVan(p) {
 // Dit is de bron van waarheid over wat de winkel voert; klanten matchen hun
 // lijst hiertegen wanneer ze deze winkel kiezen.
 export default function CatalogPage() {
-  const { activeManager, isManagerIngelogd, managerLogout, productsByStoreLive } = useStore()
-  const navigate = useNavigate()
+  const { activeManager, isManagerIngelogd, productsByStoreLive } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
   const [zoek, setZoek] = useState('')
@@ -59,35 +57,9 @@ export default function CatalogPage() {
 
   if (!isManagerIngelogd || !store) return <Navigate to="/beheer/login" replace />
 
-  function uitloggen() {
-    managerLogout()
-    navigate('/beheer/login')
-  }
-
   return (
     <div className="beheer-layout flex flex-col bg-[#f6f4fc]">
-      <header className="relative z-20 shrink-0 border-b border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold text-slate-800">Catalogus</h1>
-              <p className="truncate text-sm text-slate-500">{store.naam} · live voorraad</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <BeheerNav />
-            <button
-              type="button"
-              onClick={uitloggen}
-              className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
-            >
-              Uitloggen
-            </button>
-          </div>
-        </div>
-      </header>
+      <BeheerHeader store={store} titel="Catalogus" subtitel={`${store.naam} · live voorraad`} />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto max-w-5xl space-y-5">

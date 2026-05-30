@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { getStore } from '../data/stores.js'
-import StoreLogo from '../components/StoreLogo.jsx'
+import BeheerHeader from '../components/BeheerHeader.jsx'
 import {
   loadConnections,
   saveConnection,
@@ -24,8 +24,7 @@ const LEEG_FORMULIER = {
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 export default function ConnectionsPage() {
-  const { activeManager, isManagerIngelogd, managerLogout, syncVoorraadVanConnectie } = useStore()
-  const navigate = useNavigate()
+  const { activeManager, isManagerIngelogd, syncVoorraadVanConnectie } = useStore()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
   const [connecties, setConnecties] = useState([])
@@ -115,30 +114,7 @@ export default function ConnectionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f6f4fc]">
-      <header className="border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link to="/beheer" className="text-slate-400 hover:text-slate-700">
-              ←
-            </Link>
-            <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
-            <div>
-              <h1 className="text-lg font-bold text-slate-800">Connecties</h1>
-              <p className="text-sm text-slate-500">{store.naam}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              managerLogout()
-              navigate('/beheer/login')
-            }}
-            className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
-          >
-            Uitloggen
-          </button>
-        </div>
-      </header>
+      <BeheerHeader store={store} titel="Connecties" subtitel={store.naam} />
 
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between gap-4">
