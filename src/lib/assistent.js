@@ -86,20 +86,56 @@ export const THEMAS = [
   { id: 'ontbijt', label: 'Ontbijt & brunch', emoji: '☀️' },
 ]
 
+// Maaltijdmomenten en basisingrediënt-categorieën waarmee de vragenlijst
+// gerechten kan rangschikken. De labels worden in de signupflow getoond.
+export const MAALTIJDEN = [
+  { id: 'ontbijt', label: 'Ontbijt', emoji: '🥐' },
+  { id: 'lunch', label: 'Lunch', emoji: '🥪' },
+  { id: 'avondmaal', label: 'Avondmaal', emoji: '🍽️' },
+  { id: 'salade', label: 'Salade', emoji: '🥗' },
+  { id: 'dessert', label: 'Dessert', emoji: '🍰' },
+]
+
+export const BASIS_INGREDIENTEN = [
+  { id: 'pasta', label: 'Pasta', emoji: '🍝' },
+  { id: 'rundvlees', label: 'Rundvlees', emoji: '🥩' },
+  { id: 'kip', label: 'Kip', emoji: '🍗' },
+  { id: 'vis', label: 'Vis', emoji: '🐟' },
+  { id: 'groenten', label: 'Groenten', emoji: '🥦' },
+  { id: 'kaas', label: 'Kaas & zuivel', emoji: '🧀' },
+  { id: 'brood', label: 'Brood', emoji: '🍞' },
+  { id: 'fruit', label: 'Fruit', emoji: '🍎' },
+]
+
+// Kooktijd-keuzes; `max` = bovengrens in minuten waarop recepten worden gefilterd.
+export const KOOKTIJD_OPTIES = [
+  { id: 'snel', label: 'Snel', sub: '< 15 min', emoji: '⚡', max: 15 },
+  { id: 'gemiddeld', label: 'Gemiddeld', sub: '15 – 30 min', emoji: '⏱️', max: 30 },
+  { id: 'uitgebreid', label: 'Uitgebreid', sub: '30 – 60 min', emoji: '🍳', max: 60 },
+  { id: 'geen-haast', label: 'Geen haast', sub: '60 min +', emoji: '🕯️', max: Infinity },
+]
+
 // Gerechten -> de ingrediënt-termen die ze nodig hebben. Niet elke term zit in
 // elk (beperkt) demo-assortiment; wat een gerecht sowieso niet kent staat in
 // `ontbreekt` en melden we netjes.
+//
+// Extra metadata stuurt de vragenlijst (SignupPage) aan:
+//   tijd    = bereidingstijd in minuten (hard filter op de gekozen kooktijd)
+//   dieet   = welke dieetvoorkeuren dit gerecht respecteert (hard filter)
+//   maaltijd= bij welke maaltijdmomenten het past (rangschikking)
+//   basis   = basisingrediënt-categorieën (rangschikking)
+//   prijs   = prijsklasse (rangschikking)
 export const RECEPTEN = [
-  { naam: 'spaghetti bolognese', emoji: '🍝', themas: ['italiaans', 'klassiek'], aliassen: ['spaghetti bolognese', 'bolognese', 'spaghetti'], ingredienten: ['spaghetti', 'gehakt', 'tomaten', 'kaas'], ontbreekt: ['ui', 'look'] },
-  { naam: 'spaghetti carbonara', emoji: '🥓', themas: ['italiaans'], aliassen: ['carbonara'], ingredienten: ['spaghetti', 'spek', 'kaas'], ontbreekt: ['eieren'] },
-  { naam: 'lasagne', emoji: '🧀', themas: ['italiaans', 'klassiek'], aliassen: ['lasagne', 'lasagna'], ingredienten: ['lasagnebladen', 'gehakt', 'tomaten', 'kaas'], ontbreekt: ['bechamel'] },
-  { naam: 'pasta met tomatensaus', emoji: '🍅', themas: ['italiaans', 'snel'], aliassen: ['pasta', 'macaroni', 'penne'], ingredienten: ['penne', 'tomaten', 'kaas'], ontbreekt: [] },
-  { naam: 'kip met groenten', emoji: '🍗', themas: ['klassiek', 'gezond'], aliassen: ['kip met groenten', 'gegrilde kip', 'kip'], ingredienten: ['kipfilet', 'groenten'], ontbreekt: ['aardappelen'] },
-  { naam: 'zalm met groenten', emoji: '🐟', themas: ['gezond', 'klassiek'], aliassen: ['zalm', 'vis'], ingredienten: ['zalm', 'groenten'], ontbreekt: ['citroen'] },
-  { naam: 'verse salade', emoji: '🥗', themas: ['gezond', 'snel'], aliassen: ['salade', 'slaatje', 'sla'], ingredienten: ['sla', 'tomaten', 'kaas', 'kipfilet'], ontbreekt: ['dressing'] },
-  { naam: 'broodmaaltijd', emoji: '🥪', themas: ['snel', 'ontbijt'], aliassen: ['boterhammen', 'lunch', 'broodje', 'broodmaaltijd'], ingredienten: ['brood', 'kaas'], ontbreekt: ['hesp'] },
-  { naam: 'uitgebreid ontbijt', emoji: '🥐', themas: ['ontbijt'], aliassen: ['ontbijt', 'brunch'], ingredienten: ['brood', 'confituur', 'koffie'], ontbreekt: ['eieren'] },
-  { naam: 'fruit-smoothie', emoji: '🥤', themas: ['gezond', 'ontbijt'], aliassen: ['smoothie', 'smoothies'], ingredienten: ['bananen', 'appels', 'yoghurt'], ontbreekt: [] },
+  { naam: 'spaghetti bolognese', emoji: '🍝', themas: ['italiaans', 'klassiek'], aliassen: ['spaghetti bolognese', 'bolognese', 'spaghetti'], ingredienten: ['spaghetti', 'gehakt', 'tomaten', 'kaas'], ontbreekt: ['ui', 'look'], tijd: 25, dieet: [], maaltijd: ['avondmaal'], basis: ['pasta', 'rundvlees', 'groenten', 'kaas'], prijs: 'middenklasse' },
+  { naam: 'spaghetti carbonara', emoji: '🥓', themas: ['italiaans'], aliassen: ['carbonara'], ingredienten: ['spaghetti', 'spek', 'kaas'], ontbreekt: ['eieren'], tijd: 20, dieet: [], maaltijd: ['avondmaal'], basis: ['pasta', 'kaas'], prijs: 'middenklasse' },
+  { naam: 'lasagne', emoji: '🧀', themas: ['italiaans', 'klassiek'], aliassen: ['lasagne', 'lasagna'], ingredienten: ['lasagnebladen', 'gehakt', 'tomaten', 'kaas'], ontbreekt: ['bechamel'], tijd: 45, dieet: [], maaltijd: ['avondmaal'], basis: ['pasta', 'rundvlees', 'groenten', 'kaas'], prijs: 'middenklasse' },
+  { naam: 'pasta met tomatensaus', emoji: '🍅', themas: ['italiaans', 'snel'], aliassen: ['pasta', 'macaroni', 'penne'], ingredienten: ['penne', 'tomaten', 'kaas'], ontbreekt: [], tijd: 15, dieet: ['Vegetarisch'], maaltijd: ['avondmaal', 'lunch'], basis: ['pasta', 'groenten', 'kaas'], prijs: 'budget' },
+  { naam: 'kip met groenten', emoji: '🍗', themas: ['klassiek', 'gezond'], aliassen: ['kip met groenten', 'gegrilde kip', 'kip'], ingredienten: ['kipfilet', 'groenten'], ontbreekt: ['aardappelen'], tijd: 30, dieet: ['Glutenvrij', 'Lactosevrij', 'Suikervrij'], maaltijd: ['avondmaal'], basis: ['kip', 'groenten'], prijs: 'middenklasse' },
+  { naam: 'zalm met groenten', emoji: '🐟', themas: ['gezond', 'klassiek'], aliassen: ['zalm', 'vis'], ingredienten: ['zalm', 'groenten'], ontbreekt: ['citroen'], tijd: 25, dieet: ['Glutenvrij', 'Lactosevrij', 'Suikervrij'], maaltijd: ['avondmaal'], basis: ['vis', 'groenten'], prijs: 'premium' },
+  { naam: 'verse salade', emoji: '🥗', themas: ['gezond', 'snel'], aliassen: ['salade', 'slaatje', 'sla'], ingredienten: ['sla', 'tomaten', 'kaas', 'kipfilet'], ontbreekt: ['dressing'], tijd: 10, dieet: ['Glutenvrij'], maaltijd: ['salade', 'lunch'], basis: ['groenten', 'kip', 'kaas'], prijs: 'middenklasse' },
+  { naam: 'broodmaaltijd', emoji: '🥪', themas: ['snel', 'ontbijt'], aliassen: ['boterhammen', 'lunch', 'broodje', 'broodmaaltijd'], ingredienten: ['brood', 'kaas'], ontbreekt: ['hesp'], tijd: 5, dieet: ['Vegetarisch'], maaltijd: ['lunch', 'ontbijt'], basis: ['brood', 'kaas'], prijs: 'budget' },
+  { naam: 'uitgebreid ontbijt', emoji: '🥐', themas: ['ontbijt'], aliassen: ['ontbijt', 'brunch'], ingredienten: ['brood', 'confituur', 'koffie'], ontbreekt: ['eieren'], tijd: 15, dieet: ['Vegetarisch'], maaltijd: ['ontbijt'], basis: ['brood'], prijs: 'budget' },
+  { naam: 'fruit-smoothie', emoji: '🥤', themas: ['gezond', 'ontbijt'], aliassen: ['smoothie', 'smoothies'], ingredienten: ['bananen', 'appels', 'yoghurt'], ontbreekt: [], tijd: 5, dieet: ['Vegetarisch', 'Glutenvrij'], maaltijd: ['ontbijt', 'dessert'], basis: ['fruit', 'kaas'], prijs: 'budget' },
 ]
 
 // Alle gerechten die bij minstens één van de gekozen thema's horen.
@@ -107,6 +143,102 @@ export function gerechtenVoorThemas(themaIds) {
   if (!themaIds?.length) return RECEPTEN
   const set = new Set(themaIds)
   return RECEPTEN.filter((r) => r.themas.some((t) => set.has(t)))
+}
+
+// Centrale recept-aanbeveling, gedeeld door de aanmeldvragenlijst én de kok-chat.
+// Hard filter op dieet, kooktijd en vermeden ingrediënten; daarna rangschikken op
+// hoe goed een recept aansluit bij de keukenstijl, het maaltijdmoment, de gewenste
+// ingrediënten en de prijsklasse. Zo staan de beste matches bovenaan zonder dat de
+// lijst onverwacht leegloopt.
+export function rangschikRecepten({
+  dieet = [],
+  kooktijd = '',
+  vermijden = [],
+  themas = [],
+  maaltijden = [],
+  ingredienten = [],
+  prijsklasse = '',
+} = {}) {
+  const maxTijd = KOOKTIJD_OPTIES.find((k) => k.id === kooktijd)?.max ?? Infinity
+  const prijsLower = (prijsklasse || '').toLowerCase()
+
+  return RECEPTEN.filter((r) => dieet.every((d) => r.dieet.includes(d)))
+    .filter((r) => r.tijd <= maxTijd)
+    .filter((r) => !vermijden.some((v) => r.basis.includes(v)))
+    .map((r) => {
+      let score = 0
+      score += themas.filter((t) => r.themas.includes(t)).length * 2
+      score += maaltijden.filter((m) => r.maaltijd.includes(m)).length * 2
+      score += ingredienten.filter((i) => r.basis.includes(i)).length * 2
+      if (prijsLower && r.prijs === prijsLower) score += 1
+      return { ...r, score }
+    })
+    .sort((a, b) => b.score - a.score)
+}
+
+// ── Kok-gesprek ──────────────────────────────────────────────────────────────
+// De chat voert de vragenlijst als een gesprek: de kok stelt stap voor stap
+// vragen ("doorvragen") en stelt op het einde gerechten voor. Elk antwoord
+// landt in `voorkeuren` en voedt rangschikRecepten().
+
+export const KOK_BEGROETING =
+  'Hoi, ik ben je kok! Vertel me waar je zin in hebt — typ of spreek gerust vrijuit — dan stel ik een paar vragen en zoek ik samen met jou de juiste gerechten. Zullen we beginnen?'
+
+// Bouw quick-reply-opties uit een datalijst (THEMAS, BASIS_INGREDIENTEN, …).
+const opt = (lijst) => lijst.map((o) => ({ id: o.id, label: o.label, emoji: o.emoji }))
+
+// Het script van vragen. `multi` = meerdere antwoorden, `overslaan` = mag leeg.
+// `key` is het veld in de voorkeuren dat rangschikRecepten() leest.
+export const KOK_VRAGEN = [
+  { key: 'kooktijd', multi: false, vraag: 'Hoeveel tijd heb je vandaag om te koken?', opties: opt(KOOKTIJD_OPTIES) },
+  {
+    key: 'personen',
+    multi: false,
+    vraag: 'Voor hoeveel personen kook je?',
+    opties: [
+      { id: '1', label: 'Voor mezelf', emoji: '🧑' },
+      { id: '2', label: 'Twee', emoji: '👫' },
+      { id: '3-4', label: '3 – 4', emoji: '👨‍👩‍👧' },
+      { id: '5+', label: '5 of meer', emoji: '👨‍👩‍👧‍👦' },
+    ],
+  },
+  { key: 'themas', multi: true, vraag: 'Waar heb je zin in? Kies gerust meerdere keukens.', opties: opt(THEMAS) },
+  { key: 'maaltijden', multi: true, overslaan: true, vraag: 'Voor welk moment van de dag?', opties: opt(MAALTIJDEN) },
+  { key: 'ingredienten', multi: true, overslaan: true, vraag: 'Zijn er ingrediënten waar je graag mee werkt?', opties: opt(BASIS_INGREDIENTEN) },
+  { key: 'vermijden', multi: true, overslaan: true, vraag: 'En iets dat ik beter laat liggen?', opties: opt(BASIS_INGREDIENTEN) },
+]
+
+// Een kok-achtige reactie op een gegeven antwoord, vóór de volgende vraag.
+export function kokReactie(key, labels) {
+  const stuk = lijstZin(labels).toLowerCase()
+  switch (key) {
+    case 'kooktijd':
+      return `Top — ik hou rekening met "${stuk}".`
+    case 'personen':
+      return labels[0] === 'Voor mezelf' ? 'Lekker voor jezelf koken, ook fijn!' : `Genoteerd, koken voor ${stuk}.`
+    case 'themas':
+      return labels.length ? `Mmm, ${stuk} — daar kan ik wel iets mee!` : 'Geen voorkeur? Dan verras ik je straks.'
+    case 'maaltijden':
+      return labels.length ? `Helder, voor ${stuk} dus.` : 'Maakt niet uit wanneer — prima.'
+    case 'ingredienten':
+      return labels.length ? `Fijn, ik werk graag met ${stuk}.` : 'Oké, dan hou ik alle opties open.'
+    case 'vermijden':
+      return labels.length ? `Begrepen — ${stuk} laat ik weg.` : 'Niets te vermijden, dat maakt het makkelijk.'
+    default:
+      return 'Genoteerd!'
+  }
+}
+
+// Herken welke opties van een vraag in vrije tekst voorkomen (chips zijn primair,
+// maar wie liever typt — "iets snels met kip" — wordt ook begrepen).
+export function herkenKeuzes(opties, tekst) {
+  const t = normaliseer(tekst)
+  const woorden = new Set(t.split(/[^a-z]+/).filter((w) => w.length >= 3))
+  return opties.filter((o) => {
+    if (woorden.has(normaliseer(o.id))) return true
+    const labelWoorden = normaliseer(o.label).split(/[^a-z]+/).filter((w) => w.length >= 4)
+    return labelWoorden.some((lw) => woorden.has(lw))
+  })
 }
 
 // De ingrediënt-termen voor een set gekozen gerechten (winkel-onafhankelijk).
