@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 // Interactieve 2D-plattegrond.
-// - Elke "gang" heeft een looppad in het midden met rekken (rechthoeken) links en
-//   rechts ernaast; één rek per product in die gang.
-// - Een figuurtje toont waar jij staat (ingang) en een gestippelde route loopt
+// - Elke "gang" heeft een looppad in het midden met aaneengesloten vierkante rekken
+//   links en rechts ervan; één vierkant per product in die gang.
+// - Boven elke gang staat een lijstje met welke producten er precies in zitten.
+// - Bij inzoomen verschijnen de productnamen naast de rekken (meer detail).
+// - Een blauw bolletje ("me") toont waar jij staat; een gestippelde route loopt
 //   langs de gangen naar het gemarkeerde rek (highlightId = product-id).
-// - In-/uitzoomen met de knoppen of slepen om te pannen; "Zoom naar rek" gaat tot
-//   bij de geschatte plek in het rek.
+// - In-/uitzoomen met de knoppen of slepen om te pannen.
 
 const FULL = { x: 0, y: 0, w: 100, h: 104 }
 const MIN_W = 26
 const PERSON = { x: 50, y: 93 }
 const LOOP_AISLE_Y = 85 // horizontale hoofdgang onderaan
 
-// Rek-afmetingen
-const RACK_W = 10
-const RACK_H = 4.4
-const ROW_SPACING = RACK_H + 1.4
-const SIDE_OFFSET = 3 + RACK_W / 2 // afstand van het looppad tot het midden van een rek
+// Rek-afmetingen (vierkant) en plaatsing t.o.v. het looppad.
+const AISLE_HALF = 2 // halve breedte van het looppad
+const SQ = 3.2 // zijde van een vierkant rek
+const SIDE_OFF = AISLE_HALF + SQ / 2 // afstand looppad-midden -> rek-midden
 
 function clampView(v) {
   let { x, y, w, h } = v
@@ -28,7 +28,11 @@ function clampView(v) {
   return { x, y, w, h }
 }
 
-// Bouwt de rekken op basis van de schaplocaties van de producten.
+function kort(naam, max) {
+  return naam.length > max ? naam.slice(0, max - 1) + '…' : naam
+}
+
+// Bouwt de vierkante rekken + de header-lijsten op basis van de schaplocaties.
 function buildLayout(products) {
   const gangen = new Map()
   for (const p of products) {
@@ -41,27 +45,44 @@ function buildLayout(products) {
   }
 
   const racks = []
-  const labels = []
+  const headers = []
   for (const g of gangen.values()) {
-    const rows = Math.ceil(g.items.length / 2)
-    g.items.forEach((p, i) => {
-      const side = i % 2 === 0 ? -1 : 1 // even -> links, oneven -> rechts
-      const row = Math.floor(i / 2)
-      const cx = g.cx + side * SIDE_OFFSET
-      const cy = g.cy - ((rows - 1) / 2) * ROW_SPACING + row * ROW_SPACING
-      racks.push({ productId: p.id, naam: p.naam, label: g.label, cx, cy, side, gangX: g.cx })
+    const links = g.items.filter((_, i) => i % 2 === 0)
+    const rechts = g.items.filter((_, i) => i % 2 === 1)
+
+    const plaats = (lijst, side) => {
+      const top = g.cy - (lijst.length * SQ) / 2
+      lijst.forEach((p, j) => {
+        racks.push({
+          productId: p.id,
+          naam: p.naam,
+          label: g.label,
+          side,
+          gangX: g.cx,
+          cx: g.cx + side * SIDE_OFF,
+          cy: top + SQ / 2 + j * SQ,
+        })
+      })
+    }
+    plaats(links, -1)
+    plaats(rechts, 1)
+
+    const maxRijen = Math.max(links.length, rechts.length)
+    headers.push({
+      label: g.label,
+      cx: g.cx,
+      gangTop: g.cy - (maxRijen * SQ) / 2,
+      namen: g.items.map((p) => p.naam),
     })
-    const topY = g.cy - ((rows - 1) / 2) * ROW_SPACING - RACK_H / 2
-    labels.push({ label: g.label, cx: g.cx, y: topY - 1.3 })
   }
-  return { racks, labels }
+  return { racks, headers }
 }
 
-// Orthogonale route: van de persoon, omhoog naar de hoofdgang, horizontaal naar
-// het juiste looppad, omhoog langs de gang en een korte stap naar het rek.
+// Orthogonale route: van de persoon omhoog naar de hoofdgang, horizontaal naar het
+// juiste looppad, omhoog langs de gang en een korte stap naar het rek.
 function buildRoute(rack) {
   const tx = rack.gangX
-  const innerEdgeX = rack.cx - rack.side * (RACK_W / 2)
+  const innerEdgeX = rack.cx - rack.side * (SQ / 2)
   const pts = [
     [PERSON.x, PERSON.y],
     [PERSON.x, LOOP_AISLE_Y],
@@ -73,11 +94,10 @@ function buildRoute(rack) {
 }
 
 export default function Floorplan({ products, highlightId, highlight }) {
-  const { racks, labels } = useMemo(() => buildLayout(products), [products])
+  const { racks, headers } = useMemo(() => buildLayout(products), [products])
 
   const doelRek = useMemo(() => {
     if (highlightId) return racks.find((r) => r.productId === highlightId) || null
-    // Terugval: oude API met een schaplocatie -> pak het eerste rek van die gang.
     if (highlight) return racks.find((r) => r.label === highlight.label) || null
     return null
   }, [racks, highlightId, highlight])
@@ -88,7 +108,6 @@ export default function Floorplan({ products, highlightId, highlight }) {
   const svgRef = useRef(null)
   const sleep = useRef(null)
 
-  // Bij een nieuw doelproduct terug naar het volledige overzicht (route zichtbaar).
   useEffect(() => {
     setVb(FULL)
   }, [doelRek])
@@ -105,12 +124,11 @@ export default function Floorplan({ products, highlightId, highlight }) {
 
   function zoomNaarRek() {
     if (!doelRek) return
-    const w = 34
+    const w = 30
     const h = (w * FULL.h) / FULL.w
     setVb(clampView({ x: doelRek.cx - w / 2, y: doelRek.cy - h / 2, w, h }))
   }
 
-  // Slepen om te pannen.
   function onPointerDown(e) {
     sleep.current = { px: e.clientX, py: e.clientY, vb }
     e.currentTarget.setPointerCapture?.(e.pointerId)
@@ -129,6 +147,7 @@ export default function Floorplan({ products, highlightId, highlight }) {
   }
 
   const ingezoomd = vb.w < FULL.w - 0.5
+  const LH = 1.6 // regelhoogte van de header-lijst
 
   return (
     <div className="relative">
@@ -145,30 +164,69 @@ export default function Floorplan({ products, highlightId, highlight }) {
       >
         <rect x="2" y="2" width="96" height="100" rx="4" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.6" />
 
-        {/* Gang-labels */}
-        {labels.map((l) => (
-          <text key={l.label} x={l.cx} y={l.y} textAnchor="middle" fontSize="2.8" fill="#94a3b8">
-            {l.label}
-          </text>
+        {/* Header boven elke gang: welke producten zitten erin */}
+        {headers.map((h) => {
+          const startY = h.gangTop - 1.2 - h.namen.length * LH
+          return (
+            <g key={h.label}>
+              <text x={h.cx} y={startY} textAnchor="middle" fontSize="1.9" fontWeight="700" fill="#64748b">
+                {h.label}
+              </text>
+              {h.namen.map((n, k) => (
+                <text key={n} x={h.cx} y={startY + (k + 1) * LH} textAnchor="middle" fontSize="1.5" fill="#94a3b8">
+                  {kort(n, 16)}
+                </text>
+              ))}
+            </g>
+          )
+        })}
+
+        {/* Looppaden (lichte lijn in het midden van elke gang) */}
+        {headers.map((h) => (
+          <line
+            key={`pad-${h.label}`}
+            x1={h.cx}
+            y1={h.gangTop}
+            x2={h.cx}
+            y2={h.gangTop + (racks.filter((r) => r.label === h.label).length / 2 + 0.5) * SQ}
+            stroke="#eef2f7"
+            strokeWidth={AISLE_HALF * 2}
+            strokeLinecap="round"
+          />
         ))}
 
-        {/* Rekken (rechthoeken) links/rechts van elk looppad */}
+        {/* Vierkante rekken, aaneengesloten links/rechts van het looppad */}
         {racks.map((r) => {
           const actief = doelRek && r.productId === doelRek.productId
           return (
             <rect
               key={r.productId}
-              x={r.cx - RACK_W / 2}
-              y={r.cy - RACK_H / 2}
-              width={RACK_W}
-              height={RACK_H}
-              rx="1"
+              x={r.cx - SQ / 2}
+              y={r.cy - SQ / 2}
+              width={SQ}
+              height={SQ}
               fill={actief ? '#ddd6fe' : '#e2e8f0'}
               stroke={actief ? '#7c3aed' : '#cbd5e1'}
-              strokeWidth={actief ? 0.7 : 0.4}
+              strokeWidth={actief ? 0.6 : 0.3}
             />
           )
         })}
+
+        {/* Detail bij inzoomen: productnaam naast elk rek (buitenkant) */}
+        {ingezoomd &&
+          racks.map((r) => (
+            <text
+              key={`lbl-${r.productId}`}
+              x={r.cx + r.side * (SQ / 2 + 0.6)}
+              y={r.cy + 0.5}
+              textAnchor={r.side === -1 ? 'end' : 'start'}
+              fontSize="1.5"
+              fill={doelRek && r.productId === doelRek.productId ? '#6d28d9' : '#64748b'}
+              fontWeight={doelRek && r.productId === doelRek.productId ? '700' : '400'}
+            >
+              {kort(r.naam, 18)}
+            </text>
+          ))}
 
         {/* Route + bewegend stipje */}
         {routeD && (
@@ -180,26 +238,18 @@ export default function Floorplan({ products, highlightId, highlight }) {
           </>
         )}
 
-        {/* Markering op het doelrek */}
+        {/* Pulserende markering op het doelrek */}
         {doelRek && (
-          <>
-            <circle cx={doelRek.cx} cy={doelRek.cy} r="2.4" fill="#7c3aed">
-              <animate attributeName="r" values="2.4;3.4;2.4" dur="1.2s" repeatCount="indefinite" />
-            </circle>
-            {ingezoomd && (
-              <text x={doelRek.cx} y={doelRek.cy - 4} textAnchor="middle" fontSize="2.6" fill="#6d28d9" fontWeight="600">
-                {doelRek.naam}
-              </text>
-            )}
-          </>
+          <circle cx={doelRek.cx} cy={doelRek.cy} r="2.2" fill="none" stroke="#7c3aed" strokeWidth="0.6">
+            <animate attributeName="r" values="2.2;3.2;2.2" dur="1.2s" repeatCount="indefinite" />
+          </circle>
         )}
 
-        {/* Jij + ingang */}
-        <text x={PERSON.x} y={PERSON.y + 1.5} textAnchor="middle" fontSize="6">🧍</text>
-        <text x={PERSON.x} y={PERSON.y + 6} textAnchor="middle" fontSize="3" fill="#16a34a" fontWeight="600">
-          Jij staat hier
+        {/* Jij — blauw bolletje met label */}
+        <circle cx={PERSON.x} cy={PERSON.y} r="2.4" fill="#2563eb" stroke="#fff" strokeWidth="0.6" />
+        <text x={PERSON.x} y={PERSON.y + 6} textAnchor="middle" fontSize="3.4" fill="#2563eb" fontWeight="600">
+          me
         </text>
-        <circle cx={PERSON.x} cy={100} r="1.8" fill="#16a34a" />
       </svg>
 
       {/* Zoom-bediening */}
