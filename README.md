@@ -1,6 +1,6 @@
-# StoreNav — your personal shopping assistant
+# Never Lost — your personal shopping assistant
 
-A web app that makes the physical shopping experience **personal** — from the moment you open the app to the moment you reach the right shelf. Just like Uber shows you which rides are relevant based on where you are and where you're going, StoreNav shows you which stores and products are interesting for you *right now* — and once you're in the store, it leads you straight to the right shelf.
+A web app that makes the physical shopping experience **personal** — from the moment you open the app to the moment you reach the right shelf. Just like Uber shows you which rides are relevant based on where you are and where you're going, Never Lost shows you which stores and products are interesting for you *right now* — and once you're in the store, it leads you straight to the right shelf.
 
 Think: **Uber's personalized home screen** + **Klarna's loyalty-card layer** + **indoor navigation**, all built around one principle: **everything the user sees is tailored to who they are.**
 
@@ -24,9 +24,9 @@ Customers face three points of friction in physical shopping:
 2. **Entering the store** — "where is this thing?" Endless wandering or interrupting staff.
 3. **At an empty shelf** — "it's not here". The sale is gone, often the customer too.
 
-StoreNav solves all three, with personalization at its core:
+Never Lost solves all three, with personalization at its core:
 
-| Moment | What StoreNav does |
+| Moment | What Never Lost does |
 |---|---|
 | **Before the store** | Personal home screen with nearby stores, your regular stores, and stores on your route with products you'll likely enjoy. |
 | **In the store** | Optimized route along your shopping list, personalized on-location deals. |
@@ -404,7 +404,6 @@ The demo is "done" when:
 * [ ] Loyalty deals are only visible to relevant profiles.
 * [ ] The app runs live on an HTTPS URL, mobile-friendly.
 * [ ] The 3-minute demo pitch is ready, with the explicit profile switch as the climax.
-
 ---
 
 ## 🎤 The pitch in one sentence
