@@ -27,18 +27,18 @@ export default function HomePage() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-white px-4 pb-3 pt-6">
-        <p className="text-sm text-slate-500">
-          {isGast ? 'Welkom' : `Goedemorgen,`}
+      <div className="px-4 pb-3 pt-7">
+        <p className="text-sm font-medium text-violet-500">
+          {isGast ? 'Welkom' : 'Goedemorgen,'}
         </p>
-        <h1 className="mb-3 text-xl font-bold text-slate-800">
+        <h1 className="mb-3 text-2xl font-bold tracking-tight text-slate-900">
           {isGast ? 'Ontdek winkels dichtbij' : activeProfile.naam}
         </h1>
         <SearchBar value={zoek} onChange={setZoek} placeholder="Zoek een winkel" />
       </div>
 
       {/* Kaart */}
-      <div className="overflow-hidden">
+      <div className="mx-4 overflow-hidden rounded-2xl shadow-sm ring-1 ring-slate-100">
         <MapView
           stores={gesorteerd}
           userLocation={userLocation}

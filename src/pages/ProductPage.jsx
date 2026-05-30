@@ -29,7 +29,7 @@ export default function ProductPage() {
 
       <div className="space-y-4 px-4 py-4">
         {/* Productkaart */}
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-2xl font-bold text-slate-800">€ {product.prijs.toFixed(2)}</p>
@@ -57,8 +57,8 @@ export default function ProductPage() {
           {product.opVoorraad && (
             <button
               onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
-              className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition ${
-                zit ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-700'
+              className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition active:scale-[0.98] ${
+                zit ? 'bg-violet-600 text-white shadow-md shadow-violet-200' : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
               }`}
             >
               {zit ? '✓ In je mandje — tik om te verwijderen' : '+ Voeg toe aan mandje'}

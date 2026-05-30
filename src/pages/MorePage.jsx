@@ -49,7 +49,7 @@ export default function MorePage() {
 
       <div className="space-y-5 px-4 py-4">
         {/* Profielkop */}
-        <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
           <span
             className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
             style={{ backgroundColor: activeProfile.kleur }}
@@ -70,7 +70,7 @@ export default function MorePage() {
         ) : (
           <>
             {/* Persoonsgegevens */}
-            <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+            <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <h2 className="text-sm font-semibold text-slate-500">Persoonsgegevens</h2>
               <Veld label="Naam" value={activeProfile.naam} onChange={(x) => updateProfile({ naam: x })} />
               <Veld label="E-mail" type="email" value={persoon.email} onChange={(x) => updateProfile({ persoon: { email: x } })} />
@@ -79,7 +79,7 @@ export default function MorePage() {
             </section>
 
             {/* Afdelingen */}
-            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <h2 className="text-sm font-semibold text-slate-500">Favoriete afdelingen</h2>
               <div className="flex flex-wrap gap-2">
                 {AFDELINGEN.map((a) => {
@@ -100,7 +100,7 @@ export default function MorePage() {
             </section>
 
             {/* Favoriete merken */}
-            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <h2 className="text-sm font-semibold text-slate-500">Favoriete merken</h2>
               <div className="flex flex-wrap gap-2">
                 {v.merken.length ? (
@@ -128,14 +128,14 @@ export default function MorePage() {
                   placeholder="Voeg een merk toe"
                   className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
                 />
-                <button onClick={voegMerkToe} className="rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white">
+                <button onClick={voegMerkToe} className="rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-95">
                   +
                 </button>
               </div>
             </section>
 
             {/* Dieet */}
-            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <h2 className="text-sm font-semibold text-slate-500">Dieetwensen</h2>
               <div className="flex flex-wrap gap-2">
                 {DIEETEN.map((d) => {
@@ -156,7 +156,7 @@ export default function MorePage() {
             </section>
 
             {/* Prijsklasse */}
-            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+            <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <h2 className="text-sm font-semibold text-slate-500">Prijsklasse</h2>
               <div className="flex gap-2">
                 {PRIJSKLASSEN.map((p) => (
@@ -183,7 +183,7 @@ export default function MorePage() {
 
         <button
           onClick={() => navigate('/login')}
-          className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600"
+          className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200 active:scale-[0.98]"
         >
           Naar inlogscherm
         </button>

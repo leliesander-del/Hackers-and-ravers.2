@@ -16,7 +16,7 @@ export default function WalletPage() {
 
       <div className="space-y-5 px-4 py-4">
         {/* Saldo-kaart */}
-        <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-violet-500 p-5 text-white shadow-md">
+        <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-violet-500 p-5 text-white shadow-lg shadow-violet-200">
           <p className="text-sm text-violet-100">Cashback-saldo</p>
           <p className="text-3xl font-bold">€ {activeProfile.cashbackSaldo.toFixed(2)}</p>
           <div className="mt-4 flex items-center justify-between text-sm">
@@ -35,7 +35,7 @@ export default function WalletPage() {
           </h2>
 
           {isGast ? (
-            <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+            <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-100">
               <p className="text-3xl">🔒</p>
               <p className="mt-2 text-sm text-slate-500">
                 Persoonlijke deals zijn alleen voor leden. Wissel naar een klantenkaart.

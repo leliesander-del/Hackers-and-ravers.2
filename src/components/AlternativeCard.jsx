@@ -6,8 +6,8 @@ export default function AlternativeCard({ product }) {
   const zit = inCart(product.id)
 
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
-      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-lg">✅</span>
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-lg">✅</span>
       <div className="flex-1">
         <p className="font-medium text-slate-800">{product.naam}</p>
         <p className="text-xs text-slate-500">
@@ -19,8 +19,8 @@ export default function AlternativeCard({ product }) {
       </div>
       <button
         onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition ${
-          zit ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-600'
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold transition active:scale-90 ${
+          zit ? 'bg-violet-600 text-white shadow-sm shadow-violet-300' : 'bg-violet-100 text-violet-600'
         }`}
         aria-label={zit ? 'Verwijder uit mandje' : 'Voeg toe aan mandje'}
       >

@@ -13,28 +13,38 @@ export default function BottomNav() {
   const { cartCount } = useStore()
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white">
-      <div className="flex items-stretch justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200/70 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+      <div className="flex items-stretch justify-around px-2 py-1.5">
         {tabs.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}
             end={t.to === '/'}
             className={({ isActive }) =>
-              `relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1 text-[11px] font-medium transition ${
+              `relative flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium transition ${
                 isActive ? 'text-violet-600' : 'text-slate-400'
               }`
             }
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d={t.icon} />
-            </svg>
-            {t.label === 'Boodschappen' && cartCount > 0 && (
-              <span className="absolute right-3 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
-                {cartCount}
-              </span>
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`flex h-8 w-12 items-center justify-center rounded-full transition ${
+                    isActive ? 'bg-violet-100' : 'bg-transparent'
+                  }`}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={t.icon} />
+                  </svg>
+                </span>
+                {t.label === 'Boodschappen' && cartCount > 0 && (
+                  <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                    {cartCount}
+                  </span>
+                )}
+                {t.label}
+              </>
             )}
-            {t.label}
           </NavLink>
         ))}
       </div>

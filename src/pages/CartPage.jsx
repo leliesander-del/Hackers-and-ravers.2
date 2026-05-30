@@ -48,8 +48,8 @@ export default function CartPage() {
 
                   <div className="space-y-2">
                     {lijst.map((p) => (
-                      <div key={p.id} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-lg">🛒</span>
+                      <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">🛒</span>
                         <div className="flex-1">
                           <p className="font-medium text-slate-800">{p.naam}</p>
                           <p className="text-xs text-slate-500">
@@ -72,7 +72,7 @@ export default function CartPage() {
                     <>
                       <button
                         onClick={() => setOpenMap(mapOpen ? null : storeId)}
-                        className="w-full rounded-full bg-violet-100 py-2.5 text-sm font-semibold text-violet-700"
+                        className="w-full rounded-full bg-violet-100 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-200 active:scale-[0.98]"
                       >
                         {mapOpen ? 'Verberg route' : `🗺️ Toon route op map (${lijst.length} stops)`}
                       </button>
@@ -90,9 +90,9 @@ export default function CartPage() {
               )
             })}
 
-            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
               <span className="text-slate-500">Totaal</span>
-              <span className="text-xl font-bold text-slate-800">€ {cartTotaal.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-violet-700">€ {cartTotaal.toFixed(2)}</span>
             </div>
 
             <button
@@ -100,7 +100,7 @@ export default function CartPage() {
                 clearCart()
                 setOpenMap(null)
               }}
-              className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-500"
+              className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-200 active:scale-[0.98]"
             >
               Mandje leegmaken
             </button>

@@ -16,7 +16,7 @@ function AppShell() {
   if (!isIngelogd) return <Navigate to="/login" replace />
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-[#f6f4fc] pb-20 shadow-xl">
+    <div className="relative mx-auto min-h-screen max-w-md bg-[#f7f5fd] pb-24 shadow-[0_0_60px_rgba(76,29,149,0.08)] ring-1 ring-black/5">
       <Outlet />
       <BottomNav />
     </div>

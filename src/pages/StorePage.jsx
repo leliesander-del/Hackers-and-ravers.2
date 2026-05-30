@@ -84,8 +84,8 @@ export default function StorePage() {
         {store.heeftPlattegrond && (
           <button
             onClick={() => setToonMap((v) => !v)}
-            className={`w-full rounded-full py-2.5 text-sm font-semibold ${
-              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-700'
+            className={`w-full rounded-full py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
+              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
             }`}
           >
             {toonMap ? 'Verberg plattegrond' : '🗺️ Bekijk de plattegrond'}
@@ -111,7 +111,7 @@ export default function StorePage() {
                 <button
                   key={cat}
                   onClick={() => setCategorie(cat)}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
+                  className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-200 active:scale-[0.97]"
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xl">
                     {catEmoji(cat)}
