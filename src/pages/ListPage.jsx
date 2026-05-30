@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
 import { stores, afstandTotGebruiker } from '../data/stores.js'
 import StoreLogo from '../components/StoreLogo.jsx'
+import SearchBar from '../components/SearchBar.jsx'
 import {
   KOK_BEGROETING,
   KOK_VRAGEN,
@@ -61,6 +62,7 @@ export default function ListPage() {
 // Tik op een winkel om het assortiment te bekijken en een route te starten.
 function WinkelsTab() {
   const navigate = useNavigate()
+  const [zoek, setZoek] = useState('')
   const gesorteerd = useMemo(
     () =>
       stores
@@ -69,9 +71,25 @@ function WinkelsTab() {
     [],
   )
 
+  const getoond = useMemo(() => {
+    const term = zoek.trim().toLowerCase()
+    if (!term) return gesorteerd
+    return gesorteerd.filter((s) =>
+      [s.naam, s.straat, s.type].some((v) => v?.toLowerCase().includes(term)),
+    )
+  }, [zoek, gesorteerd])
+
   return (
     <div className="space-y-2">
-      {gesorteerd.map((s) => (
+      <SearchBar value={zoek} onChange={setZoek} placeholder="Zoek een winkel" />
+
+      {getoond.length === 0 && (
+        <p className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-100">
+          Geen winkel gevonden voor “{zoek.trim()}”.
+        </p>
+      )}
+
+      {getoond.map((s) => (
         <button
           key={s.id}
           onClick={() => navigate(`/store/${s.id}`)}

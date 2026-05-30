@@ -180,17 +180,28 @@ export default function SignupPage() {
   const toggleGerecht = toggleIn(setGerechten)
   const toggleWinkel = toggleIn(setWinkels)
 
-  function valideerStap() {
-    if (stap === 1) {
-      if (!naam.trim()) return 'Vul je naam in.'
-      if (!email.trim()) return 'Vul je e-mailadres in.'
-      if (!wachtwoord) return 'Vul een wachtwoord in.'
-      if (wachtwoord.length < 4) return 'Wachtwoord moet minimaal 4 tekens bevatten.'
-      const emailLower = email.trim().toLowerCase()
-      if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
-        return 'Er bestaat al een account met dit e-mailadres.'
-      }
+  function valideerAccount() {
+    const naamTrim = naam.trim()
+    if (!naamTrim) return 'Vul je naam in.'
+    const naamLetters = (naamTrim.match(/\p{L}/gu) || []).length
+    if (naamLetters < 5) return 'Je naam moet minimaal 5 letters bevatten.'
+
+    const emailTrim = email.trim()
+    if (!emailTrim) return 'Vul je e-mailadres in.'
+    if (!emailTrim.includes('@')) return 'zorg ervoor dat het een bestaand emailadress is'
+
+    if (!wachtwoord) return 'Vul een wachtwoord in.'
+    if (wachtwoord.length < 7) return 'Wachtwoord moet minimaal 7 tekens bevatten.'
+
+    const emailLower = emailTrim.toLowerCase()
+    if (DEMO_EMAILS.includes(emailLower) || getAccounts()[emailLower]) {
+      return 'Er bestaat al een account met dit e-mailadres.'
     }
+    return null
+  }
+
+  function valideerStap() {
+    if (stap === 1) return valideerAccount()
     return null
   }
 
@@ -208,6 +219,13 @@ export default function SignupPage() {
   }
 
   function maakAccount() {
+    const accountFout = valideerAccount()
+    if (accountFout) {
+      setStap(1)
+      setFout(accountFout)
+      return
+    }
+
     const emailLower = email.trim().toLowerCase()
 
     // Laatste controle: één account per e-mailadres. Voorkomt dat een
@@ -324,7 +342,7 @@ export default function SignupPage() {
                   type="password"
                   value={wachtwoord}
                   onChange={(e) => setWachtwoord(e.target.value)}
-                  placeholder="Wachtwoord (min. 4 tekens)"
+                  placeholder="Wachtwoord (min. 7 tekens)"
                   className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-fuchsia-400/50 transition"
                 />
               </div>
