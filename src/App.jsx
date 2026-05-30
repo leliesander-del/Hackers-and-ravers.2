@@ -13,6 +13,7 @@ import ManagerLoginPage from './pages/ManagerLoginPage.jsx'
 import FloorplanEditorPage from './pages/FloorplanEditorPage.jsx'
 import StaffRoute from './components/StaffRoute.jsx'
 import StaffPage from './pages/StaffPage.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
 
 // Het "telefoon"-frame met onderbalk. Wie nog geen profiel koos, gaat naar /login.
 function AppShell() {
@@ -47,6 +48,14 @@ export default function App() {
           element={
             <StaffRoute>
               <StaffPage />
+            </StaffRoute>
+          }
+        />
+        <Route
+          path="dashboard"
+          element={
+            <StaffRoute>
+              <DashboardPage />
             </StaffRoute>
           }
         />

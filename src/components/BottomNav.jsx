@@ -9,12 +9,15 @@ const tabs = [
   { to: '/meer', label: 'Profiel', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
 ]
 
-// Extra tab, alleen zichtbaar voor een winkelbediende.
+// Tabs voor de winkelbediende.
+const dashboardTab = { to: '/dashboard', label: 'Dashboard', icon: 'M3 3h8v8H3zM13 3h8v8h-8zM13 13h8v8h-8zM3 13h8v8H3z' }
 const personeelTab = { to: '/personeel', label: 'Personeel', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11h-6' }
+const profielTab = tabs.find((t) => t.to === '/meer')
 
 export default function BottomNav() {
   const { cartCount, isGekwalificeerdeBediende } = useStore()
-  const zichtbareTabs = isGekwalificeerdeBediende ? [...tabs, personeelTab] : tabs
+  // Een bediende ziet enkel het dashboard, personeelspaneel en profiel — geen klant-tabs.
+  const zichtbareTabs = isGekwalificeerdeBediende ? [dashboardTab, personeelTab, profielTab] : tabs
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-[1000] w-full max-w-md -translate-x-1/2 border-t border-slate-200/70 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
