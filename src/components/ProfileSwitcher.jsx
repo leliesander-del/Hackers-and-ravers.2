@@ -5,9 +5,12 @@ import { profiles } from '../data/profiles.js'
 export default function ProfileSwitcher() {
   const { activeProfile, login } = useStore()
 
+  // Personeel zit in een volledig gescheiden gedeelte; toon hier enkel klantprofielen.
+  const klantprofielen = profiles.filter((p) => p.type !== 'bediende')
+
   return (
     <div className="grid grid-cols-3 gap-2">
-      {profiles.map((p) => {
+      {klantprofielen.map((p) => {
         const actief = activeProfile.id === p.id
         return (
           <button
