@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
-import { getStore } from '../data/stores.js'
 import PageHeader from '../components/PageHeader.jsx'
 import StoreLogo from '../components/StoreLogo.jsx'
 
@@ -9,15 +8,8 @@ import StoreLogo from '../components/StoreLogo.jsx'
 // ✨ Sparren toevoegde én concrete producten die je in een winkel aanklikte.
 // Onderaan kies je een winkel om de route te starten.
 export default function MandjePage() {
-  const { cart, winkelsVoorLijst, getProductLive, removeFromCart, clearCart, isAfgevinkt, toggleAfgevinkt } =
-    useStore()
+  const { cart, winkelsVoorLijst, removeFromCart, clearCart, isAfgevinkt, toggleAfgevinkt } = useStore()
   const navigate = useNavigate()
-
-  const totaal = cart
-    .filter((it) => it.kind === 'product')
-    .map((it) => getProductLive(it.key))
-    .filter(Boolean)
-    .reduce((som, p) => som + p.prijs, 0)
 
   if (cart.length === 0) {
     return (
@@ -50,38 +42,33 @@ export default function MandjePage() {
           <ul className="space-y-1">
             {cart.map((it) => {
               const af = isAfgevinkt(it.key)
-              const product = it.kind === 'product' ? getProductLive(it.key) : null
-              const store = product ? getStore(product.storeId) : null
               return (
                 <li key={it.key} className="flex items-center gap-3 py-1.5">
                   <button
                     onClick={() => toggleAfgevinkt(it.key)}
                     aria-label={af ? 'Vink af' : 'Markeer als gepakt'}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${
-                      af ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300 text-transparent'
-                    }`}
+                    aria-pressed={af}
+                    className="tap-target -my-1 flex shrink-0 items-center justify-center"
                   >
-                    ✓
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold transition ${
+                        af ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 text-transparent'
+                      }`}
+                    >
+                      ✓
+                    </span>
                   </button>
                   <div className="min-w-0 flex-1">
                     <span className={`block truncate text-sm ${af ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                       {it.label}
                     </span>
-                    {product && (
-                      <span className="block truncate text-xs text-slate-400">
-                        {[product.merk, store?.naam, product.schaplocatie?.label].filter(Boolean).join(' · ')}
-                      </span>
-                    )}
                   </div>
-                  {product && (
-                    <span className="shrink-0 text-sm font-semibold text-slate-600">€ {product.prijs.toFixed(2)}</span>
-                  )}
                   <button
                     onClick={() => removeFromCart(it.key)}
                     aria-label="Verwijderen"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
+                    className="tap-target -my-1 flex shrink-0 items-center justify-center text-slate-300 transition hover:text-rose-500"
                   >
-                    ✕
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-rose-50">✕</span>
                   </button>
                 </li>
               )
@@ -106,8 +93,8 @@ export default function MandjePage() {
             {(() => {
               const beste = winkelsVoorLijst[0]
               return (
-                <section className="rounded-2xl bg-white p-4 shadow-sm ring-2 ring-violet-200">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-violet-500">
+                <section className="rounded-2xl bg-white p-4 shadow-sm ring-2 ring-brand-200">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-brand-500">
                     Meeste producten in één winkel
                   </p>
                   <div className="flex items-center gap-3">
@@ -122,14 +109,14 @@ export default function MandjePage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => navigate(`/store/${beste.store.id}`)}
-                      className="flex-1 rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98]"
+                      className="flex-1 rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98]"
                     >
                       Open winkel →
                     </button>
                     {beste.store.heeftPlattegrond && (
                       <button
                         onClick={() => navigate(`/store/${beste.store.id}?plan=1`)}
-                        className="flex-1 rounded-full bg-violet-100 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-200 active:scale-[0.98]"
+                        className="flex-1 rounded-full bg-brand-100 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-200 active:scale-[0.98]"
                       >
                         🗺️ Bekijk winkelplan
                       </button>
@@ -147,7 +134,7 @@ export default function MandjePage() {
                     <button
                       key={store.id}
                       onClick={() => navigate(`/store/${store.id}`)}
-                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
+                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-brand-300 active:scale-[0.98]"
                     >
                       <StoreLogo store={store} sizeClass="h-10 w-10" emojiClass="text-lg" />
                       <div className="min-w-0 flex-1">
@@ -156,20 +143,13 @@ export default function MandjePage() {
                           {aantal} van {aantalTotaal} items · ± € {totaalPrijs.toFixed(2)}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold text-violet-600">→</span>
+                      <span className="shrink-0 text-sm font-semibold text-brand-600">→</span>
                     </button>
                   ))}
                 </div>
               </section>
             )}
           </>
-        )}
-
-        {totaal > 0 && (
-          <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-            <span className="text-slate-500">Totaal (producten)</span>
-            <span className="text-xl font-bold text-violet-700">€ {totaal.toFixed(2)}</span>
-          </div>
         )}
 
         <button
@@ -203,7 +183,7 @@ function HandmatigToevoegen() {
       <p className="mb-1 font-bold text-slate-800">Zelf iets toevoegen</p>
       <p className="mb-3 text-xs text-slate-400">Zoek een product en tik om het op je lijst te zetten.</p>
 
-      <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 ring-1 ring-slate-200 focus-within:ring-violet-300">
+      <div className="flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 ring-1 ring-slate-200 focus-within:ring-brand-300">
         <span className="text-slate-400">🔍</span>
         <input
           value={zoek}
@@ -230,7 +210,7 @@ function HandmatigToevoegen() {
                     addToCart(p.id)
                     setZoek('')
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
+                  className="flex w-full items-center gap-3 rounded-xl p-2 text-left ring-1 ring-slate-100 transition hover:ring-brand-300 active:scale-[0.98]"
                 >
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-slate-800">{p.naam}</span>
@@ -238,7 +218,7 @@ function HandmatigToevoegen() {
                       {p.merk} · € {p.prijs.toFixed(2)}
                     </span>
                   </span>
-                  <span className="shrink-0 text-lg font-semibold text-violet-600">＋</span>
+                  <span className="shrink-0 text-lg font-semibold text-brand-600">＋</span>
                 </button>
               </li>
             ))

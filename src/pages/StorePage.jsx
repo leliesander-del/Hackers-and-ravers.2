@@ -71,10 +71,10 @@ export default function StorePage() {
         subtitle={`${store.type} · ${store.cashback}% cashback`}
         back
         right={
-          <Link to="/mandje" className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
+          <Link to="/mandje" aria-label="Naar mandje" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100">
             🛍️
             {productCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
                 {productCount}
               </span>
             )}
@@ -89,7 +89,7 @@ export default function StorePage() {
           <button
             onClick={() => setToonMap((v) => !v)}
             className={`w-full rounded-full py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
-              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+              toonMap ? 'bg-slate-100 text-slate-500' : 'bg-brand-100 text-brand-700 hover:bg-brand-200'
             }`}
           >
             {toonMap ? 'Verberg plattegrond' : '🗺️ Bekijk de plattegrond'}
@@ -117,9 +117,9 @@ export default function StorePage() {
                 <button
                   key={cat}
                   onClick={() => setCategorie(cat)}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-200 active:scale-[0.97]"
+                  className="flex items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-200 active:scale-[0.97]"
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xl">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xl">
                     {catEmoji(cat)}
                   </span>
                   <span>
@@ -140,7 +140,7 @@ export default function StorePage() {
                 )}
               </h2>
               {!zoekActief && categorie && (
-                <button onClick={() => setCategorie(null)} className="text-xs font-medium text-violet-600">
+                <button onClick={() => setCategorie(null)} className="text-xs font-medium text-brand-600">
                   ← Categorieën
                 </button>
               )}

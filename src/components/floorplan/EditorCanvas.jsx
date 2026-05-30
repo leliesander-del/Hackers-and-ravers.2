@@ -163,7 +163,7 @@ export default function EditorCanvas({
   return (
     <main className="min-h-0 flex-1 overflow-y-auto bg-[#f6f4fc]">
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-8">
-        <div className="border border-violet-100 bg-white p-4 shadow-md">
+        <div className="rounded-2xl bg-white p-4 shadow-md ring-1 ring-brand-100">
           <FloorplanRenderer
             svgRef={svgRef}
             elements={elements}

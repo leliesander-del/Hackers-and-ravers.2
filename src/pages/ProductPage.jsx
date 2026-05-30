@@ -67,7 +67,7 @@ export default function ProductPage() {
           {product.dieet.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
               {product.dieet.map((d) => (
-                <span key={d} className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-600">
+                <span key={d} className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-600">
                   {d}
                 </span>
               ))}
@@ -78,7 +78,7 @@ export default function ProductPage() {
             <button
               onClick={() => (zit ? removeFromCart(product.id) : addToCart(product.id))}
               className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition active:scale-[0.98] ${
-                zit ? 'bg-violet-600 text-white shadow-md shadow-violet-200' : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                zit ? 'bg-brand-600 text-white shadow-md shadow-brand-200' : 'bg-brand-100 text-brand-700 hover:bg-brand-200'
               }`}
             >
               {zit ? '✓ In je mandje — tik om te verwijderen' : '+ Voeg toe aan mandje'}
@@ -99,7 +99,7 @@ export default function ProductPage() {
         )}
 
         {opRekken && store.heeftPlattegrond && !hasPlan && (
-          <Link to="/mandje" className="block rounded-xl bg-violet-50 px-4 py-3 text-sm text-violet-700">
+          <Link to="/mandje" className="block rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-700">
             🗺️ Voeg toe aan je mandje en bekijk daar de route langs al je producten →
           </Link>
         )}

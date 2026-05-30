@@ -21,14 +21,14 @@ function Veld({ label, value, onChange, type = 'text', placeholder }) {
         value={value || ''}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-400"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-400"
       />
     </label>
   )
 }
 
 export default function MorePage() {
-  const { activeProfile, updateProfile } = useStore()
+  const { activeProfile, updateProfile, isEigenAccount, logout } = useStore()
   const navigate = useNavigate()
   const [nieuwMerk, setNieuwMerk] = useState('')
 
@@ -90,7 +90,7 @@ export default function MorePage() {
                       key={a}
                       onClick={() => updateProfile({ voorkeuren: { afdelingen: toggle(v.afdelingen, a) } })}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
-                        aan ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500'
+                        aan ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {a}
@@ -106,11 +106,11 @@ export default function MorePage() {
               <div className="flex flex-wrap gap-2">
                 {v.merken.length ? (
                   v.merken.map((m) => (
-                    <span key={m} className="flex items-center gap-1 rounded-full bg-violet-100 px-3 py-1.5 text-sm font-medium text-violet-700">
+                    <span key={m} className="flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-medium text-brand-700">
                       {m}
                       <button
                         onClick={() => updateProfile({ voorkeuren: { merken: v.merken.filter((x) => x !== m) } })}
-                        className="text-violet-400"
+                        className="text-brand-400"
                         aria-label={`Verwijder ${m}`}
                       >
                         ✕
@@ -127,9 +127,9 @@ export default function MorePage() {
                   onChange={(e) => setNieuwMerk(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && voegMerkToe()}
                   placeholder="Voeg een merk toe"
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400"
                 />
-                <button onClick={voegMerkToe} className="rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-95">
+                <button onClick={voegMerkToe} className="rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-95">
                   +
                 </button>
               </div>
@@ -146,7 +146,7 @@ export default function MorePage() {
                       key={d}
                       onClick={() => updateProfile({ voorkeuren: { dieet: toggle(v.dieet, d) } })}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${
-                        aan ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'
+                        aan ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {d}
@@ -165,7 +165,7 @@ export default function MorePage() {
                     key={p}
                     onClick={() => updateProfile({ voorkeuren: { prijsklasse: p } })}
                     className={`flex-1 rounded-xl py-2 text-sm font-medium capitalize ${
-                      v.prijsklasse === p ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500'
+                      v.prijsklasse === p ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                     }`}
                   >
                     {p}
@@ -176,17 +176,24 @@ export default function MorePage() {
           </>
         )}
 
-        {/* Wissel profiel */}
-        <section>
-          <h2 className="mb-2 text-sm font-semibold text-slate-500">Wissel profiel</h2>
-          <ProfileSwitcher />
-        </section>
+        {/* Wissel profiel — alleen beschikbaar voor de demo-profielen, niet voor
+            een echt ingelogd account. Wie met een eigen account is ingelogd,
+            wisselt via uitloggen en opnieuw inloggen. */}
+        {!isEigenAccount && (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold text-slate-500">Wissel profiel</h2>
+            <ProfileSwitcher />
+          </section>
+        )}
 
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            if (isEigenAccount) logout()
+            navigate('/login')
+          }}
           className="w-full rounded-full bg-slate-100 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-200 active:scale-[0.98]"
         >
-          Naar inlogscherm
+          {isEigenAccount ? 'Uitloggen' : 'Naar inlogscherm'}
         </button>
       </div>
     </div>

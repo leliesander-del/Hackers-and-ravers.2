@@ -16,7 +16,7 @@ function ProductRij({ product, actief, onClick }) {
       type="button"
       onClick={() => onClick(product.id)}
       className={`flex w-full items-center gap-3 rounded-xl p-3 text-left ring-1 transition ${
-        actief ? 'bg-emerald-100 ring-emerald-400' : 'bg-slate-50 ring-slate-100 hover:bg-emerald-50'
+        actief ? 'bg-brand-100 ring-brand-400' : 'bg-slate-50 ring-slate-100 hover:bg-brand-50'
       }`}
     >
       <div className="min-w-0 flex-1">
@@ -81,7 +81,7 @@ export default function DashboardPage() {
     return (
       <StaffProductActiePaneel
         product={product}
-        variant="emerald"
+        variant="violet"
         modus="bijvullen"
         inputId={`rek-aantal-${product.id}`}
         {...aantalInputProps(verplaatsNaarRekkenActie)}

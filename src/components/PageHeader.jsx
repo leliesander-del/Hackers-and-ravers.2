@@ -9,7 +9,7 @@ export default function PageHeader({ title, subtitle, back = false, right = null
       {back && (
         <button
           onClick={() => navigate(-1)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 active:scale-95"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 active:scale-95"
           aria-label="Terug"
         >
           ←

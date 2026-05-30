@@ -8,7 +8,7 @@ export default function CollapsibleSection({ titel, aantal, kleur = 'slate', sta
     orange: { ring: 'ring-orange-100', badge: 'bg-orange-100 text-orange-800', titel: 'text-orange-900' },
     amber: { ring: 'ring-amber-100', badge: 'bg-amber-100 text-amber-700', titel: 'text-amber-800' },
     emerald: { ring: 'ring-emerald-100', badge: 'bg-emerald-100 text-emerald-700', titel: 'text-emerald-800' },
-    violet: { ring: 'ring-violet-100', badge: 'bg-violet-100 text-violet-700', titel: 'text-violet-800' },
+    violet: { ring: 'ring-brand-100', badge: 'bg-brand-100 text-brand-700', titel: 'text-brand-800' },
     slate: { ring: 'ring-slate-100', badge: 'bg-slate-100 text-slate-600', titel: 'text-slate-700' },
   }
   const k = kleuren[kleur] ?? kleuren.slate

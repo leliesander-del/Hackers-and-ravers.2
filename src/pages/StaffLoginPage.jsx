@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../context/StoreContext.jsx'
+import { AuthLayout, Button, Input, Card } from '../components/ui/index.js'
 
 // Aparte inlog voor winkelpersoneel — losgekoppeld van de klantenlogin.
 const STAFF_ACCOUNTS = [{ email: 'lisa@neverlost.be', wachtwoord: 'lisa123', profielId: 'bediende' }]
@@ -26,59 +27,55 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 px-5 py-12">
-      <div className="w-full max-w-md space-y-5">
-        <div className="mb-2 flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-2xl shadow-lg">
-            🏪
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Personeel</h1>
-            <p className="mt-0.5 text-sm text-white/50">Rekkenvuller of kassamedewerker</p>
-          </div>
-        </div>
-
-        <form onSubmit={inloggen} className="space-y-3 rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
-          <input
+    <AuthLayout
+      logo={
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-2xl shadow-lg shadow-brand-600/25">
+          🏪
+        </span>
+      }
+      title="Personeel"
+      subtitle="Voorraadbeheer · magazijn ↔ rekken"
+      footer={
+        <Link to="/login" className="underline underline-offset-2 transition hover:text-brand-600">
+          ← Terug naar klantenlogin
+        </Link>
+      }
+    >
+      <Card className="p-6">
+        <form onSubmit={inloggen} className="space-y-3">
+          <Input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Personeels-e-mail"
-            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-emerald-300/50"
+            aria-label="Personeels-e-mail"
+            autoComplete="email"
           />
-          <input
+          <Input
             type="password"
             required
             value={wachtwoord}
             onChange={(e) => setWachtwoord(e.target.value)}
             placeholder="Wachtwoord"
-            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-emerald-300/50"
+            aria-label="Wachtwoord"
+            autoComplete="current-password"
           />
 
           {fout && (
-            <div className="rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-200 ring-1 ring-red-500/30">{fout}</div>
+            <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600 ring-1 ring-rose-200">{fout}</div>
           )}
 
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-white py-3.5 text-sm font-semibold text-emerald-800 shadow-lg transition active:scale-[0.98]"
-          >
+          <Button type="submit" size="lg" className="w-full">
             Inloggen
-          </button>
+          </Button>
         </form>
+      </Card>
 
-        <div className="space-y-1.5 rounded-2xl bg-white/5 px-4 py-3.5 ring-1 ring-white/10">
-          <p className="mb-2 text-xs font-medium text-white/40">Demo-account</p>
-          <p className="font-mono text-xs text-white/25">lisa@neverlost.be / lisa123</p>
-        </div>
-
-        <p className="text-center text-xs text-white/30">
-          <Link to="/login" className="underline underline-offset-2 transition hover:text-white/50">
-            ← Terug naar klantenlogin
-          </Link>
-        </p>
-      </div>
-    </div>
+      <Card className="space-y-1.5 px-4 py-3.5">
+        <p className="mb-2 text-xs font-medium text-slate-400">Demo-account</p>
+        <p className="font-mono text-xs text-slate-500">lisa@neverlost.be / lisa123</p>
+      </Card>
+    </AuthLayout>
   )
 }

@@ -44,7 +44,7 @@ export default function ListPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-              tab === t.id ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'
+              tab === t.id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'
             }`}
           >
             {t.label}
@@ -93,7 +93,7 @@ function WinkelsTab() {
         <button
           key={s.id}
           onClick={() => navigate(`/store/${s.id}`)}
-          className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-violet-300 active:scale-[0.98]"
+          className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-300 active:scale-[0.98]"
         >
           <StoreLogo store={s} sizeClass="h-12 w-12" emojiClass="text-xl" />
           <div className="min-w-0 flex-1">
@@ -101,7 +101,7 @@ function WinkelsTab() {
             <p className="truncate text-xs text-slate-500">{s.straat}</p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-sm font-semibold text-violet-600">{s._afstand} km</p>
+            <p className="text-sm font-semibold text-brand-600">{s._afstand} km</p>
             <p className="text-[11px] text-slate-400">{s.type}</p>
           </div>
         </button>
@@ -265,7 +265,7 @@ function KokTab({ naarLijst }) {
         ))}
 
         {luistert && (
-          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-violet-100 px-4 py-2.5 text-sm italic text-violet-500">
+          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-brand-100 px-4 py-2.5 text-sm italic text-brand-500">
             {tussentijds || 'Aan het luisteren…'}
           </div>
         )}
@@ -303,8 +303,8 @@ function KokTab({ naarLijst }) {
                   onClick={() => toggleGerecht(r.naam)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize ring-1 transition active:scale-95 ${
                     aan
-                      ? 'bg-violet-600 text-white ring-violet-600'
-                      : 'bg-white text-slate-600 ring-slate-200 hover:ring-violet-300'
+                      ? 'bg-brand-600 text-white ring-brand-600'
+                      : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'
                   }`}
                 >
                   {r.emoji} {r.naam} · {r.tijd}m
@@ -316,7 +316,7 @@ function KokTab({ naarLijst }) {
             <button
               onClick={bevestigGerechten}
               disabled={!gekozenGerechten.length}
-              className="flex-1 rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-40"
+              className="flex-1 rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98] disabled:opacity-40"
             >
               {gekozenGerechten.length ? `Zet op mijn lijst (${gekozenGerechten.length})` : 'Kies een gerecht'}
             </button>
@@ -364,19 +364,20 @@ function KokTab({ naarLijst }) {
             e.preventDefault()
             stuur(invoer)
           }}
-          className="flex flex-1 items-center gap-2 rounded-full bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200 focus-within:ring-violet-300"
+          className="flex flex-1 items-center gap-2 rounded-full bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200 focus-within:ring-brand-300"
         >
           <input
             value={invoer}
             onChange={(e) => setInvoer(e.target.value)}
             placeholder="Typ je antwoord of wat je wil eten…"
+            aria-label="Bericht aan de kok"
             className="flex-1 bg-transparent px-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
           />
           <button
             type="submit"
             disabled={!invoer.trim()}
             aria-label="Versturen"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95 disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 active:scale-95 disabled:opacity-40"
           >
             ↑
           </button>
@@ -389,7 +390,7 @@ function KokTab({ naarLijst }) {
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg shadow-sm transition active:scale-95 ${
               luistert
                 ? 'animate-pulse bg-rose-500 text-white ring-4 ring-rose-200'
-                : 'bg-white text-violet-600 ring-1 ring-slate-200 hover:ring-violet-300'
+                : 'bg-white text-brand-600 ring-1 ring-slate-200 hover:ring-brand-300'
             }`}
           >
             🎤
@@ -406,7 +407,7 @@ function KokTab({ naarLijst }) {
               setVoorlezen(e.target.checked)
               if (!e.target.checked) stopSpreken()
             }}
-            className="h-3.5 w-3.5 accent-violet-600"
+            className="h-3.5 w-3.5 accent-brand-600"
           />
           Antwoorden voorlezen
         </label>
@@ -430,8 +431,8 @@ function QuickReplies({ vraag, pending, onKies, onToggle, onKlaar }) {
               onClick={() => (vraag.multi ? onToggle(o.id) : onKies(o.id))}
               className={`rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition active:scale-95 ${
                 aan
-                  ? 'bg-violet-600 text-white ring-violet-600'
-                  : 'bg-white text-slate-600 ring-slate-200 hover:ring-violet-300'
+                  ? 'bg-brand-600 text-white ring-brand-600'
+                  : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'
               }`}
             >
               {o.emoji} {o.label}
@@ -442,7 +443,7 @@ function QuickReplies({ vraag, pending, onKies, onToggle, onKlaar }) {
       {vraag.multi && (
         <button
           onClick={onKlaar}
-          className="w-full rounded-full bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
+          className="w-full rounded-full bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98]"
         >
           {pending.length ? `Klaar (${pending.length})` : vraag.overslaan ? 'Sla over' : 'Geen voorkeur'}
         </button>
@@ -454,7 +455,7 @@ function QuickReplies({ vraag, pending, onKies, onToggle, onKlaar }) {
 function Bericht({ bericht }) {
   if (bericht.rol === 'gebruiker') {
     return (
-      <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-violet-600 px-4 py-2.5 text-sm text-white">
+      <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-brand-600 px-4 py-2.5 text-sm text-white">
         {bericht.tekst}
       </div>
     )

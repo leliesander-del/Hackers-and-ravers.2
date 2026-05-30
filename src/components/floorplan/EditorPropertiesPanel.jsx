@@ -59,7 +59,7 @@ export default function EditorPropertiesPanel({
             type="checkbox"
             checked={snapEnabled}
             onChange={(e) => onSnapToggle(e.target.checked)}
-            className="border-slate-300 text-violet-600"
+            className="rounded border-slate-300 text-brand-600"
           />
           Magnetisch uitlijnen (snap)
         </label>
@@ -113,7 +113,7 @@ export default function EditorPropertiesPanel({
   return (
     <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-slate-200 bg-white p-4">
       <h2 className="text-sm font-bold text-slate-800">Eigenschappen</h2>
-      <p className="mt-0.5 text-xs text-violet-600">{def?.label}</p>
+      <p className="mt-0.5 text-xs text-brand-600">{def?.label}</p>
 
       {kanLabel && (
         <div className="mt-4">
@@ -254,7 +254,7 @@ export default function EditorPropertiesPanel({
           type="checkbox"
           checked={snapEnabled}
           onChange={(e) => onSnapToggle(e.target.checked)}
-          className="border-slate-300 text-violet-600"
+          className="rounded border-slate-300 text-brand-600"
         />
         Magnetisch uitlijnen (snap)
       </label>
