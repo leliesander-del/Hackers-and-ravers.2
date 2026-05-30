@@ -56,6 +56,22 @@ export default function BeheerHomePage() {
             </Link>
 
             <Link
+              to="/beheer/catalogus"
+              className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-violet-50 p-4 transition hover:border-violet-300 hover:bg-violet-100"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-600 text-2xl">
+                📦
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-800">Catalogus</p>
+                <p className="text-sm text-slate-500">
+                  Bekijk producten met live voorraad van je winkel.
+                </p>
+              </div>
+              <span className="ml-auto text-violet-400">→</span>
+            </Link>
+
+            <Link
               to="/beheer/connecties"
               className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-violet-50 p-4 transition hover:border-violet-300 hover:bg-violet-100"
             >

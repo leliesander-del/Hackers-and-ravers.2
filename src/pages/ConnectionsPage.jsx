@@ -18,12 +18,13 @@ const LEEG_FORMULIER = {
   authHeader: '',
   apiKey: '',
   actief: true,
+  demo: false,
 }
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 export default function ConnectionsPage() {
-  const { activeManager, isManagerIngelogd, managerLogout } = useStore()
+  const { activeManager, isManagerIngelogd, managerLogout, syncVoorraadVanConnectie } = useStore()
   const navigate = useNavigate()
   const store = activeManager ? getStore(activeManager.storeId) : null
 
@@ -31,6 +32,23 @@ export default function ConnectionsPage() {
   const [formulier, setFormulier] = useState(LEEG_FORMULIER)
   const [toonFormulier, setToonFormulier] = useState(false)
   const [fout, setFout] = useState('')
+  // Sync-status per connectie-id: { bezig, ok, tekst }.
+  const [syncStatus, setSyncStatus] = useState({})
+
+  async function synchroniseer(connectie) {
+    setSyncStatus((s) => ({ ...s, [connectie.id]: { bezig: true } }))
+    const r = await syncVoorraadVanConnectie(store.id, connectie.id)
+    setSyncStatus((s) => ({
+      ...s,
+      [connectie.id]: {
+        bezig: false,
+        ok: r.ok,
+        tekst: r.ok
+          ? `✓ ${r.herkend} producten gesynchroniseerd (${r.gewijzigd} aangepast)`
+          : `✕ ${r.fout}`,
+      },
+    }))
+  }
 
   useEffect(() => {
     if (store) setConnecties(loadConnections(store.id))
@@ -58,16 +76,19 @@ export default function ConnectionsPage() {
       setFout('Geef de connectie een naam.')
       return
     }
-    if (!formulier.baseUrl.trim()) {
-      setFout('Vul een API-URL in.')
-      return
-    }
-    try {
-      // eslint-disable-next-line no-new
-      new URL(formulier.baseUrl.trim())
-    } catch {
-      setFout('De API-URL is geen geldige URL (begin met https://).')
-      return
+    // Een demo-databron heeft geen URL nodig; een echte API wel.
+    if (!formulier.demo) {
+      if (!formulier.baseUrl.trim()) {
+        setFout('Vul een API-URL in (of kies een demo-databron).')
+        return
+      }
+      try {
+        // eslint-disable-next-line no-new
+        new URL(formulier.baseUrl.trim())
+      } catch {
+        setFout('De API-URL is geen geldige URL (begin met https://).')
+        return
+      }
     }
     saveConnection(store.id, {
       ...formulier,
@@ -122,8 +143,8 @@ export default function ConnectionsPage() {
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="text-sm text-slate-600">
-            Koppel andere systemen via custom API's. Klanten en personeel gebruiken deze
-            verbindingen op de achtergrond.
+            Koppel de databank van je winkel via een custom API en synchroniseer de voorraad,
+            zodat de inventaris in de app klopt.
           </p>
           {!toonFormulier && (
             <button
@@ -207,15 +228,34 @@ export default function ConnectionsPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={formulier.actief}
-                onChange={(e) => set('actief', e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
-              />
-              Connectie actief
-            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={formulier.actief}
+                  onChange={(e) => set('actief', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
+                />
+                Connectie actief
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={formulier.demo}
+                  onChange={(e) => set('demo', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
+                />
+                Demo-databron (gesimuleerde winkeldatabank — werkt zonder echte server)
+              </label>
+            </div>
+
+            <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+              Deze connectie haalt de voorraad uit de databank van je winkel. Verwachte JSON:
+              een lijst met per product een <code className="text-violet-600">sku</code> (= product-id),{' '}
+              <code className="text-violet-600">magazijn</code> en{' '}
+              <code className="text-violet-600">rekken</code>. Synchroniseren werkt de live
+              inventaris bij (zichtbaar in catalogus en personeelsdashboard).
+            </p>
 
             {fout && <p className="text-sm text-red-600">{fout}</p>}
 
@@ -250,8 +290,9 @@ export default function ConnectionsPage() {
             {connecties.map((c) => (
               <li
                 key={c.id}
-                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
+               <div className="flex items-center gap-4">
                 <span
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
                     c.actief ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
@@ -296,6 +337,34 @@ export default function ConnectionsPage() {
                     Verwijder
                   </button>
                 </div>
+               </div>
+
+                {c.actief ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => synchroniseer(c)}
+                      disabled={syncStatus[c.id]?.bezig}
+                      className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      {syncStatus[c.id]?.bezig ? 'Synchroniseren…' : '🔄 Voorraad synchroniseren'}
+                    </button>
+                    {c.demo && (
+                      <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-600">
+                        demo-databron
+                      </span>
+                    )}
+                    {syncStatus[c.id]?.tekst && (
+                      <span
+                        className={`text-xs font-medium ${
+                          syncStatus[c.id].ok ? 'text-emerald-600' : 'text-red-600'
+                        }`}
+                      >
+                        {syncStatus[c.id].tekst}
+                      </span>
+                    )}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
