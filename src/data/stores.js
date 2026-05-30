@@ -6,6 +6,7 @@ export const userLocation = { lat: 51.0538, lng: 3.7220, label: 'Korenmarkt, Gen
 export const stores = [
   {
     id: 'ah-xl',
+    logoDomain: 'ah.be',
     naam: 'AH XL Gent',
     afdeling: 'boodschappen',
     type: 'Supermarkt',
@@ -18,6 +19,7 @@ export const stores = [
   },
   {
     id: 'mediamarkt',
+    logoDomain: 'mediamarkt.be',
     naam: 'MediaMarkt Gent',
     afdeling: 'elektronica',
     type: 'Elektronica',
@@ -30,6 +32,7 @@ export const stores = [
   },
   {
     id: 'decathlon',
+    logoDomain: 'decathlon.be',
     naam: 'Decathlon Gent',
     afdeling: 'sport',
     type: 'Sport',
@@ -42,6 +45,7 @@ export const stores = [
   },
   {
     id: 'hema',
+    logoDomain: 'hema.be',
     naam: 'HEMA Veldstraat',
     afdeling: 'speelgoed',
     type: 'Warenhuis',
@@ -54,6 +58,7 @@ export const stores = [
   },
   {
     id: 'delhaize',
+    logoDomain: 'delhaize.be',
     naam: 'Delhaize Sint-Pieters',
     afdeling: 'boodschappen',
     type: 'Supermarkt',

@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext.jsx'
 import { getProduct } from '../data/products.js'
 import { getStore } from '../data/stores.js'
 import PageHeader from '../components/PageHeader.jsx'
+import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function ListPage() {
   const { activeProfile, inCart, addToCart } = useStore()
@@ -39,8 +40,9 @@ export default function ListPage() {
             return (
               <section key={storeId}>
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-semibold text-slate-700">
-                    {store.emoji} {store.naam}
+                  <h2 className="flex items-center gap-2 font-semibold text-slate-700">
+                    <StoreLogo store={store} sizeClass="h-7 w-7" emojiClass="text-sm" />
+                    {store.naam}
                   </h2>
                   {store.heeftPlattegrond && (
                     <Link to={`/store/${storeId}`} className="text-xs font-medium text-violet-600">

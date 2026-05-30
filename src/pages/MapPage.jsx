@@ -5,6 +5,7 @@ import { stores as alleStores, userLocation } from '../data/stores.js'
 import { rankStores } from '../lib/personalization.js'
 import PageHeader from '../components/PageHeader.jsx'
 import SearchBar from '../components/SearchBar.jsx'
+import StoreLogo from '../components/StoreLogo.jsx'
 
 export default function MapPage() {
   const { activeProfile } = useStore()
@@ -34,12 +35,7 @@ export default function MapPage() {
                 to={`/store/${s.id}`}
                 className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
               >
-                <span
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl text-white shadow-sm"
-                  style={{ backgroundColor: s.kleur }}
-                >
-                  {s.emoji}
-                </span>
+                <StoreLogo store={s} sizeClass="h-12 w-12" emojiClass="text-2xl" />
                 <span className="flex-1">
                   <span className="flex items-center gap-2">
                     <span className="font-semibold text-slate-800">{s.naam}</span>
