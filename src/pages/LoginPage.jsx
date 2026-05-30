@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       const accounts = getAccounts()
       const account = accounts[emailLower]
-      if (account && (await verifyPassword(password, account.password))) {
+      if (account?.profile && (await verifyPassword(password, account.password))) {
         clearLoginAttempts()
         if (isLegacyPassword(account.password)) {
           saveAccount(emailLower, { ...account, password: await hashPassword(password) })
